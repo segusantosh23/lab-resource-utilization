@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
@@ -44,6 +44,7 @@ const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   if (!user) return null;
 
@@ -93,19 +94,36 @@ const Navbar = () => {
         </div>
 
         {/* User Profile & Actions */}
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold text-gray-200">{user.name}</p>
-            <span className="text-xs text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full font-medium uppercase tracking-wide">
-              {user.role.replace('_', ' ')}
-            </span>
-          </div>
+        <div className="relative flex items-center shrink-0">
           <button 
-            onClick={handleLogout} 
-            className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 text-gray-400 text-sm font-medium transition duration-200 cursor-pointer"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.08] transition duration-200 cursor-pointer"
           >
-            Sign Out
+            <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            </div>
+            <span className="text-sm font-medium text-gray-200">Profile</span>
           </button>
+
+          {dropdownOpen && (
+            <div className="absolute right-0 top-full mt-2 w-64 bg-[#1a1c23] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden z-50">
+              <div className="p-4 border-b border-white/[0.05]">
+                <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                <p className="text-xs text-gray-400 truncate mt-0.5">{user.email}</p>
+                <div className="mt-2 inline-block px-2 py-1 bg-purple-500/10 border border-purple-500/20 rounded-md">
+                  <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">{user.role.replace('_', ' ')}</span>
+                </div>
+              </div>
+              <div className="p-2">
+                <button 
+                  onClick={handleLogout} 
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition duration-200"
+                >
+                  Log out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </nav>

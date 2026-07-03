@@ -3,6 +3,7 @@
 /* ── Base Resets ── */
 body {
   margin: 0;
+  background-color: #0d0e12;
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
