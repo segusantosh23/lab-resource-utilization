@@ -17,6 +17,7 @@ import {
 
 import EquipmentList from './pages/equipment/EquipmentList';
 import EquipmentDetails from './pages/equipment/EquipmentDetails';
+import Bookings from './pages/booking/Bookings';
 import Navbar from './components/Navbar';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -120,6 +121,14 @@ function App() {
           element={
             <ProtectedRoute>
               <EquipmentDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bookings"
+          element={
+            <ProtectedRoute>
+              <Bookings />
             </ProtectedRoute>
           }
         />

@@ -1,0 +1,126 @@
+{
+	"info": {
+		"_postman_id": "8b5c92e1-4c12-4eb2-9b2f-7c157fdf512b",
+		"name": "Lab Resource Utilization - Conflict Prevention",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Successful Booking",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"equipmentId\": 1,\n  \"startTime\": \"2026-10-15T09:00:00\",\n  \"endTime\": \"2026-10-15T12:00:00\",\n  \"purpose\": \"Successful reservation request\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8086/bookings",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8086",
+					"path": [
+						"bookings"
+					]
+				},
+				"description": "Performs a successful booking request on an available equipment. Make sure you are authenticated."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Conflicting Booking (Double Booking Prevention)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"equipmentId\": 1,\n  \"startTime\": \"2026-10-15T10:00:00\",\n  \"endTime\": \"2026-10-15T11:00:00\",\n  \"purpose\": \"This should conflict and fail\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8086/bookings",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8086",
+					"path": [
+						"bookings"
+					]
+				},
+				"description": "Performs a booking that overlaps with the first booking's time slot. Expects a 400 Bad Request with: 'Equipment is already booked for the selected time slot.'"
+			},
+			"response": []
+		},
+		{
+			"name": "3. Unavailable Equipment Booking",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"equipmentId\": 2,\n  \"startTime\": \"2026-10-15T14:00:00\",\n  \"endTime\": \"2026-10-15T16:00:00\",\n  \"purpose\": \"Booking an equipment under maintenance or out of service\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8086/bookings",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8086",
+					"path": [
+						"bookings"
+					]
+				},
+				"description": "Performs a booking for an equipment that has status OUT_OF_SERVICE or UNDER_MAINTENANCE. Expects a 400 Bad Request indicating the equipment is not available."
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

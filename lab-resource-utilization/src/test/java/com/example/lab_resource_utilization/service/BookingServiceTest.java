@@ -20,6 +20,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -119,5 +121,44 @@ class BookingServiceTest {
         assertThrows(InvalidBookingException.class, () -> 
             bookingService.updateBooking(100L, request, researcher.getEmail())
         );
+    }
+
+    @Test
+    void createBooking_ConflictingBooking_ThrowsException() {
+        when(userRepository.findByEmail(researcher.getEmail())).thenReturn(Optional.of(researcher));
+        when(equipmentRepository.findById(equipment.getId())).thenReturn(Optional.of(equipment));
+        
+        when(bookingRepository.hasOverlappingBooking(eq(equipment.getId()), any(LocalDateTime.class), any(LocalDateTime.class), anyList()))
+                .thenReturn(true);
+
+        InvalidBookingException exception = assertThrows(InvalidBookingException.class, () -> 
+            bookingService.createBooking(request, researcher.getEmail())
+        );
+
+        assertEquals("Equipment is already booked for the selected time slot.", exception.getMessage());
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void updateBooking_ConflictingBooking_ThrowsException() {
+        Booking booking = new Booking();
+        booking.setId(100L);
+        booking.setUser(researcher);
+        booking.setEquipment(equipment);
+        booking.setStatus(BookingStatus.PENDING_APPROVAL);
+
+        when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
+        when(userRepository.findByEmail(researcher.getEmail())).thenReturn(Optional.of(researcher));
+        when(equipmentRepository.findById(equipment.getId())).thenReturn(Optional.of(equipment));
+        
+        when(bookingRepository.hasOverlappingBookingExcludingId(eq(equipment.getId()), eq(100L), any(LocalDateTime.class), any(LocalDateTime.class), anyList()))
+                .thenReturn(true);
+
+        InvalidBookingException exception = assertThrows(InvalidBookingException.class, () -> 
+            bookingService.updateBooking(100L, request, researcher.getEmail())
+        );
+
+        assertEquals("Equipment is already booked for the selected time slot.", exception.getMessage());
+        verify(bookingRepository, never()).save(any(Booking.class));
     }
 }

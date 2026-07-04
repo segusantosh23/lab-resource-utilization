@@ -65,6 +65,8 @@ public class BookingService {
             throw new InvalidBookingException("End time must be after start time.");
         }
 
+        validateNoConflict(equipment.getId(), request.getStartTime(), request.getEndTime(), null);
+
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setEquipment(equipment);
@@ -114,6 +116,8 @@ public class BookingService {
             throw new InvalidBookingException("End time must be after start time.");
         }
 
+        validateNoConflict(equipment.getId(), request.getStartTime(), request.getEndTime(), id);
+
         booking.setEquipment(equipment);
         booking.setStartTime(request.getStartTime());
         booking.setEndTime(request.getEndTime());
@@ -141,5 +145,22 @@ public class BookingService {
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    private void validateNoConflict(Long equipmentId, LocalDateTime startTime, LocalDateTime endTime, Long excludingBookingId) {
+        List<BookingStatus> activeStatuses = List.of(
+            BookingStatus.PENDING_APPROVAL,
+            BookingStatus.CONFIRMED,
+            BookingStatus.IN_USE
+        );
+        boolean hasConflict;
+        if (excludingBookingId == null) {
+            hasConflict = bookingRepository.hasOverlappingBooking(equipmentId, startTime, endTime, activeStatuses);
+        } else {
+            hasConflict = bookingRepository.hasOverlappingBookingExcludingId(equipmentId, excludingBookingId, startTime, endTime, activeStatuses);
+        }
+        if (hasConflict) {
+            throw new InvalidBookingException("Equipment is already booked for the selected time slot.");
+        }
     }
 }
