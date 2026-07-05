@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 
@@ -9,7 +9,7 @@ const STATUS_STYLES = {
   CONFIRMED:        'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   IN_USE:           'bg-blue-500/10 text-blue-400 border-blue-500/20',
   COMPLETED:        'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  CANCELLED:        'bg-gray-500/10 text-gray-400 border-gray-500/20',
+  CANCELLED:        'bg-red-500/10 text-red-400 border-red-500/20',
   REJECTED:         'bg-red-500/10 text-red-400 border-red-500/20',
 };
 
@@ -18,6 +18,10 @@ const RECURRENCE_OPTIONS = ['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY'];
 const Bookings = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialTab = searchParams.get('tab') || 'my';
+  const initialStatus = searchParams.get('status') || '';
 
   const [bookings,      setBookings]      = useState([]);
   const [equipmentList, setEquipmentList] = useState([]);
@@ -25,10 +29,11 @@ const Bookings = () => {
   const [error,         setError]         = useState('');
 
   /* view tabs: 'my' | 'all' */
-  const [viewTab, setViewTab] = useState('my');
+  const [viewTab, setViewTab] = useState(initialTab);
 
-  /* status filter for the list */
-  const [statusFilter, setStatusFilter] = useState('');
+  /* filters for the list */
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [roleFilter, setRoleFilter] = useState('');
 
   /* add-reservation modal */
   const [isAddOpen,   setIsAddOpen]   = useState(false);
@@ -47,7 +52,7 @@ const Bookings = () => {
   });
 
   const isManagerOrAdmin = user && [
-    'LAB_MANAGER', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN',
+    'LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN',
   ].includes(user.role);
 
   /* ── data fetching ─────────────────────────────────────────── */
@@ -169,9 +174,11 @@ const Bookings = () => {
   };
 
   /* ── filtered list ──────────────────────────────────────────── */
-  const displayed = statusFilter
-    ? bookings.filter(b => b.status === statusFilter)
-    : bookings;
+  const displayed = bookings.filter(b => {
+    if (statusFilter && b.status !== statusFilter) return false;
+    if (roleFilter && b.userRole !== roleFilter) return false;
+    return true;
+  });
 
   /* ── summary counts ─────────────────────────────────────────── */
   const counts = bookings.reduce((acc, b) => {
@@ -191,12 +198,6 @@ const Bookings = () => {
             <p className="text-gray-400 mt-1">Reserve equipment and monitor time slots.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="px-4 py-2 rounded-lg bg-white/[0.05] border border-white/[0.1] hover:bg-white/[0.1] transition font-medium text-sm"
-            >
-              Back
-            </button>
             {/* Quick-nav links to sub-pages */}
             <Link
               to="/bookings/calendar"
@@ -237,49 +238,68 @@ const Bookings = () => {
           </div>
         </div>
 
-        {/* ── Status summary chips ── */}
-        {!loading && !error && bookings.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            <button
-              onClick={() => setStatusFilter('')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition
-                ${!statusFilter
-                  ? 'bg-white/10 text-white border-white/20'
-                  : 'bg-white/[0.03] text-gray-400 border-white/[0.08] hover:bg-white/[0.07]'}`}
-            >
-              All · {bookings.length}
-            </button>
-            {Object.entries(counts).map(([status, count]) => (
-              <button
-                key={status}
-                onClick={() => setStatusFilter(prev => prev === status ? '' : status)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition
-                  ${statusFilter === status ? 'ring-2 ring-white/20' : ''}
-                  ${STATUS_STYLES[status] || STATUS_STYLES.CANCELLED}`}
-              >
-                {status.replace(/_/g, ' ')} · {count}
-              </button>
-            ))}
+        {/* ── Tabs and Filters Row ── */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/[0.05] mb-6 pb-2 gap-4">
+          
+          {/* Tabs for Admin/Manager vs regular users */}
+          <div className="flex gap-4">
+            {isManagerOrAdmin ? (
+              [['my', 'My Bookings'], ['all', 'All Portal Bookings']].map(([tab, label]) => (
+                <button
+                  key={tab}
+                  onClick={() => { setViewTab(tab); setStatusFilter(''); setRoleFilter(''); }}
+                  className={`pb-2 px-1 text-sm font-semibold border-b-2 transition
+                    ${viewTab === tab
+                      ? 'border-purple-500 text-purple-400'
+                      : 'border-transparent text-gray-400 hover:text-white'}`}
+                >
+                  {label}
+                </button>
+              ))
+            ) : (
+              <span className="pb-2 px-1 text-sm font-semibold border-b-2 border-purple-500 text-purple-400">
+                My Bookings
+              </span>
+            )}
           </div>
-        )}
 
-        {/* ── Tabs for admin/manager ── */}
-        {isManagerOrAdmin && (
-          <div className="flex gap-4 border-b border-white/[0.05] mb-6">
-            {[['my', 'My Bookings'], ['all', 'All Portal Bookings']].map(([tab, label]) => (
-              <button
-                key={tab}
-                onClick={() => { setViewTab(tab); setStatusFilter(''); }}
-                className={`pb-3 px-1 text-sm font-semibold border-b-2 transition
-                  ${viewTab === tab
-                    ? 'border-purple-500 text-purple-400'
-                    : 'border-transparent text-gray-400 hover:text-white'}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
+          {/* Filters (only visible if bookings exist) */}
+          {!loading && !error && bookings.length > 0 && (
+            <div className="flex flex-wrap items-center gap-4">
+               {/* Status Filter */}
+               <div className="flex items-center gap-2">
+                 <span className="text-xs text-gray-400 font-medium">Status:</span>
+                 <select
+                   value={statusFilter}
+                   onChange={(e) => setStatusFilter(e.target.value)}
+                   className="bg-[#181922] border border-white/[0.08] rounded-lg px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                 >
+                   <option value="">All ({bookings.length})</option>
+                   {Object.entries(counts).map(([status, count]) => (
+                     <option key={status} value={status}>{status.replace(/_/g, ' ')} ({count})</option>
+                   ))}
+                 </select>
+               </div>
+               
+               {/* Role Filter (only for managers looking at all bookings) */}
+               {isManagerOrAdmin && viewTab === 'all' && (
+                 <div className="flex items-center gap-2">
+                   <span className="text-xs text-gray-400 font-medium">Role:</span>
+                   <select
+                     value={roleFilter}
+                     onChange={(e) => setRoleFilter(e.target.value)}
+                     className="bg-[#181922] border border-white/[0.08] rounded-lg px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                   >
+                     <option value="">All Roles</option>
+                     {Array.from(new Set(bookings.map(b => b.userRole).filter(Boolean))).map(role => (
+                       <option key={role} value={role}>{role.replace(/_/g, ' ')}</option>
+                     ))}
+                   </select>
+                 </div>
+               )}
+            </div>
+          )}
+        </div>
 
         {/* ── Bookings table ── */}
         <div className="bg-[#12131a] border border-white/[0.05] rounded-xl overflow-hidden shadow-xl">
@@ -295,7 +315,7 @@ const Bookings = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse whitespace-nowrap">
+              <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#161720] border-b border-white/[0.05]">
                     <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Equipment</th>
@@ -335,20 +355,20 @@ const Bookings = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${STATUS_STYLES[item.status] || STATUS_STYLES.CANCELLED}`}>
+                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full border whitespace-nowrap inline-block ${STATUS_STYLES[item.status] || STATUS_STYLES.CANCELLED}`}>
                           {item.status.replace(/_/g, ' ')}
                         </span>
                       </td>
 
                       {/* ── Action buttons per status ── */}
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                        <div className="flex items-center justify-end gap-2 flex-nowrap">
 
-                          {/* Cancel — own pending/confirmed bookings */}
-                          {(item.status === 'PENDING_APPROVAL' || item.status === 'CONFIRMED') && (
+                          {/* Cancel — own pending (for non-managers) or confirmed bookings */}
+                          {((!isManagerOrAdmin && item.status === 'PENDING_APPROVAL') || item.status === 'CONFIRMED') && (
                             <button
                               onClick={() => handleStatusChange(item.id, 'CANCELLED')}
-                              className="text-red-400 hover:text-red-300 text-xs px-2.5 py-1.5 rounded bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition"
+                              className="text-red-400 hover:text-red-300 text-xs px-2.5 py-1.5 rounded bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition whitespace-nowrap"
                             >
                               Cancel
                             </button>
@@ -359,13 +379,13 @@ const Bookings = () => {
                             <>
                               <button
                                 onClick={() => handleStatusChange(item.id, 'CONFIRMED')}
-                                className="text-emerald-400 hover:text-emerald-300 text-xs px-2.5 py-1.5 rounded bg-emerald-500/5 border border-emerald-500/10 hover:bg-emerald-500/10 transition"
+                                className="text-emerald-400 hover:text-emerald-300 text-xs px-2.5 py-1.5 rounded bg-emerald-500/5 border border-emerald-500/10 hover:bg-emerald-500/10 transition whitespace-nowrap"
                               >
                                 Approve
                               </button>
                               <button
                                 onClick={() => handleReject(item.id)}
-                                className="text-red-400 hover:text-red-300 text-xs px-2.5 py-1.5 rounded bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition"
+                                className="text-red-400 hover:text-red-300 text-xs px-2.5 py-1.5 rounded bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition whitespace-nowrap"
                               >
                                 Reject
                               </button>

@@ -130,9 +130,7 @@ const EquipmentList = () => {
             <p className="text-gray-400 mt-1">Manage and track all laboratory resources.</p>
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <button onClick={() => navigate(-1)} className="px-4 py-2 rounded-lg bg-white/[0.05] border border-white/[0.1] hover:bg-white/[0.1] transition font-medium text-sm">
-              Back
-            </button>
+
             <button onClick={() => { resetForm(); setIsAddOpen(true); }} className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition shadow-lg shadow-purple-500/20 font-medium text-sm w-full md:w-auto">
               + Add Equipment
             </button>
@@ -213,7 +211,7 @@ const EquipmentList = () => {
                           ${item.status === 'AVAILABLE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
                             item.status === 'UNDER_MAINTENANCE' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
                             'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
-                          {item.status.replace('_', ' ')}
+                          {item.status.replace(/_/g, ' ')}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">

@@ -24,7 +24,7 @@ public class EquipmentController {
 
     // Add Equipment — 201 CREATED
     @PostMapping
-    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<EquipmentResponse> add(@Valid @RequestBody EquipmentRequest request) {
         EquipmentResponse response = service.addEquipment(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -48,7 +48,7 @@ public class EquipmentController {
 
     // Update Equipment — 200 OK
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<EquipmentResponse> update(@PathVariable Long id,
                                                     @Valid @RequestBody EquipmentRequest request) {
         EquipmentResponse response = service.updateEquipment(id, request);
@@ -57,7 +57,7 @@ public class EquipmentController {
 
     // Update Equipment Status — 200 OK
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'LAB_MANAGER', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<EquipmentResponse> updateStatus(@PathVariable Long id,
                                                           @RequestParam EquipmentStatus status) {
         EquipmentResponse response = service.updateEquipmentStatus(id, status);
@@ -66,7 +66,7 @@ public class EquipmentController {
 
     // Delete Equipment — 204 NO CONTENT
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.deleteEquipment(id);
         return ResponseEntity.noContent().build();

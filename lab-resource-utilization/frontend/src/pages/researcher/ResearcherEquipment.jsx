@@ -12,31 +12,20 @@ const ResearcherEquipment = () => {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
 
-    useEffect(() => {
-
-        fetchEquipment();
-
-    }, []);
-
     const fetchEquipment = async () => {
-
         try {
-
             const response = await api.get("/equipment");
-
             setEquipment(response.data);
-
         } catch (error) {
-
             console.error("Unable to load equipment.", error);
-
         } finally {
-
             setLoading(false);
-
         }
-
     };
+
+    useEffect(() => {
+        fetchEquipment();
+    }, []);
 
     const filteredEquipment = equipment.filter(item => {
 

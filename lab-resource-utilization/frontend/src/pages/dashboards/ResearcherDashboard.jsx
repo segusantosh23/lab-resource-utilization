@@ -1,43 +1,35 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { getMyBookings } from "../../services/bookingService";
+import { getAllEquipment } from "../../services/equipmentService";
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import api from "../../services/api";
+
 const ResearcherDashboard = () => {
     const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
     const [bookings, setBookings] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [equipment, setEquipment] = useState([]);
-    const fetchBookings = async () => {
+    const [loading, setLoading] = useState(true);
 
+    const fetchData = async () => {
         try {
-
-            const data = await getMyBookings();
-
-            setBookings(data);
-
-            const equipmentResponse = await api.get("/equipment");
-
-            setEquipment(equipmentResponse.data);
-
+            setLoading(true);
+            const [bookingsData, equipmentData] = await Promise.all([
+                getMyBookings(),
+                getAllEquipment()
+            ]);
+            setBookings(bookingsData);
+            setEquipment(equipmentData);
         } catch (error) {
-
-            console.error(error);
-
+            console.error("Failed to fetch researcher data:", error);
         } finally {
-
             setLoading(false);
-
         }
-
     };
 
     useEffect(() => {
-
-        fetchBookings();
-
+        fetchData();
     }, []);
 
     const dashboardCards = [

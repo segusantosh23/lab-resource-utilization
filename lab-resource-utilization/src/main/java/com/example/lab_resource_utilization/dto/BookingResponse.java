@@ -11,6 +11,7 @@ public class BookingResponse {
     private Long userId;
     private String userName;
     private String userEmail;
+    private String userRole;
     private Long equipmentId;
     private String equipmentName;
     private LocalDateTime startTime;
@@ -37,6 +38,9 @@ public class BookingResponse {
 
     public String getUserEmail() { return userEmail; }
     public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
+
+    public String getUserRole() { return userRole; }
+    public void setUserRole(String userRole) { this.userRole = userRole; }
 
     public Long getEquipmentId() { return equipmentId; }
     public void setEquipmentId(Long equipmentId) { this.equipmentId = equipmentId; }

@@ -8,7 +8,7 @@ const STATUS_STYLES = {
   CONFIRMED:        'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   IN_USE:           'bg-blue-500/10 text-blue-400 border-blue-500/20',
   COMPLETED:        'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  CANCELLED:        'bg-gray-500/10 text-gray-400 border-gray-500/20',
+  CANCELLED:        'bg-red-500/10 text-red-400 border-red-500/20',
   REJECTED:         'bg-red-500/10 text-red-400 border-red-500/20',
 };
 
@@ -33,7 +33,7 @@ const BookingHistory = () => {
   // Expanded row for full detail
   const [expandedId,     setExpandedId]     = useState(null);
 
-  const isManagerOrAdmin = user && ['LAB_MANAGER','INSTITUTION_ADMIN','SYSTEM_ADMIN'].includes(user.role);
+  const isManagerOrAdmin = user && ['LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN'].includes(user.role);
 
   /* ── fetch ───────────────────────────────────────────────────── */
   useEffect(() => {
@@ -193,7 +193,7 @@ const BookingHistory = () => {
                 onChange={e => setStatusFilter(e.target.value)}
                 className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
               >
-                <option value="">All Statuses</option>
+                <option value="">All</option>
                 {ALL_STATUSES.map(s => (
                   <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
                 ))}
@@ -289,7 +289,7 @@ const BookingHistory = () => {
                         <td className="px-6 py-4 text-sm text-gray-400">{fmt(b.endTime)}</td>
                         <td className="px-6 py-4 text-sm text-gray-500">{duration(b.startTime, b.endTime)}</td>
                         <td className="px-6 py-4">
-                          <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${STATUS_STYLES[b.status] || STATUS_STYLES.CANCELLED}`}>
+                          <span className={`px-2.5 py-1 text-xs font-medium rounded-full border whitespace-nowrap inline-block ${STATUS_STYLES[b.status] || STATUS_STYLES.CANCELLED}`}>
                             {b.status.replace(/_/g, ' ')}
                           </span>
                         </td>
@@ -359,7 +359,7 @@ const BookingHistory = () => {
                                   <div className="flex gap-2">
                                     <dt className="text-gray-500 w-24 shrink-0">Status</dt>
                                     <dd>
-                                      <span className={`px-2 py-0.5 text-xs rounded-full border ${STATUS_STYLES[b.status] || STATUS_STYLES.CANCELLED}`}>
+                                      <span className={`px-2 py-0.5 text-xs rounded-full border whitespace-nowrap inline-block ${STATUS_STYLES[b.status] || STATUS_STYLES.CANCELLED}`}>
                                         {b.status.replace(/_/g, ' ')}
                                       </span>
                                     </dd>

@@ -24,7 +24,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   // Roles permissions mapping
-  const hasFullCrud = ['LAB_MANAGER', 'SYSTEM_ADMINISTRATOR'].includes(user?.role);
+  const hasFullCrud = ['LAB_MANAGER', 'DEPARTMENT_HEAD', 'SYSTEM_ADMINISTRATOR'].includes(user?.role);
   const hasStatusUpdateOnly = ['LAB_TECHNICIAN'].includes(user?.role);
   const hasReadOnly = !hasFullCrud && !hasStatusUpdateOnly;
 

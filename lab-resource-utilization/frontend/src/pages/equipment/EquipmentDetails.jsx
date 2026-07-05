@@ -67,7 +67,7 @@ const EquipmentDetails = () => {
                     ${equipment.status === 'AVAILABLE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
                       equipment.status === 'UNDER_MAINTENANCE' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
                       'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
-                    {equipment.status.replace('_', ' ')}
+                    {equipment.status.replace(/_/g, ' ')}
                 </span>
               </div>
 

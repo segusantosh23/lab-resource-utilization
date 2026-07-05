@@ -25,7 +25,7 @@ const WaitlistManager = () => {
   const [joinSuccess,   setJoinSuccess]   = useState('');
   const [viewTab,       setViewTab]       = useState('my'); // 'my' | 'all'
 
-  const isManagerOrAdmin = user && ['LAB_MANAGER','INSTITUTION_ADMIN','SYSTEM_ADMIN'].includes(user.role);
+  const isManagerOrAdmin = user && ['LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN'].includes(user.role);
 
   /* ── fetch ───────────────────────────────────────────────────── */
   const load = async () => {

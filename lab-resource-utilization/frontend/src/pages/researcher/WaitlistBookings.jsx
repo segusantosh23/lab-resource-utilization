@@ -119,22 +119,6 @@ const WaitlistBookings = () => {
 
                 </div>
 
-                {bookings.length === 0 && (
-
-                    <div className="mt-8 bg-[#12131a] rounded-xl p-8 text-center">
-
-                        <h2 className="text-2xl font-semibold">
-                            No Pending Bookings
-                        </h2>
-
-                        <p className="text-gray-400 mt-2">
-                            You don't have any booking requests waiting for approval.
-                        </p>
-
-                    </div>
-
-                )}
-
                 {/* Table */}
 
                 <div className="mt-8 overflow-hidden rounded-xl border border-white/10">
@@ -144,70 +128,48 @@ const WaitlistBookings = () => {
                         <thead className="bg-[#161821]">
 
                         <tr>
-
-                            <th>Booking ID</th>
-                            <th>Equipment</th>
-                            <th>Created</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Status</th>
-                            {/*<th>Action</th>*/}
-
+                            <th className="text-left p-4 font-semibold text-gray-400 text-sm">Booking ID</th>
+                            <th className="text-left p-4 font-semibold text-gray-400 text-sm">Equipment</th>
+                            <th className="text-left p-4 font-semibold text-gray-400 text-sm">Created</th>
+                            <th className="text-left p-4 font-semibold text-gray-400 text-sm">Start Time</th>
+                            <th className="text-left p-4 font-semibold text-gray-400 text-sm">End Time</th>
+                            <th className="text-left p-4 font-semibold text-gray-400 text-sm">Status</th>
+                            <th className="text-left p-4 font-semibold text-gray-400 text-sm">Action</th>
                         </tr>
 
                         </thead>
 
                         <tbody>
-
-                        {filteredBookings.map((booking) => (
-
-                            <tr
-                                key={booking.id}
-                                className="border-t border-white/10 hover:bg-white/5"
-                            >
-
-                                <td className="p-4">{booking.id}</td>
-
-                                <td className="p-4">{booking.equipmentName}</td>
-
-                                <td className="p-4">
-                                    {new Date(booking.createdAt).toLocaleDateString()}
-                                </td>
-
-                                <td className="p-4">
-                                    {new Date(booking.startTime).toLocaleString()}
-                                </td>
-
-                                <td className="p-4 font-semibold text-yellow-400">
-                                    {new Date(booking.endTime).toLocaleString()}
-                                </td>
-
-
-
-                                <td className="p-4">
-
-                    <span className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-sm">
-                      {booking.status}
-                    </span>
-
-                                </td>
-
-                                {/*<td className="p-4">*/}
-
-                                {/*    <button className="text-purple-400 hover:text-purple-300 mr-4">*/}
-                                {/*        View*/}
-                                {/*    </button>*/}
-
-                                {/*    <button className="text-red-400 hover:text-red-300">*/}
-                                {/*        Remove*/}
-                                {/*    </button>*/}
-
-                                {/*</td>*/}
-
-                            </tr>
-
-                        ))}
-
+                            {filteredBookings.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="p-8 text-center bg-[#12131a]">
+                                        <h2 className="text-2xl font-semibold text-white">No Pending Bookings</h2>
+                                        <p className="text-gray-400 mt-2">You don't have any booking requests waiting for approval.</p>
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredBookings.map((booking) => (
+                                    <tr
+                                        key={booking.id}
+                                        className="border-t border-white/10 hover:bg-white/5"
+                                    >
+                                        <td className="p-4">{booking.id}</td>
+                                        <td className="p-4">{booking.equipmentName}</td>
+                                        <td className="p-4">{new Date(booking.createdAt).toLocaleDateString()}</td>
+                                        <td className="p-4">{new Date(booking.startTime).toLocaleString()}</td>
+                                        <td className="p-4">{new Date(booking.endTime).toLocaleString()}</td>
+                                        <td className="p-4">
+                                            <span className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-sm font-medium">
+                                                {booking.status.replace(/_/g, ' ')}
+                                            </span>
+                                        </td>
+                                        <td className="p-4">
+                                            {/* Action placeholder */}
+                                            <span className="text-gray-500 text-sm italic">Pending</span>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
 
                     </table>

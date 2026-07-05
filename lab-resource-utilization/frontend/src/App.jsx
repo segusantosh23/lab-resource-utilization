@@ -36,6 +36,7 @@ import BookingHistory from './pages/booking/BookingHistory';
 import WaitlistManager from './pages/booking/WaitlistManager';
 
 import Navbar from './components/Navbar';
+import ScrollToTop from './components/ScrollToTop';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { token, user, loading } = useContext(AuthContext);
@@ -67,6 +68,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />

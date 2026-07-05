@@ -32,11 +32,21 @@ public class BookingService {
     public BookingResponse mapToResponse(Booking booking) {
         BookingResponse response = new BookingResponse();
         response.setId(booking.getId());
-        response.setUserId(booking.getUser().getId());
-        response.setUserName(booking.getUser().getName());
-        response.setUserEmail(booking.getUser().getEmail());
-        response.setEquipmentId(booking.getEquipment().getId());
-        response.setEquipmentName(booking.getEquipment().getName());
+        
+        if (booking.getUser() != null) {
+            response.setUserId(booking.getUser().getId());
+            response.setUserName(booking.getUser().getName());
+            response.setUserEmail(booking.getUser().getEmail());
+            if (booking.getUser().getRole() != null) {
+                response.setUserRole(booking.getUser().getRole().name());
+            }
+        }
+        
+        if (booking.getEquipment() != null) {
+            response.setEquipmentId(booking.getEquipment().getId());
+            response.setEquipmentName(booking.getEquipment().getName());
+        }
+        
         response.setStartTime(booking.getStartTime());
         response.setEndTime(booking.getEndTime());
         response.setStatus(booking.getStatus());

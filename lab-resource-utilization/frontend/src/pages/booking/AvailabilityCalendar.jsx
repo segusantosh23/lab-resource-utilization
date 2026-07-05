@@ -34,7 +34,7 @@ const AvailabilityCalendar = () => {
   const [loading,        setLoading]        = useState(true);
   const [error,          setError]          = useState('');
 
-  const isManagerOrAdmin = user && ['LAB_MANAGER','INSTITUTION_ADMIN','SYSTEM_ADMIN'].includes(user.role);
+  const isManagerOrAdmin = user && ['LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN'].includes(user.role);
 
   /* ── fetch bookings for the visible month ───────────────────── */
   useEffect(() => {
