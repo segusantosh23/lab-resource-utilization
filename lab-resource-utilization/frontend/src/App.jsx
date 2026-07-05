@@ -4,21 +4,18 @@ import Home from './components/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { AuthContext } from './context/AuthContext';
-import NewBooking from "./pages/researcher/NewBooking";
 
+// Researcher sub-pages (teammate's work)
+import NewBooking from './pages/researcher/NewBooking';
+import UpcomingBookings from './pages/researcher/UpcomingBookings';
+import ActiveBookings from './pages/researcher/ActiveBookings';
+import WaitlistBookings from './pages/researcher/WaitlistBookings';
+import ResearcherEquipment from './pages/researcher/ResearcherEquipment';
+import CompletedBookings from './pages/researcher/CompletedBookings';
+import UsageSummary from './pages/researcher/UsageSummary';
+import EquipmentAvailability from './pages/researcher/EquipmentAvailability';
 
-import UpcomingBookings from "./pages/researcher/UpcomingBookings";
-
-import ActiveBookings from "./pages/researcher/ActiveBookings";
-
-import WaitlistBookings from "./pages/researcher/WaitlistBookings";
-import ResearcherEquipment from "./pages/researcher/ResearcherEquipment";
-
-
-import CompletedBookings from "./pages/researcher/CompletedBookings";
-import UsageSummary from "./pages/researcher/UsageSummary";
-import EquipmentAvailability from "./pages/researcher/EquipmentAvailability";
-// Import all Role Dashboards
+// Role Dashboards
 import {
   ResearcherDashboard,
   LabTechnicianDashboard,
@@ -28,9 +25,16 @@ import {
   SystemAdminDashboard,
 } from './pages/dashboards';
 
+// Equipment
 import EquipmentList from './pages/equipment/EquipmentList';
 import EquipmentDetails from './pages/equipment/EquipmentDetails';
+
+// Booking module
 import Bookings from './pages/booking/Bookings';
+import AvailabilityCalendar from './pages/booking/AvailabilityCalendar';
+import BookingHistory from './pages/booking/BookingHistory';
+import WaitlistManager from './pages/booking/WaitlistManager';
+
 import Navbar from './components/Navbar';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -49,8 +53,6 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (allowedRoles && !allowedRoles.includes(user?.role)) {
-    // If user tries to access a dashboard they don't have permission for,
-    // redirect them to their designated dashboard or home.
     return <Navigate to="/" replace />;
   }
 
@@ -69,135 +71,38 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        
-        {/* Role-Based Dashboards */}
-        <Route
-          path="/dashboard/researcher"
-          element={
-            <ProtectedRoute allowedRoles={['RESEARCHER']}>
-              <ResearcherDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/lab-technician"
-          element={
-            <ProtectedRoute allowedRoles={['LAB_TECHNICIAN']}>
-              <LabTechnicianDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/lab-manager"
-          element={
-            <ProtectedRoute allowedRoles={['LAB_MANAGER']}>
-              <LabManagerDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/department-head"
-          element={
-            <ProtectedRoute allowedRoles={['DEPARTMENT_HEAD']}>
-              <DepartmentHeadDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/institution-admin"
-          element={
-            <ProtectedRoute allowedRoles={['INSTITUTION_ADMIN']}>
-              <InstitutionAdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/system-admin"
-          element={
-            <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
-              <SystemAdminDashboard />
-            </ProtectedRoute>
-          }
-        />
 
-        {/* Equipment Inventory Routes */}
-        <Route
-          path="/equipment"
-          element={
-            <ProtectedRoute>
-              <EquipmentList />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/equipment/:id"
-          element={
-            <ProtectedRoute>
-              <EquipmentDetails />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/bookings"
-          element={
-            <ProtectedRoute>
-              <Bookings />
-            </ProtectedRoute>
-          }
-        />
+        {/* ── Role-Based Dashboards ── */}
+        <Route path="/dashboard/researcher" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><ResearcherDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/lab-technician" element={<ProtectedRoute allowedRoles={['LAB_TECHNICIAN']}><LabTechnicianDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/lab-manager" element={<ProtectedRoute allowedRoles={['LAB_MANAGER']}><LabManagerDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/department-head" element={<ProtectedRoute allowedRoles={['DEPARTMENT_HEAD']}><DepartmentHeadDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/institution-admin" element={<ProtectedRoute allowedRoles={['INSTITUTION_ADMIN']}><InstitutionAdminDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/system-admin" element={<ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}><SystemAdminDashboard /></ProtectedRoute>} />
 
+        {/* ── Equipment ── */}
+        <Route path="/equipment" element={<ProtectedRoute><EquipmentList /></ProtectedRoute>} />
+        <Route path="/equipment/:id" element={<ProtectedRoute><EquipmentDetails /></ProtectedRoute>} />
 
-        
-        {/* Fallback routing */}
+        {/* ── Booking & Scheduling Module ── */}
+        <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+        <Route path="/bookings/calendar" element={<ProtectedRoute><AvailabilityCalendar /></ProtectedRoute>} />
+        <Route path="/bookings/history" element={<ProtectedRoute><BookingHistory /></ProtectedRoute>} />
+        <Route path="/bookings/waitlist" element={<ProtectedRoute><WaitlistManager /></ProtectedRoute>} />
+
+        {/* ── Researcher sub-pages (teammate's work) ── */}
+        <Route path="/researcher/bookings/new" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><NewBooking /></ProtectedRoute>} />
+        <Route path="/researcher/bookings/upcoming" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><UpcomingBookings /></ProtectedRoute>} />
+        <Route path="/researcher/bookings/active" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><ActiveBookings /></ProtectedRoute>} />
+        <Route path="/researcher/bookings/waitlist" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><WaitlistBookings /></ProtectedRoute>} />
+        <Route path="/researcher/bookings/history" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><CompletedBookings /></ProtectedRoute>} />
+        <Route path="/researcher/equipment-availability" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><EquipmentAvailability /></ProtectedRoute>} />
+        <Route path="/researcher/UsageSummary" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><UsageSummary /></ProtectedRoute>} />
+        <Route path="/researcher/equipment" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><ResearcherEquipment /></ProtectedRoute>} />
+
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
-
-
-
-          <Route
-              path="/researcher/bookings/upcoming"
-              element={<UpcomingBookings />}
-          />
-
-          <Route
-              path="/researcher/bookings/active"
-              element={<ActiveBookings />}
-          />
-
-          <Route
-              path="/researcher/bookings/waitlist"
-              element={<WaitlistBookings />}
-          />
-
-          <Route
-              path="/researcher/bookings/history"
-              element={<CompletedBookings />}
-          />
-
-          <Route
-              path="/researcher/equipment-availability"
-              element={<EquipmentAvailability />}
-          />
-
-          <Route
-              path="/bookings"
-              element={<NewBooking />}
-          />
-
-          <Route
-              path="/researcher/UsageSummary"
-              element={<UsageSummary />}
-          />
-
-          <Route
-              path="/researcher/equipment"
-              element={<ResearcherEquipment />}
-          />
-
-
       </Routes>
-
-
-
     </BrowserRouter>
   );
 }

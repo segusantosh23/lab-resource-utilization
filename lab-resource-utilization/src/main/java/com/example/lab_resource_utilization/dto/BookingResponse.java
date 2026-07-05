@@ -1,6 +1,8 @@
 package com.example.lab_resource_utilization.dto;
 
 import com.example.lab_resource_utilization.entity.BookingStatus;
+import com.example.lab_resource_utilization.entity.RecurrenceType;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class BookingResponse {
@@ -15,105 +17,57 @@ public class BookingResponse {
     private LocalDateTime endTime;
     private BookingStatus status;
     private String purpose;
+    private RecurrenceType recurrenceType;
+    private LocalDate recurrenceEndDate;
+    private Long parentBookingId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public BookingResponse() {
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
-    public Long getUserId() {
-        return userId;
-    }
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+    public String getUserEmail() { return userEmail; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 
-    public String getUserName() {
-        return userName;
-    }
+    public Long getEquipmentId() { return equipmentId; }
+    public void setEquipmentId(Long equipmentId) { this.equipmentId = equipmentId; }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
+    public String getEquipmentName() { return equipmentName; }
+    public void setEquipmentName(String equipmentName) { this.equipmentName = equipmentName; }
 
-    public String getUserEmail() {
-        return userEmail;
-    }
+    public LocalDateTime getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
 
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
-    }
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
-    public Long getEquipmentId() {
-        return equipmentId;
-    }
+    public BookingStatus getStatus() { return status; }
+    public void setStatus(BookingStatus status) { this.status = status; }
 
-    public void setEquipmentId(Long equipmentId) {
-        this.equipmentId = equipmentId;
-    }
+    public String getPurpose() { return purpose; }
+    public void setPurpose(String purpose) { this.purpose = purpose; }
 
-    public String getEquipmentName() {
-        return equipmentName;
-    }
+    public RecurrenceType getRecurrenceType() { return recurrenceType; }
+    public void setRecurrenceType(RecurrenceType recurrenceType) { this.recurrenceType = recurrenceType; }
 
-    public void setEquipmentName(String equipmentName) {
-        this.equipmentName = equipmentName;
-    }
+    public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
+    public void setRecurrenceEndDate(LocalDate recurrenceEndDate) { this.recurrenceEndDate = recurrenceEndDate; }
 
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
+    public Long getParentBookingId() { return parentBookingId; }
+    public void setParentBookingId(Long parentBookingId) { this.parentBookingId = parentBookingId; }
 
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
-    }
-
-    public BookingStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(BookingStatus status) {
-        this.status = status;
-    }
-
-    public String getPurpose() {
-        return purpose;
-    }
-
-    public void setPurpose(String purpose) {
-        this.purpose = purpose;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

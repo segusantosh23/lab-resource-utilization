@@ -3,6 +3,7 @@ package com.example.lab_resource_utilization.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -39,6 +40,17 @@ public class Booking {
     @NotBlank(message = "Purpose is required")
     @Column(length = 1000, nullable = false)
     private String purpose;
+
+    // --- Recurring Booking Fields ---
+    @Enumerated(EnumType.STRING)
+    @Column(name = "recurrence_type", nullable = false)
+    private RecurrenceType recurrenceType = RecurrenceType.NONE;
+
+    @Column(name = "recurrence_end_date")
+    private LocalDate recurrenceEndDate;
+
+    @Column(name = "parent_booking_id")
+    private Long parentBookingId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -133,4 +145,13 @@ public class Booking {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public RecurrenceType getRecurrenceType() { return recurrenceType; }
+    public void setRecurrenceType(RecurrenceType recurrenceType) { this.recurrenceType = recurrenceType; }
+
+    public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
+    public void setRecurrenceEndDate(LocalDate recurrenceEndDate) { this.recurrenceEndDate = recurrenceEndDate; }
+
+    public Long getParentBookingId() { return parentBookingId; }
+    public void setParentBookingId(Long parentBookingId) { this.parentBookingId = parentBookingId; }
 }
