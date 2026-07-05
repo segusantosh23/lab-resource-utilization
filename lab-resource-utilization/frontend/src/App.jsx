@@ -4,7 +4,20 @@ import Home from './components/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { AuthContext } from './context/AuthContext';
+import NewBooking from "./pages/researcher/NewBooking";
 
+
+import UpcomingBookings from "./pages/researcher/UpcomingBookings";
+
+import ActiveBookings from "./pages/researcher/ActiveBookings";
+
+import WaitlistBookings from "./pages/researcher/WaitlistBookings";
+import ResearcherEquipment from "./pages/researcher/ResearcherEquipment";
+
+
+import CompletedBookings from "./pages/researcher/CompletedBookings";
+import UsageSummary from "./pages/researcher/UsageSummary";
+import EquipmentAvailability from "./pages/researcher/EquipmentAvailability";
 // Import all Role Dashboards
 import {
   ResearcherDashboard,
@@ -132,10 +145,59 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+
         
         {/* Fallback routing */}
         <Route path="*" element={<Navigate to="/" replace />} />
+
+
+
+          <Route
+              path="/researcher/bookings/upcoming"
+              element={<UpcomingBookings />}
+          />
+
+          <Route
+              path="/researcher/bookings/active"
+              element={<ActiveBookings />}
+          />
+
+          <Route
+              path="/researcher/bookings/waitlist"
+              element={<WaitlistBookings />}
+          />
+
+          <Route
+              path="/researcher/bookings/history"
+              element={<CompletedBookings />}
+          />
+
+          <Route
+              path="/researcher/equipment-availability"
+              element={<EquipmentAvailability />}
+          />
+
+          <Route
+              path="/bookings"
+              element={<NewBooking />}
+          />
+
+          <Route
+              path="/researcher/UsageSummary"
+              element={<UsageSummary />}
+          />
+
+          <Route
+              path="/researcher/equipment"
+              element={<ResearcherEquipment />}
+          />
+
+
       </Routes>
+
+
+
     </BrowserRouter>
   );
 }

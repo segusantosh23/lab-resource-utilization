@@ -6,7 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 const ROLE_MENUS = {
   RESEARCHER: [
     { label: 'Dashboard', path: '/dashboard/researcher' },
-    { label: 'Equipment', path: '/equipment' },
+    { label: 'Equipment', path: '/researcher/equipment' },
     { label: 'Bookings', path: '/bookings' },
   ],
   LAB_TECHNICIAN: [
