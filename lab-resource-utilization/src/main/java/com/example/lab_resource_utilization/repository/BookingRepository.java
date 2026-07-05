@@ -40,5 +40,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime,
             @Param("activeStatuses") List<BookingStatus> activeStatuses);
+    long countByStatus(BookingStatus status);
+
+    @Query("SELECT COUNT(DISTINCT b.equipment.id) FROM Booking b WHERE b.status IN :statuses")
+    long countDistinctEquipmentByStatuses(@Param("statuses") List<BookingStatus> statuses);
 }
 
