@@ -28,52 +28,47 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String path = request.getRequestURI();
-
-        // ✅ SKIP AUTH ENDPOINTS
-        if (path.startsWith("/auth")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String authHeader = request.getHeader("Authorization");
 
-        // ✅ NO TOKEN → just continue (DON'T BLOCK HERE)
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        System.out.println("AUTH HEADER: " + authHeader);
 
-        try {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
             String token = authHeader.substring(7);
 
-            String email = jwtUtil.extractEmail(token);
-            String role = jwtUtil.extractRole(token);
+            try {
+                String email = jwtUtil.extractEmail(token);
+                String role = jwtUtil.extractRole(token);
 
-            if (email != null) {
+                System.out.println("EMAIL: " + email);
+                System.out.println("ROLE: " + role);
 
-                String authority = (role != null && !role.isEmpty())
-                        ? (role.startsWith("ROLE_") ? role : "ROLE_" + role)
-                        : "ROLE_STUDENT";
+                if (email != null &&
+                        SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                email,
-                                null,
-                                Collections.singletonList(new SimpleGrantedAuthority(authority))
-                        );
+                    // ✅ SAFE ROLE HANDLING (NO DUPLICATE ROLE_)
+                    if (role == null || role.isEmpty()) {
+                        role = "ROLE_STUDENT";
+                    }
 
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                    SimpleGrantedAuthority authority =
+                            new SimpleGrantedAuthority(role);
 
-                System.out.println("Authenticated: " + email + " role: " + authority);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    email,
+                                    null,
+                                    Collections.singletonList(authority)
+                            );
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    System.out.println("✅ AUTHENTICATED: " + email + " -> " + role);
+                }
+
+            } catch (Exception e) {
+                System.out.println("❌ JWT ERROR: " + e.getMessage());
             }
-
-        } catch (Exception e) {
-            System.out.println("Invalid token: " + e.getMessage());
-
-            // ❌ IMPORTANT: return 401 instead of silent failure
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
         }
 
         filterChain.doFilter(request, response);
