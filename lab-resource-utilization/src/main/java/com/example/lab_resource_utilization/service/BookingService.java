@@ -51,6 +51,7 @@ public class BookingService {
         response.setEndTime(booking.getEndTime());
         response.setStatus(booking.getStatus());
         response.setPurpose(booking.getPurpose());
+        response.setQuantity(booking.getQuantity());
         response.setCreatedAt(booking.getCreatedAt());
         response.setUpdatedAt(booking.getUpdatedAt());
         return response;
@@ -75,7 +76,7 @@ public class BookingService {
             throw new InvalidBookingException("End time must be after start time.");
         }
 
-        validateNoConflict(equipment.getId(), request.getStartTime(), request.getEndTime(), null);
+        validateNoConflict(equipment.getId(), equipment.getQuantity(), request.getQuantity(), request.getStartTime(), request.getEndTime(), null);
 
         Booking booking = new Booking();
         booking.setUser(user);
@@ -83,6 +84,7 @@ public class BookingService {
         booking.setStartTime(request.getStartTime());
         booking.setEndTime(request.getEndTime());
         booking.setPurpose(request.getPurpose());
+        booking.setQuantity(request.getQuantity());
         booking.setStatus(BookingStatus.PENDING_APPROVAL);
 
         Booking savedBooking = bookingRepository.save(booking);
@@ -126,12 +128,13 @@ public class BookingService {
             throw new InvalidBookingException("End time must be after start time.");
         }
 
-        validateNoConflict(equipment.getId(), request.getStartTime(), request.getEndTime(), id);
+        validateNoConflict(equipment.getId(), equipment.getQuantity(), request.getQuantity(), request.getStartTime(), request.getEndTime(), id);
 
         booking.setEquipment(equipment);
         booking.setStartTime(request.getStartTime());
         booking.setEndTime(request.getEndTime());
         booking.setPurpose(request.getPurpose());
+        booking.setQuantity(request.getQuantity());
 
         Booking savedBooking = bookingRepository.save(booking);
         return mapToResponse(savedBooking);
@@ -157,20 +160,59 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    private void validateNoConflict(Long equipmentId, LocalDateTime startTime, LocalDateTime endTime, Long excludingBookingId) {
+    private void validateNoConflict(Long equipmentId, Integer totalEquipmentQuantity, Integer requestedQuantity, LocalDateTime reqStart, LocalDateTime reqEnd, Long excludingBookingId) {
         List<BookingStatus> activeStatuses = List.of(
             BookingStatus.PENDING_APPROVAL,
             BookingStatus.CONFIRMED,
             BookingStatus.IN_USE
         );
-        boolean hasConflict;
+        List<Booking> overlapping;
         if (excludingBookingId == null) {
-            hasConflict = bookingRepository.hasOverlappingBooking(equipmentId, startTime, endTime, activeStatuses);
+            overlapping = bookingRepository.findOverlappingBookings(equipmentId, reqStart, reqEnd, activeStatuses);
         } else {
-            hasConflict = bookingRepository.hasOverlappingBookingExcludingId(equipmentId, excludingBookingId, startTime, endTime, activeStatuses);
+            overlapping = bookingRepository.findOverlappingBookingsExcludingId(equipmentId, excludingBookingId, reqStart, reqEnd, activeStatuses);
         }
-        if (hasConflict) {
-            throw new InvalidBookingException("Equipment is already booked for the selected time slot.");
+
+        class Event implements Comparable<Event> {
+            LocalDateTime time;
+            int type; // 1 for start, -1 for end
+            int qty;
+            Event(LocalDateTime time, int type, int qty) {
+                this.time = time; this.type = type; this.qty = qty;
+            }
+            @Override
+            public int compareTo(Event o) {
+                int cmp = this.time.compareTo(o.time);
+                if (cmp == 0) return Integer.compare(this.type, o.type);
+                return cmp;
+            }
+        }
+
+        List<Event> events = new java.util.ArrayList<>();
+        for (Booking b : overlapping) {
+            LocalDateTime overlapStart = b.getStartTime().isAfter(reqStart) ? b.getStartTime() : reqStart;
+            LocalDateTime overlapEnd = b.getEndTime().isBefore(reqEnd) ? b.getEndTime() : reqEnd;
+            if (overlapStart.isBefore(overlapEnd)) {
+                events.add(new Event(overlapStart, 1, b.getQuantity()));
+                events.add(new Event(overlapEnd, -1, b.getQuantity()));
+            }
+        }
+
+        java.util.Collections.sort(events);
+
+        int currentUsage = 0;
+        int maxUsage = 0;
+        for (Event e : events) {
+            if (e.type == 1) {
+                currentUsage += e.qty;
+                if (currentUsage > maxUsage) maxUsage = currentUsage;
+            } else {
+                currentUsage -= e.qty;
+            }
+        }
+
+        if (maxUsage + requestedQuantity > totalEquipmentQuantity) {
+            throw new InvalidBookingException("Insufficient equipment quantity available for the selected time slot. Available: " + (totalEquipmentQuantity - maxUsage));
         }
     }
 }

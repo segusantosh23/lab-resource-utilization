@@ -22,6 +22,8 @@ const Bookings = () => {
   const searchParams = new URLSearchParams(location.search);
   const initialTab = searchParams.get('tab') || 'my';
   const initialStatus = searchParams.get('status') || '';
+  const initialAdd = searchParams.get('add') === 'true';
+  const initialDate = searchParams.get('date');
 
   const [bookings,      setBookings]      = useState([]);
   const [equipmentList, setEquipmentList] = useState([]);
@@ -36,7 +38,7 @@ const Bookings = () => {
   const [roleFilter, setRoleFilter] = useState('');
 
   /* add-reservation modal */
-  const [isAddOpen,   setIsAddOpen]   = useState(false);
+  const [isAddOpen,   setIsAddOpen]   = useState(initialAdd);
   const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isConflict,  setIsConflict]  = useState(false);
@@ -49,16 +51,21 @@ const Bookings = () => {
   /* form state — includes recurring fields */
   const [formData, setFormData] = useState({
     equipmentId:        '',
-    startTime:          '',
-    endTime:            '',
+    quantity:           1,
+    startTime:          initialDate ? `${initialDate}T09:00` : '',
+    endTime:            initialDate ? `${initialDate}T10:00` : '',
     purpose:            '',
     isRecurring:        false,
     recurrencePattern:  '',
     recurrenceEndDate:  '',
   });
 
-  const isManagerOrAdmin = user && [
+  const canViewAllBookings = user && [
     'LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN',
+  ].includes(user.role);
+
+  const isManagerOrAdmin = user && [
+    'LAB_MANAGER', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN',
   ].includes(user.role);
 
   /* ── data fetching ─────────────────────────────────────────── */
@@ -66,7 +73,7 @@ const Bookings = () => {
     setLoading(true);
     setError('');
     try {
-      const endpoint = (viewTab === 'all' && isManagerOrAdmin) ? '/bookings' : '/bookings/my';
+      const endpoint = (viewTab === 'all' && canViewAllBookings) ? '/bookings' : '/bookings/my';
       const res = await api.get(endpoint);
       setBookings(res.data);
     } catch {
@@ -103,7 +110,7 @@ const Bookings = () => {
 
   const resetForm = () => {
     setFormData({
-      equipmentId: '', startTime: '', endTime: '', purpose: '',
+      equipmentId: '', quantity: 1, startTime: '', endTime: '', purpose: '',
       isRecurring: false, recurrencePattern: '', recurrenceEndDate: '',
     });
     setSubmitError('');
@@ -142,6 +149,7 @@ const Bookings = () => {
 
       const payload = {
         equipmentId:       parseInt(formData.equipmentId),
+        quantity:          parseInt(formData.quantity) || 1,
         startTime:         formData.startTime,
         endTime:           formData.endTime,
         purpose:           formData.purpose,
@@ -213,6 +221,9 @@ const Bookings = () => {
     return acc;
   }, {});
 
+  /* ── visibility helpers ─────────────────────────────────────── */
+  const showActionsColumn = !(viewTab === 'all' && !isManagerOrAdmin);
+
   /* ── render ─────────────────────────────────────────────────── */
   return (
     <div className="min-h-screen bg-[#0d0e12] text-white p-6 md:p-12 font-sans">
@@ -270,7 +281,7 @@ const Bookings = () => {
           
           {/* Tabs for Admin/Manager vs regular users */}
           <div className="flex gap-4">
-            {isManagerOrAdmin ? (
+            {canViewAllBookings ? (
               [['my', 'My Bookings'], ['all', 'All Portal Bookings']].map(([tab, label]) => (
                 <button
                   key={tab}
@@ -309,7 +320,7 @@ const Bookings = () => {
                </div>
                
                {/* Role Filter (only for managers looking at all bookings) */}
-               {isManagerOrAdmin && viewTab === 'all' && (
+               {canViewAllBookings && viewTab === 'all' && (
                  <div className="flex items-center gap-2">
                    <span className="text-xs text-gray-400 font-medium">Role:</span>
                    <select
@@ -352,7 +363,9 @@ const Bookings = () => {
                     <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Purpose</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Recurring</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Status</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase text-right">Actions</th>
+                    {showActionsColumn && (
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase text-right">Actions</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.03]">
@@ -388,58 +401,61 @@ const Bookings = () => {
                       </td>
 
                       {/* ── Action buttons per status ── */}
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 flex-nowrap">
+                      {showActionsColumn && (
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2 flex-nowrap">
 
-                          {/* Cancel — own pending (for non-managers) or confirmed bookings */}
-                          {((!isManagerOrAdmin && item.status === 'PENDING_APPROVAL') || item.status === 'CONFIRMED') && (
-                            <button
-                              onClick={() => handleStatusChange(item.id, 'CANCELLED')}
-                              className="text-red-400 hover:text-red-300 text-xs px-2.5 py-1.5 rounded bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition whitespace-nowrap"
-                            >
-                              Cancel
-                            </button>
-                          )}
-
-                          {/* Approve / Reject — managers only, pending items */}
-                          {isManagerOrAdmin && item.status === 'PENDING_APPROVAL' && (
-                            <>
+                            {/* Cancel — own pending/confirmed bookings, or managers cancelling confirmed */}
+                            {( (item.userEmail === user?.email && ['PENDING_APPROVAL', 'CONFIRMED'].includes(item.status)) || 
+                               (isManagerOrAdmin && item.status === 'CONFIRMED') ) && (
                               <button
-                                onClick={() => handleStatusChange(item.id, 'CONFIRMED')}
-                                className="text-emerald-400 hover:text-emerald-300 text-xs px-2.5 py-1.5 rounded bg-emerald-500/5 border border-emerald-500/10 hover:bg-emerald-500/10 transition whitespace-nowrap"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleReject(item.id)}
+                                onClick={() => handleStatusChange(item.id, 'CANCELLED')}
                                 className="text-red-400 hover:text-red-300 text-xs px-2.5 py-1.5 rounded bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition whitespace-nowrap"
                               >
-                                Reject
+                                Cancel
                               </button>
-                            </>
-                          )}
+                            )}
 
-                          {/* Check In — confirmed booking */}
-                          {item.status === 'CONFIRMED' && (
-                            <button
-                              onClick={() => handleStatusChange(item.id, 'IN_USE')}
-                              className="text-blue-400 hover:text-blue-300 text-xs px-2.5 py-1.5 rounded bg-blue-500/5 border border-blue-500/10 hover:bg-blue-500/10 transition"
-                            >
-                              Check In
-                            </button>
-                          )}
+                            {/* Approve / Reject — managers only, pending items */}
+                            {isManagerOrAdmin && item.status === 'PENDING_APPROVAL' && (
+                              <>
+                                <button
+                                  onClick={() => handleStatusChange(item.id, 'CONFIRMED')}
+                                  className="text-emerald-400 hover:text-emerald-300 text-xs px-2.5 py-1.5 rounded bg-emerald-500/5 border border-emerald-500/10 hover:bg-emerald-500/10 transition whitespace-nowrap"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleReject(item.id)}
+                                  className="text-red-400 hover:text-red-300 text-xs px-2.5 py-1.5 rounded bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition whitespace-nowrap"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
 
-                          {/* Complete — in-use booking */}
-                          {item.status === 'IN_USE' && (
-                            <button
-                              onClick={() => handleStatusChange(item.id, 'COMPLETED')}
-                              className="text-purple-400 hover:text-purple-300 text-xs px-2.5 py-1.5 rounded bg-purple-500/5 border border-purple-500/10 hover:bg-purple-500/10 transition"
-                            >
-                              Complete
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                            {/* Check In — confirmed booking */}
+                            {item.status === 'CONFIRMED' && (
+                              <button
+                                onClick={() => handleStatusChange(item.id, 'IN_USE')}
+                                className="text-blue-400 hover:text-blue-300 text-xs px-2.5 py-1.5 rounded bg-blue-500/5 border border-blue-500/10 hover:bg-blue-500/10 transition"
+                              >
+                                Check In
+                              </button>
+                            )}
+
+                            {/* Complete — in-use booking */}
+                            {item.status === 'IN_USE' && (
+                              <button
+                                onClick={() => handleStatusChange(item.id, 'COMPLETED')}
+                                className="text-purple-400 hover:text-purple-300 text-xs px-2.5 py-1.5 rounded bg-purple-500/5 border border-purple-500/10 hover:bg-purple-500/10 transition"
+                              >
+                                Complete
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -501,6 +517,19 @@ const Bookings = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Quantity */}
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Quantity *</label>
+                <input
+                  required type="number" min="1"
+                  disabled={!formData.equipmentId}
+                  max={equipmentList.find(e => e.id == formData.equipmentId)?.quantity || 1}
+                  name="quantity" value={formData.equipmentId ? formData.quantity : ''}
+                  onChange={handleInputChange}
+                  className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
               </div>
 
               {/* Time range */}

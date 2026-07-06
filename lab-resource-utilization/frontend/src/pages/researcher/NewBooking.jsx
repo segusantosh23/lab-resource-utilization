@@ -8,6 +8,7 @@ const NewBooking = () => {
     const [form, setForm] = useState({
         equipmentId: "",
         purpose: "",
+        quantity: 1,
         startTime: "",
         endTime: ""
     });
@@ -73,6 +74,7 @@ const NewBooking = () => {
             setForm({
                 equipmentId: "",
                 purpose: "",
+                quantity: 1,
                 startTime: "",
                 endTime: ""
             });
@@ -246,6 +248,26 @@ const NewBooking = () => {
                             required
                             rows="4"
                             className="w-full bg-[#12131a] border border-white/10 rounded-lg p-3"
+                        />
+
+                    </div>
+
+                    <div>
+
+                        <label className="block mb-2">
+                            Quantity
+                        </label>
+
+                        <input
+                            type="number"
+                            name="quantity"
+                            value={form.equipmentId ? form.quantity : ''}
+                            onChange={handleChange}
+                            min="1"
+                            disabled={!form.equipmentId}
+                            max={equipment.find(e => e.id == form.equipmentId)?.quantity || 1}
+                            required
+                            className="w-full bg-[#12131a] border border-white/10 rounded-lg p-3 disabled:opacity-50 disabled:cursor-not-allowed"
                         />
 
                     </div>

@@ -1,6 +1,7 @@
 package com.example.lab_resource_utilization.dto;
 
 import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -20,6 +21,10 @@ public class BookingRequest {
 
     @NotBlank(message = "Purpose is required")
     private String purpose;
+
+    @NotNull(message = "Quantity is required")
+    @Min(value = 1, message = "Quantity must be at least 1")
+    private Integer quantity = 1;
 
     public BookingRequest() {
     }
@@ -54,5 +59,13 @@ public class BookingRequest {
 
     public void setPurpose(String purpose) {
         this.purpose = purpose;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 }

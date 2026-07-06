@@ -41,6 +41,9 @@ public class Booking {
     @Column(length = 1000, nullable = false)
     private String purpose;
 
+    @Column(nullable = false, columnDefinition = "integer default 1")
+    private Integer quantity = 1;
+
     // --- Recurring Booking Fields ---
     @Enumerated(EnumType.STRING)
     @Column(name = "recurrence_type", nullable = false)
@@ -128,6 +131,14 @@ public class Booking {
 
     public void setPurpose(String purpose) {
         this.purpose = purpose;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 
     public LocalDateTime getCreatedAt() {

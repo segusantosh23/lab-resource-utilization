@@ -21,20 +21,20 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.equipment.id = :equipmentId " +
+    @Query("SELECT b FROM Booking b WHERE b.equipment.id = :equipmentId " +
            "AND b.status IN :activeStatuses " +
            "AND b.startTime < :endTime AND b.endTime > :startTime")
-    boolean hasOverlappingBooking(
+    List<Booking> findOverlappingBookings(
             @Param("equipmentId") Long equipmentId,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime,
             @Param("activeStatuses") List<BookingStatus> activeStatuses);
 
-    @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.equipment.id = :equipmentId " +
+    @Query("SELECT b FROM Booking b WHERE b.equipment.id = :equipmentId " +
            "AND b.id != :bookingId " +
            "AND b.status IN :activeStatuses " +
            "AND b.startTime < :endTime AND b.endTime > :startTime")
-    boolean hasOverlappingBookingExcludingId(
+    List<Booking> findOverlappingBookingsExcludingId(
             @Param("equipmentId") Long equipmentId,
             @Param("bookingId") Long bookingId,
             @Param("startTime") LocalDateTime startTime,
