@@ -30,6 +30,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
+        System.out.println("AUTH HEADER: " + authHeader);
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
             String token = authHeader.substring(7);
@@ -37,21 +39,35 @@ public class JwtFilter extends OncePerRequestFilter {
             try {
                 String email = jwtUtil.extractEmail(token);
                 String role = jwtUtil.extractRole(token);
-                
-                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    String authorityName = (role != null && !role.isEmpty()) ? 
-                            (role.startsWith("ROLE_") ? role : "ROLE_" + role) : "ROLE_STUDENT";
-                    
-                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(authorityName);
-                    
+
+                System.out.println("EMAIL: " + email);
+                System.out.println("ROLE: " + role);
+
+                if (email != null &&
+                        SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                    // ✅ SAFE ROLE HANDLING (NO DUPLICATE ROLE_)
+                    if (role == null || role.isEmpty()) {
+                        role = "ROLE_STUDENT";
+                    }
+
+                    SimpleGrantedAuthority authority =
+                            new SimpleGrantedAuthority(role);
+
                     UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(email, null, Collections.singletonList(authority));
-                    
+                            new UsernamePasswordAuthenticationToken(
+                                    email,
+                                    null,
+                                    Collections.singletonList(authority)
+                            );
+
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    System.out.println("Authenticated user: " + email + " with role: " + authorityName);
+
+                    System.out.println("✅ AUTHENTICATED: " + email + " -> " + role);
                 }
+
             } catch (Exception e) {
-                System.out.println("Invalid token: " + e.getMessage());
+                System.out.println("❌ JWT ERROR: " + e.getMessage());
             }
         }
 
