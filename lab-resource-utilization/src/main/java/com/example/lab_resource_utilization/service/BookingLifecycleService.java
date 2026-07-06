@@ -12,11 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Manages the status transitions and lifecycle of laboratory equipment bookings.
- * 
+ *
  * Allowed Status Transitions:
  * - PENDING_APPROVAL → CONFIRMED, REJECTED, CANCELLED
- * - CONFIRMED → IN_USE, CANCELLED, NO_SHOW
- * - IN_USE → COMPLETED
+ * - CONFIRMED        → IN_USE, CANCELLED, NO_SHOW
+ * - IN_USE           → COMPLETED
+ *
+ * Side-effects:
+ * - CANCELLED or REJECTED → WaitlistService.notifyNext() is called so the next
+ *   person in the queue is promoted to NOTIFIED status.
  */
 @Service
 @Transactional
@@ -30,6 +34,9 @@ public class BookingLifecycleService {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private WaitlistService waitlistService;
 
     public BookingResponse updateBookingStatus(Long bookingId, BookingStatus newStatus, String userEmail) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -50,6 +57,12 @@ public class BookingLifecycleService {
         booking.setStatus(newStatus);
         Booking savedBooking = bookingRepository.save(booking);
 
+        // 4. If booking freed up (CANCELLED or REJECTED), notify next waitlisted user
+        if (newStatus == BookingStatus.CANCELLED || newStatus == BookingStatus.REJECTED) {
+            Long equipmentId = booking.getEquipment().getId();
+            waitlistService.notifyNext(equipmentId);
+        }
+
         return bookingService.mapToResponse(savedBooking);
     }
 
@@ -59,11 +72,11 @@ public class BookingLifecycleService {
         switch (current) {
             case PENDING_APPROVAL:
                 isValid = (target == BookingStatus.CONFIRMED ||
-                           target == BookingStatus.REJECTED ||
+                           target == BookingStatus.REJECTED  ||
                            target == BookingStatus.CANCELLED);
                 break;
             case CONFIRMED:
-                isValid = (target == BookingStatus.IN_USE ||
+                isValid = (target == BookingStatus.IN_USE   ||
                            target == BookingStatus.CANCELLED ||
                            target == BookingStatus.NO_SHOW);
                 break;
@@ -71,13 +84,14 @@ public class BookingLifecycleService {
                 isValid = (target == BookingStatus.COMPLETED);
                 break;
             default:
-                // COMPLETED, CANCELLED, NO_SHOW, REJECTED are terminal states
+                // COMPLETED, CANCELLED, NO_SHOW, REJECTED are terminal
                 isValid = false;
                 break;
         }
 
         if (!isValid) {
-            throw new InvalidBookingException("Invalid status transition from " + current + " to " + target);
+            throw new InvalidBookingException(
+                "Invalid status transition from " + current + " to " + target);
         }
     }
 
@@ -85,10 +99,9 @@ public class BookingLifecycleService {
         boolean isOwner = booking.getUser().getId().equals(currentUser.getId());
         Role role = currentUser.getRole();
 
-        boolean isAdminOrManager = (role == Role.LAB_MANAGER ||
+        boolean isAdminOrManager = (role == Role.LAB_MANAGER     ||
                                     role == Role.INSTITUTION_ADMIN ||
                                     role == Role.SYSTEM_ADMIN);
-
         boolean isTech = (role == Role.LAB_TECHNICIAN);
 
         switch (target) {
@@ -96,25 +109,29 @@ public class BookingLifecycleService {
             case REJECTED:
             case NO_SHOW:
                 if (!isAdminOrManager) {
-                    throw new InvalidBookingException("Only managers/admins can approve, reject, or mark bookings as NO_SHOW.");
+                    throw new InvalidBookingException(
+                        "Only managers/admins can approve, reject, or mark bookings as NO_SHOW.");
                 }
                 break;
 
             case CANCELLED:
                 if (!isOwner && !isAdminOrManager) {
-                    throw new InvalidBookingException("You are not authorized to cancel this booking.");
+                    throw new InvalidBookingException(
+                        "You are not authorized to cancel this booking.");
                 }
                 break;
 
             case IN_USE:
             case COMPLETED:
                 if (!isOwner && !isTech && !isAdminOrManager) {
-                    throw new InvalidBookingException("You are not authorized to check in or complete this booking.");
+                    throw new InvalidBookingException(
+                        "You are not authorized to check in or complete this booking.");
                 }
                 break;
 
             default:
-                throw new InvalidBookingException("Unsupported status update target: " + target);
+                throw new InvalidBookingException(
+                    "Unsupported status update target: " + target);
         }
     }
 }

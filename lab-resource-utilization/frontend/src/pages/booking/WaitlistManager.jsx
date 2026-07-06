@@ -36,7 +36,7 @@ const WaitlistManager = () => {
       const res = await api.get(endpoint);
       setEntries(res.data);
     } catch (err) {
-      // Backend may not have waitlist endpoint yet — show empty state instead of breaking
+      // Backend may not have waitlist endpoint yet — show empty state gracefully
       if (err.response?.status === 404) {
         setEntries([]);
       } else {

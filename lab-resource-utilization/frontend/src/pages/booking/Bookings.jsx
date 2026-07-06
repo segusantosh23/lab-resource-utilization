@@ -39,6 +39,12 @@ const Bookings = () => {
   const [isAddOpen,   setIsAddOpen]   = useState(false);
   const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [isConflict,  setIsConflict]  = useState(false);
+
+  /* reject modal */
+  const [rejectModal,     setRejectModal]     = useState({ open: false, bookingId: null });
+  const [rejectReason,    setRejectReason]    = useState('');
+  const [rejectSubmitting,setRejectSubmitting]= useState(false);
 
   /* form state — includes recurring fields */
   const [formData, setFormData] = useState({
@@ -101,6 +107,7 @@ const Bookings = () => {
       isRecurring: false, recurrencePattern: '', recurrenceEndDate: '',
     });
     setSubmitError('');
+    setIsConflict(false);
   };
 
   /* ── submit booking ─────────────────────────────────────────── */
@@ -149,7 +156,12 @@ const Bookings = () => {
       resetForm();
       fetchBookings();
     } catch (err) {
-      setSubmitError(err.response?.data?.message || 'Error creating booking. Check for time conflicts.');
+      const msg = err.response?.data?.message || 'Error creating booking.';
+      const isConflictErr = msg.toLowerCase().includes('already booked') ||
+                            msg.toLowerCase().includes('conflict') ||
+                            msg.toLowerCase().includes('time slot');
+      setIsConflict(isConflictErr);
+      setSubmitError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -167,10 +179,25 @@ const Bookings = () => {
     }
   };
 
-  const handleReject = async (bookingId) => {
-    const reason = window.prompt('Rejection reason (optional):');
-    if (reason === null) return; // user cancelled the prompt
-    await handleStatusChange(bookingId, 'REJECTED', reason || undefined);
+  const handleReject = (bookingId) => {
+    setRejectReason('');
+    setRejectModal({ open: true, bookingId });
+  };
+
+  const submitReject = async () => {
+    setRejectSubmitting(true);
+    try {
+      await api.put(`/bookings/${rejectModal.bookingId}/status`, null, {
+        params: { status: 'REJECTED', ...(rejectReason ? { rejectionReason: rejectReason } : {}) }
+      });
+      setRejectModal({ open: false, bookingId: null });
+      setRejectReason('');
+      fetchBookings();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to reject booking.');
+    } finally {
+      setRejectSubmitting(false);
+    }
   };
 
   /* ── filtered list ──────────────────────────────────────────── */
@@ -431,8 +458,27 @@ const Bookings = () => {
             <h2 className="text-xl font-bold mb-4">New Reservation</h2>
 
             {submitError && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm">
-                {submitError}
+              <div className={`mb-4 p-3 rounded-lg text-sm border flex gap-2 items-start
+                ${isConflict
+                  ? 'bg-orange-500/10 border-orange-500/20 text-orange-400'
+                  : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="font-medium">{isConflict ? 'Time Slot Conflict' : 'Booking Error'}</p>
+                  <p className="text-xs mt-0.5 opacity-90">{submitError}</p>
+                  {isConflict && (
+                    <p className="text-xs mt-1 opacity-75">
+                      Please choose a different time slot or check the{' '}
+                      <Link to="/bookings/calendar" onClick={() => setIsAddOpen(false)}
+                        className="underline hover:opacity-100">
+                        availability calendar
+                      </Link>.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -558,6 +604,66 @@ const Bookings = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════
+          REJECT MODAL
+      ════════════════════════════════════════════════════════ */}
+      {rejectModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#12131a] border border-red-500/20 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Reject Booking</h2>
+                <p className="text-xs text-gray-400">Booking #{rejectModal.bookingId}</p>
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm text-gray-400 mb-1.5">
+                Reason for rejection <span className="text-gray-600">(optional)</span>
+              </label>
+              <textarea
+                rows="3"
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+                placeholder="e.g. Equipment unavailable due to maintenance, conflicting priority booking…"
+                className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500/50 focus:outline-none text-white placeholder-gray-600 resize-none"
+              />
+              <p className="text-xs text-gray-600 mt-1">This reason will be visible to the requester.</p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setRejectModal({ open: false, bookingId: null })}
+                disabled={rejectSubmitting}
+                className="px-4 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-sm transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitReject}
+                disabled={rejectSubmitting}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-sm font-medium transition flex items-center gap-2 disabled:opacity-60"
+              >
+                {rejectSubmitting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+                Confirm Rejection
+              </button>
+            </div>
           </div>
         </div>
       )}

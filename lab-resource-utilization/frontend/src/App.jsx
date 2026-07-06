@@ -35,6 +35,9 @@ import AvailabilityCalendar from './pages/booking/AvailabilityCalendar';
 import BookingHistory from './pages/booking/BookingHistory';
 import WaitlistManager from './pages/booking/WaitlistManager';
 
+// Analytics
+import UtilizationDashboard from './pages/dashboards/UtilizationDashboard';
+
 import Navbar from './components/Navbar';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -91,6 +94,9 @@ function App() {
         <Route path="/bookings/calendar" element={<ProtectedRoute><AvailabilityCalendar /></ProtectedRoute>} />
         <Route path="/bookings/history" element={<ProtectedRoute><BookingHistory /></ProtectedRoute>} />
         <Route path="/bookings/waitlist" element={<ProtectedRoute><WaitlistManager /></ProtectedRoute>} />
+
+        {/* ── Analytics ── */}
+        <Route path="/analytics/utilization" element={<ProtectedRoute allowedRoles={['LAB_MANAGER','DEPARTMENT_HEAD','INSTITUTION_ADMIN','SYSTEM_ADMIN']}><UtilizationDashboard /></ProtectedRoute>} />
 
         {/* ── Researcher sub-pages (teammate's work) ── */}
         <Route path="/researcher/bookings/new" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><NewBooking /></ProtectedRoute>} />
