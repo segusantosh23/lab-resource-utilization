@@ -9,7 +9,7 @@ import com.example.lab_resource_utilization.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.example.lab_resource_utilization.service.NotificationService;
 /**
  * Manages the status transitions and lifecycle of laboratory equipment bookings.
  *
@@ -37,14 +37,17 @@ public class BookingLifecycleService {
 
     @Autowired
     private WaitlistService waitlistService;
+    @Autowired
+    private NotificationService notificationService;
 
     public BookingResponse updateBookingStatus(Long bookingId, BookingStatus newStatus, String userEmail) {
+        System.out.println("🔥 BookingLifecycleService.updateBookingStatus called");
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         User currentUser = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
-
+        System.out.println("🔥 updateBookingStatus() called");
         BookingStatus currentStatus = booking.getStatus();
 
         // 1. Validate State Transition
@@ -56,7 +59,8 @@ public class BookingLifecycleService {
         // 3. Update Status
         booking.setStatus(newStatus);
         Booking savedBooking = bookingRepository.save(booking);
-
+        notificationService.notifyBookingStatusChange(savedBooking);
+        //createNotificationForStatus(savedBooking);
         // 4. If booking freed up (CANCELLED or REJECTED), notify next waitlisted user
         if (newStatus == BookingStatus.CANCELLED || newStatus == BookingStatus.REJECTED) {
             Long equipmentId = booking.getEquipment().getId();
@@ -134,4 +138,6 @@ public class BookingLifecycleService {
                     "Unsupported status update target: " + target);
         }
     }
+
+
 }
