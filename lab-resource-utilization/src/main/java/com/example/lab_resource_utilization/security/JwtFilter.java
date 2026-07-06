@@ -46,13 +46,16 @@ public class JwtFilter extends OncePerRequestFilter {
                 if (email != null &&
                         SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                    // ✅ SAFE ROLE HANDLING (NO DUPLICATE ROLE_)
+                    // ✅ SAFE ROLE HANDLING (ADD ROLE_ PREFIX FOR SPRING SECURITY)
                     if (role == null || role.isEmpty()) {
-                        role = "ROLE_STUDENT";
+                        role = "STUDENT";
                     }
+                    
+                    // Add ROLE_ prefix if not already present
+                    String authorityRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
 
                     SimpleGrantedAuthority authority =
-                            new SimpleGrantedAuthority(role);
+                            new SimpleGrantedAuthority(authorityRole);
 
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
