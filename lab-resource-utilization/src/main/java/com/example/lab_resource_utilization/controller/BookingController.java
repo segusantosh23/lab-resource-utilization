@@ -45,7 +45,7 @@ public class BookingController {
 
     // Get All Bookings — 200 OK (Only accessible by managers/admins)
     @GetMapping
-    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<List<BookingResponse>> getAll() {
         List<BookingResponse> bookings = bookingService.getAllBookings();
         return ResponseEntity.ok(bookings);

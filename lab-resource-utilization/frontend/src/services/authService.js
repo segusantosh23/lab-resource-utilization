@@ -25,27 +25,27 @@ const authService = {
   },
 
   /**
-   * Persist auth data to localStorage.
+   * Persist auth data to sessionStorage.
    */
   saveAuth: (token, user) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('user', JSON.stringify(user));
   },
 
   /**
-   * Remove auth data from localStorage.
+   * Remove auth data from sessionStorage.
    */
   clearAuth: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
   },
 
   /**
    * Retrieve persisted auth data.
    */
   getStoredAuth: () => {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
+    const token = sessionStorage.getItem('token');
+    const userStr = sessionStorage.getItem('user');
     if (token && userStr) {
       try {
         return { token, user: JSON.parse(userStr) };

@@ -6,7 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 const ROLE_MENUS = {
   RESEARCHER: [
     { label: 'Dashboard', path: '/dashboard/researcher' },
-    { label: 'Equipment', path: '/equipment' },
+    { label: 'Equipment', path: '/researcher/equipment' },
     { label: 'Bookings', path: '/bookings' },
   ],
   LAB_TECHNICIAN: [
@@ -17,10 +17,12 @@ const ROLE_MENUS = {
   LAB_MANAGER: [
     { label: 'Dashboard', path: '/dashboard/lab-manager' },
     { label: 'Equipment Management', path: '/equipment' },
+    { label: 'Bookings', path: '/bookings' },
     { label: 'Reports', path: '/reports' },
   ],
   DEPARTMENT_HEAD: [
     { label: 'Dashboard', path: '/dashboard/department-head' },
+    { label: 'Bookings', path: '/bookings' },
     { label: 'Reports', path: '/reports' },
     { label: 'Analytics', path: '/analytics' },
   ],
