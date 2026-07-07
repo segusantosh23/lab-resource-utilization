@@ -1,7 +1,11 @@
-import React, { useContext, useState } from 'react';
+//import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-
+import {
+  getMyNotifications,
+  markAllAsRead
+} from "../services/notificationService";
 // Configuration for role-based navigation menus
 const ROLE_MENUS = {
   RESEARCHER: [
@@ -50,7 +54,13 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
 
+  const [notifications, setNotifications] = useState([]);
+
+  const unreadCount = notifications.filter(
+      n => !n.read
+  ).length;
   if (!user) return null;
 
   // Retrieve the authorized links for the current user's role
@@ -61,6 +71,35 @@ const Navbar = () => {
     logout();
     navigate('/');
   };
+
+
+  const fetchNotifications = async () => {
+
+    try{
+
+      const data = await getMyNotifications();
+
+      setNotifications(data);
+
+    }
+
+    catch(error){
+
+      console.error(error);
+
+    }
+
+  };
+
+  useEffect(() => {
+
+    fetchNotifications();
+
+    const interval = setInterval(fetchNotifications, 30000);
+
+    return () => clearInterval(interval);
+
+  }, []);
 
   return (
     <nav className="bg-[#12131a] border-b border-white/[0.05] sticky top-0 z-50 shadow-md">
@@ -98,7 +137,113 @@ const Navbar = () => {
           })}
         </div>
 
-        {/* User Profile & Actions */}
+        <div className="flex items-center gap-4">
+
+          {/* Notification Bell */}
+
+          <div className="relative">
+
+            <button
+
+                onClick={async () => {
+
+                  setNotificationOpen(!notificationOpen);
+
+                  if (!notificationOpen) {
+
+                    await markAllAsRead();
+
+                    fetchNotifications();
+
+                  }
+
+                }}
+
+                className="relative w-10 h-10 rounded-full bg-[#1a1c23] hover:bg-[#252833] flex items-center justify-center transition"
+
+            >
+
+              <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+              >
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z"
+                />
+              </svg>
+
+              {unreadCount > 0 && (
+
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+
+                    {unreadCount}
+
+                </span>
+
+              )}
+
+            </button>
+
+            {notificationOpen && (
+
+                <div className="absolute right-0 mt-3 w-96 max-h-[500px] bg-[#1a1c23] rounded-xl border border-white/10 shadow-2xl z-50 overflow-hidden">
+                  <div className="p-4 border-b border-white/10">
+
+                    <h2 className="text-white font-bold text-lg">
+                      Notifications
+                    </h2>
+
+                  </div>
+
+                  {notifications.length === 0 ? (
+
+                      <div className="p-5 text-gray-300 text-center">
+                        No notifications
+                      </div>
+
+                  ) : (
+
+                      <div className="max-h-[420px] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-[#1a1c23]">
+
+                        {notifications.map(notification => (
+                          <div
+                              key={notification.id}
+                              onClick={() => {
+                                setNotificationOpen(false);
+                                navigate('/bookings?tab=all');
+                              }}
+                              className="p-4 border-b border-white/5 hover:bg-white/5 transition duration-200 cursor-pointer"
+                          >
+                            <h3 className="text-white font-semibold">
+                              {notification.title}
+                            </h3>
+
+                            <p className="text-gray-300 text-sm mt-1 leading-relaxed">
+                              {notification.message}
+                            </p>
+
+                            <p className="text-gray-500 text-xs mt-3">
+                              {new Date(notification.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+
+                      </div>
+
+                  )}
+
+                </div>
+
+            )}
+
+          </div>
+
+         {/* User Profile & Actions */}
         <div className="relative flex items-center shrink-0">
           <button 
             onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -131,6 +276,7 @@ const Navbar = () => {
           )}
         </div>
       </div>
+        </div>
     </nav>
   );
 };

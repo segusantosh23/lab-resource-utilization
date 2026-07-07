@@ -18,6 +18,7 @@ public class BookingResponse {
     private LocalDateTime endTime;
     private BookingStatus status;
     private String purpose;
+    private Integer quantity;
     private RecurrenceType recurrenceType;
     private LocalDate recurrenceEndDate;
     private Long parentBookingId;
@@ -59,6 +60,9 @@ public class BookingResponse {
 
     public String getPurpose() { return purpose; }
     public void setPurpose(String purpose) { this.purpose = purpose; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
     public RecurrenceType getRecurrenceType() { return recurrenceType; }
     public void setRecurrenceType(RecurrenceType recurrenceType) { this.recurrenceType = recurrenceType; }

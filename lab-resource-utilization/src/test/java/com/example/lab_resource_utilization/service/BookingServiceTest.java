@@ -61,10 +61,12 @@ class BookingServiceTest {
         equipment = new Equipment();
         equipment.setId(10L);
         equipment.setName("Spectrometer");
+        equipment.setQuantity(5);
         equipment.setStatus(EquipmentStatus.AVAILABLE);
 
         request = new BookingRequest();
         request.setEquipmentId(10L);
+        request.setQuantity(1);
         request.setStartTime(LocalDateTime.now().plusDays(1));
         request.setEndTime(LocalDateTime.now().plusDays(2));
         request.setPurpose("Physics research project");
@@ -128,14 +130,19 @@ class BookingServiceTest {
         when(userRepository.findByEmail(researcher.getEmail())).thenReturn(Optional.of(researcher));
         when(equipmentRepository.findById(equipment.getId())).thenReturn(Optional.of(equipment));
         
-        when(bookingRepository.hasOverlappingBooking(eq(equipment.getId()), any(LocalDateTime.class), any(LocalDateTime.class), anyList()))
-                .thenReturn(true);
+        Booking overlapping = new Booking();
+        overlapping.setStartTime(request.getStartTime());
+        overlapping.setEndTime(request.getEndTime());
+        overlapping.setQuantity(5);
+
+        when(bookingRepository.findOverlappingBookings(eq(equipment.getId()), any(LocalDateTime.class), any(LocalDateTime.class), anyList()))
+                .thenReturn(java.util.Collections.singletonList(overlapping));
 
         InvalidBookingException exception = assertThrows(InvalidBookingException.class, () -> 
             bookingService.createBooking(request, researcher.getEmail())
         );
 
-        assertEquals("Equipment is already booked for the selected time slot.", exception.getMessage());
+        assertTrue(exception.getMessage().contains("Insufficient equipment quantity available"));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
@@ -151,14 +158,19 @@ class BookingServiceTest {
         when(userRepository.findByEmail(researcher.getEmail())).thenReturn(Optional.of(researcher));
         when(equipmentRepository.findById(equipment.getId())).thenReturn(Optional.of(equipment));
         
-        when(bookingRepository.hasOverlappingBookingExcludingId(eq(equipment.getId()), eq(100L), any(LocalDateTime.class), any(LocalDateTime.class), anyList()))
-                .thenReturn(true);
+        Booking overlapping = new Booking();
+        overlapping.setStartTime(request.getStartTime());
+        overlapping.setEndTime(request.getEndTime());
+        overlapping.setQuantity(5);
+
+        when(bookingRepository.findOverlappingBookingsExcludingId(eq(equipment.getId()), eq(100L), any(LocalDateTime.class), any(LocalDateTime.class), anyList()))
+                .thenReturn(java.util.Collections.singletonList(overlapping));
 
         InvalidBookingException exception = assertThrows(InvalidBookingException.class, () -> 
             bookingService.updateBooking(100L, request, researcher.getEmail())
         );
 
-        assertEquals("Equipment is already booked for the selected time slot.", exception.getMessage());
+        assertTrue(exception.getMessage().contains("Insufficient equipment quantity available"));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 }
