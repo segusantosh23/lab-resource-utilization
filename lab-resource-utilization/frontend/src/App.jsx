@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './components/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ProfilePage from "./pages/profile/ProfilePage";
 import { AuthContext } from './context/AuthContext';
 
 // Researcher sub-pages (teammate's work)
@@ -84,7 +85,14 @@ function App() {
         <Route path="/dashboard/department-head" element={<ProtectedRoute allowedRoles={['DEPARTMENT_HEAD']}><DepartmentHeadDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/institution-admin" element={<ProtectedRoute allowedRoles={['INSTITUTION_ADMIN']}><InstitutionAdminDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/system-admin" element={<ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}><SystemAdminDashboard /></ProtectedRoute>} />
-
+        <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+        />
         {/* ── Equipment ── */}
         <Route path="/equipment" element={<ProtectedRoute><EquipmentList /></ProtectedRoute>} />
         <Route path="/equipment/:id" element={<ProtectedRoute><EquipmentDetails /></ProtectedRoute>} />

@@ -1,34 +1,21 @@
-package com.example.lab_resource_utilization.entity;
+package com.example.lab_resource_utilization.dto;
 
 import com.example.lab_resource_utilization.entity.Role;
-import jakarta.persistence.*;
 
-@Entity
-@Table(name = "users")
-public class User {
+public class ProfileResponse {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String name;
-
     private String email;
-
-    private String password;
-    private Integer age;
-
-    private String gender;
-
-    private String phone;
-
-    private String department;
-
-    private String institution;
-    @Enumerated(EnumType.STRING)
     private Role role;
 
-    public User() {
+    private Integer age;
+    private String gender;
+    private String phone;
+    private String department;
+    private String institution;
+
+    public ProfileResponse() {
     }
 
     public Long getId() {
@@ -55,17 +42,14 @@ public class User {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public Role getRole() {
         return role;
     }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
     public Integer getAge() {
         return age;
     }
@@ -104,8 +88,5 @@ public class User {
 
     public void setInstitution(String institution) {
         this.institution = institution;
-    }
-    public void setRole(Role role) {
-        this.role = role;
     }
 }

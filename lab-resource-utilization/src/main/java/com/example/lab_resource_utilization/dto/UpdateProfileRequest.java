@@ -1,42 +1,29 @@
-package com.example.lab_resource_utilization.entity;
+package com.example.lab_resource_utilization.dto;
 
-import com.example.lab_resource_utilization.entity.Role;
-import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
-@Entity
-@Table(name = "users")
-public class User {
+public class UpdateProfileRequest {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    @Size(min = 2, max = 100)
     private String name;
 
-    private String email;
-
-    private String password;
+    @Min(18)
+    @Max(100)
     private Integer age;
 
     private String gender;
 
+    @Pattern(regexp = "^[0-9]{10}$", message = "Phone number must contain exactly 10 digits")
     private String phone;
 
     private String department;
 
     private String institution;
-    @Enumerated(EnumType.STRING)
-    private Role role;
 
-    public User() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+    public UpdateProfileRequest() {
     }
 
     public String getName() {
@@ -47,25 +34,6 @@ public class User {
         this.name = name;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public Role getRole() {
-        return role;
-    }
     public Integer getAge() {
         return age;
     }
@@ -104,8 +72,5 @@ public class User {
 
     public void setInstitution(String institution) {
         this.institution = institution;
-    }
-    public void setRole(Role role) {
-        this.role = role;
     }
 }
