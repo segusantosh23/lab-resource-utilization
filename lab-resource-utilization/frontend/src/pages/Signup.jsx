@@ -14,6 +14,25 @@ const Signup = () => {
     role: 'RESEARCHER'
   });
   
+  // Generate random password example
+  const generatePasswordExample = () => {
+    const examples = [
+      'Test@1234',
+      'SecurePass@2024',
+      'MyPassword@99',
+      'StrongP@ss123',
+      'ValidPass@456',
+      'Sample@7890',
+      'Example@2025',
+      'Password@123',
+      'MySecret@456',
+      'Secure@9999'
+    ];
+    return examples[Math.floor(Math.random() * examples.length)];
+  };
+  
+  const [passwordExample] = useState(generatePasswordExample());
+  
   // Step 2: OTP Verification
   const [otp, setOtp] = useState('');
   const [email, setEmail] = useState('');
@@ -282,7 +301,7 @@ const Signup = () => {
                   className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Example: <span className="text-gray-400">Test@1234</span> (Min 8 chars, uppercase, lowercase, number, special character)
+                  Example: <span className="text-gray-400">{passwordExample}</span> (Min 8 chars, uppercase, lowercase, number, special character)
                 </p>
               </div>
 
