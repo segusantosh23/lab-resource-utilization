@@ -23,17 +23,10 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [otpTimer, setOtpTimer] = useState(60);
+  const [otpTimer, setOtpTimer] = useState(0);
   const [canResend, setCanResend] = useState(false);
 
   const roles = ['RESEARCHER', 'LAB_MANAGER', 'LAB_TECHNICIAN', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN'];
-
-  // Clear OTP when it expires
-  useEffect(() => {
-    if (otpTimer === 0 && displayOtp) {
-      setDisplayOtp('');
-    }
-  }, [otpTimer, displayOtp]);
 
   // Handle registration form input
   const handleInputChange = (e) => {
@@ -77,19 +70,6 @@ const Signup = () => {
       
       setSuccess('');
       
-      // Start 60 second timer
-      setOtpTimer(60);
-      setCanResend(false);
-      const timer = setInterval(() => {
-        setOtpTimer(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setCanResend(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
     } catch (err) {
       console.log('❌ ERROR Response:', err.response?.data);
       console.log('Error status:', err.response?.status);
@@ -105,7 +85,6 @@ const Signup = () => {
       } else {
         console.log('❌ OTP NOT IN ERROR RESPONSE');
       }
-      
       // Start timer even if email fails
       setOtpTimer(60);
       setCanResend(false);
@@ -371,13 +350,9 @@ const Signup = () => {
               </div>
 
               <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg text-center">
-                {otpTimer > 0 ? (
-                  <p className="text-amber-400 text-sm">
-                    OTP expires in <strong>{otpTimer}s</strong>
-                  </p>
-                ) : (
-                  <p className="text-amber-400 text-sm">OTP expired. Request a new one.</p>
-                )}
+                <p className="text-amber-400 text-sm">
+                  Enter the 6-digit OTP sent to your email
+                </p>
               </div>
 
               <button
@@ -399,17 +374,9 @@ const Signup = () => {
                 <button
                   type="button"
                   onClick={handleBackToRegistration}
-                  className="flex-1 bg-white/[0.05] hover:bg-white/[0.1] text-white font-semibold py-3 rounded-lg transition"
+                  className="w-full bg-white/[0.05] hover:bg-white/[0.1] text-white font-semibold py-3 rounded-lg transition"
                 >
                   Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={!canResend || loading}
-                  className="flex-1 bg-white/[0.05] hover:bg-white/[0.1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition"
-                >
-                  {canResend ? 'Resend OTP' : `Resend in ${otpTimer}s`}
                 </button>
               </div>
             </form>

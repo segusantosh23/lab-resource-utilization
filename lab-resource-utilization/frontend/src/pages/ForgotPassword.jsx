@@ -22,13 +22,6 @@ const ForgotPassword = () => {
   const [otpTimer, setOtpTimer] = useState(0);
   const [canResend, setCanResend] = useState(false);
 
-  // Clear OTP when it expires
-  useEffect(() => {
-    if (otpTimer === 0 && displayOtp) {
-      setDisplayOtp('');
-    }
-  }, [otpTimer, displayOtp]);
-
   // Step 1: Request password reset OTP
   const handleRequestReset = async (e) => {
     e.preventDefault();
@@ -331,13 +324,9 @@ const ForgotPassword = () => {
               </div>
 
               <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg text-center">
-                {otpTimer > 0 ? (
-                  <p className="text-amber-400 text-sm">
-                    OTP expires in <strong>{otpTimer}s</strong>
-                  </p>
-                ) : (
-                  <p className="text-amber-400 text-sm">OTP expired. Request a new one.</p>
-                )}
+                <p className="text-amber-400 text-sm">
+                  Enter the 6-digit OTP sent to your email
+                </p>
               </div>
 
               <button
@@ -359,17 +348,9 @@ const ForgotPassword = () => {
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="flex-1 bg-white/[0.05] hover:bg-white/[0.1] text-white font-semibold py-3 rounded-lg transition"
+                  className="w-full bg-white/[0.05] hover:bg-white/[0.1] text-white font-semibold py-3 rounded-lg transition"
                 >
                   Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={!canResend || loading}
-                  className="flex-1 bg-white/[0.05] hover:bg-white/[0.1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition"
-                >
-                  {canResend ? 'Resend OTP' : `Resend in ${otpTimer}s`}
                 </button>
               </div>
             </form>
