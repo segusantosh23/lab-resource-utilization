@@ -29,6 +29,9 @@ public class BookingService {
     @Autowired
     private EquipmentRepository equipmentRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public BookingResponse mapToResponse(Booking booking) {
         BookingResponse response = new BookingResponse();
         response.setId(booking.getId());
@@ -88,6 +91,19 @@ public class BookingService {
         booking.setStatus(BookingStatus.PENDING_APPROVAL);
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        if (savedBooking.getStatus() == BookingStatus.PENDING_APPROVAL) {
+            List<User> managers = userRepository.findByRole(Role.LAB_MANAGER);
+            for (User manager : managers) {
+                notificationService.createNotification(
+                    manager, 
+                    "New Booking Request", 
+                    user.getName() + " requested to book " + equipment.getName() + ".", 
+                    "INFO"
+                );
+            }
+        }
+
         return mapToResponse(savedBooking);
     }
 

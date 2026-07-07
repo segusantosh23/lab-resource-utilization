@@ -211,10 +211,13 @@ const Navbar = () => {
                       <div className="max-h-[420px] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-[#1a1c23]">
 
                         {notifications.map(notification => (
-
                           <div
                               key={notification.id}
-                              className="p-4 border-b border-white/5 hover:bg-white/5 transition duration-200"
+                              onClick={() => {
+                                setNotificationOpen(false);
+                                navigate('/bookings?tab=all');
+                              }}
+                              className="p-4 border-b border-white/5 hover:bg-white/5 transition duration-200 cursor-pointer"
                           >
                             <h3 className="text-white font-semibold">
                               {notification.title}
@@ -228,7 +231,6 @@ const Navbar = () => {
                               {new Date(notification.createdAt).toLocaleString()}
                             </p>
                           </div>
-
                         ))}
 
                       </div>
