@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './components/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
 import { AuthContext } from './context/AuthContext';
 
 // Researcher sub-pages (teammate's work)
@@ -76,6 +78,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* ── Role-Based Dashboards ── */}
         <Route path="/dashboard/researcher" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><ResearcherDashboard /></ProtectedRoute>} />

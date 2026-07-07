@@ -76,6 +76,9 @@ const Login = () => {
               <label className="text-sm font-medium text-gray-300" htmlFor="password">
                 Password
               </label>
+              <Link to="/forgot-password" className="text-xs text-purple-400 hover:text-purple-300 font-medium transition duration-200">
+                Forgot?
+              </Link>
             </div>
             <input
               id="password"
@@ -103,7 +106,7 @@ const Login = () => {
 
         <div className="mt-6 text-center text-sm text-gray-400">
           Don't have an account?{' '}
-          <Link to="/register" className="text-purple-400 hover:text-purple-300 font-medium transition duration-200">
+          <Link to="/signup" className="text-purple-400 hover:text-purple-300 font-medium transition duration-200">
             Sign Up
           </Link>
         </div>

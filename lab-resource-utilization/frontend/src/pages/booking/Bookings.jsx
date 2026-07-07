@@ -15,6 +15,9 @@ const STATUS_STYLES = {
 
 const RECURRENCE_OPTIONS = ['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY'];
 
+// Equipment statuses that mean the equipment cannot be booked
+const UNAVAILABLE_STATUSES = ['BOOKED', 'UNDER_MAINTENANCE', 'OUT_OF_SERVICE', 'RETIRED'];
+
 const Bookings = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -47,6 +50,10 @@ const Bookings = () => {
   const [rejectModal,     setRejectModal]     = useState({ open: false, bookingId: null });
   const [rejectReason,    setRejectReason]    = useState('');
   const [rejectSubmitting,setRejectSubmitting]= useState(false);
+
+  /* waitlist state */
+  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState('');
 
   /* form state — includes recurring fields */
   const [formData, setFormData] = useState({
@@ -106,6 +113,12 @@ const Bookings = () => {
         ? { recurrencePattern: '', recurrenceEndDate: '' }
         : {}),
     }));
+    // Clear waitlist success when changing equipment
+    if (name === 'equipmentId') {
+      setWaitlistSuccess('');
+      setSubmitError('');
+      setIsConflict(false);
+    }
   };
 
   const resetForm = () => {
@@ -115,6 +128,30 @@ const Bookings = () => {
     });
     setSubmitError('');
     setIsConflict(false);
+    setWaitlistSuccess('');
+  };
+
+  /* ── join waitlist ─────────────────────────────────────────── */
+  const handleJoinWaitlist = async () => {
+    if (!formData.equipmentId) return;
+    setJoiningWaitlist(true);
+    setSubmitError('');
+    setWaitlistSuccess('');
+    try {
+      await api.post('/waitlist', { equipmentId: parseInt(formData.equipmentId) });
+      setWaitlistSuccess('✓ You have been added to the waitlist! We will notify you when this equipment becomes available.');
+      setSubmitError('');
+      setIsConflict(false);
+    } catch (err) {
+      const msg = err.response?.data?.message || '';
+      if (msg.toLowerCase().includes('already')) {
+        setWaitlistSuccess('You are already on the waitlist for this equipment.');
+      } else {
+        setSubmitError('Failed to join waitlist. ' + (msg || 'Please try again.'));
+      }
+    } finally {
+      setJoiningWaitlist(false);
+    }
   };
 
   /* ── submit booking ─────────────────────────────────────────── */
@@ -498,6 +535,15 @@ const Bookings = () => {
               </div>
             )}
 
+            {waitlistSuccess && (
+              <div className="mb-4 p-3 rounded-lg text-sm border bg-emerald-500/10 border-emerald-500/20 text-emerald-400 flex gap-2 items-start">
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <p>{waitlistSuccess}</p>
+              </div>
+            )}
+
             <form onSubmit={handleAddSubmit} className="space-y-4">
 
               {/* Equipment select */}
@@ -517,6 +563,58 @@ const Bookings = () => {
                     </option>
                   ))}
                 </select>
+                
+                {/* Show unavailable warning and waitlist button */}
+                {formData.equipmentId && (() => {
+                  const selectedEq = equipmentList.find(e => e.id == formData.equipmentId);
+                  const isUnavailable = selectedEq && UNAVAILABLE_STATUSES.includes(selectedEq.status);
+                  
+                  if (isUnavailable) {
+                    return (
+                      <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                        <div className="flex items-start gap-2 mb-2">
+                          <svg className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="flex-1">
+                            <p className="text-xs font-medium text-amber-400">Equipment Currently Unavailable</p>
+                            <p className="text-xs text-amber-400/80 mt-1">
+                              This equipment is {selectedEq.status.replace(/_/g, ' ').toLowerCase()}. Join the waitlist to be notified when it becomes available.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleJoinWaitlist}
+                          disabled={joiningWaitlist || waitlistSuccess}
+                          className="w-full px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium text-sm flex items-center justify-center gap-2"
+                        >
+                          {joiningWaitlist ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              Joining Waitlist...
+                            </>
+                          ) : waitlistSuccess ? (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                              </svg>
+                              On Waitlist
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                              </svg>
+                              Join Waitlist
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               {/* Quantity */}
@@ -622,15 +720,33 @@ const Bookings = () => {
                   onClick={() => { setIsAddOpen(false); resetForm(); }}
                   className="px-4 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-sm transition"
                 >
-                  Cancel
+                  {waitlistSuccess ? 'Close' : 'Cancel'}
                 </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-60"
-                >
-                  {submitting ? 'Verifying…' : 'Book Equipment'}
-                </button>
+                {/* Only show Book button if equipment is available */}
+                {(() => {
+                  const selectedEq = equipmentList.find(e => e.id == formData.equipmentId);
+                  const isUnavailable = selectedEq && UNAVAILABLE_STATUSES.includes(selectedEq.status);
+                  
+                  if (!isUnavailable && !waitlistSuccess) {
+                    return (
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-60"
+                      >
+                        {submitting ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Verifying…
+                          </>
+                        ) : (
+                          'Book Equipment'
+                        )}
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             </form>
           </div>
