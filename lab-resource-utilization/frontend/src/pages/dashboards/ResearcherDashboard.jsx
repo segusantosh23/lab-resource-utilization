@@ -3,6 +3,7 @@ import { getMyBookings } from "../../services/bookingService";
 import { getAllEquipment } from "../../services/equipmentService";
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import BookingHeatmap from '../../components/BookingHeatmap';
 
 const ResearcherDashboard = () => {
     const { user } = useContext(AuthContext);
@@ -144,16 +145,33 @@ const ResearcherDashboard = () => {
               </p>
 
           </div>
-          <div className="bg-[#12131a] border border-white/[0.05] rounded-2xl p-6 mb-8">
-
-              <p className="text-gray-400">
-                  Total Bookings
-              </p>
-
-              <h2 className="text-4xl font-bold mt-2">
-                  {bookings.length}
-              </h2>
-
+          <div className="flex flex-col md:flex-row gap-6 mb-8">
+              <div className="bg-[#12131a] border border-white/[0.05] rounded-2xl p-6 flex-1 flex flex-col justify-center">
+                  <p className="text-gray-400">
+                      Total Bookings
+                  </p>
+                  <h2 className="text-4xl font-bold mt-2">
+                      {bookings.length}
+                  </h2>
+              </div>
+              <div
+                  onClick={() => navigate("/researcher/UsageSummary")}
+                  className="bg-[#12131a] border border-white/[0.05] rounded-2xl p-6 flex-1 shadow-xl hover:border-purple-500/30 hover:-translate-y-1 transition cursor-pointer flex flex-col justify-center"
+              >
+                  <div className="flex justify-between items-center">
+                      <div>
+                          <h3 className="text-xl font-semibold">
+                              Usage Summary
+                          </h3>
+                          <p className="text-gray-400 mt-2 text-sm">
+                              View your equipment usage statistics and booking trends.
+                          </p>
+                      </div>
+                      <span className="text-purple-400 text-xl">
+                          →
+                      </span>
+                  </div>
+              </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -255,18 +273,18 @@ const ResearcherDashboard = () => {
 
           {/* Equipment Overview & Usage Summary */}
 
-          {/* Equipment Overview & Usage Summary */}
+          {/* Equipment Overview & Heatmap */}
 
-          <div className="grid md:grid-cols-2 gap-6 mt-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-10 items-stretch">
 
               {/* Equipment Availability */}
 
               <div
                   onClick={() => navigate("/researcher/equipment")}
-                  className="bg-[#12131a] border border-white/[0.05] rounded-2xl p-6 shadow-xl hover:border-purple-500/30 hover:-translate-y-1 transition cursor-pointer"
+                  className="md:col-span-1 h-full bg-[#12131a] border border-white/[0.05] rounded-2xl p-8 shadow-xl hover:border-purple-500/30 hover:-translate-y-1 transition cursor-pointer flex flex-col justify-between"
               >
 
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-start">
 
                       <div>
 
@@ -286,64 +304,35 @@ const ResearcherDashboard = () => {
 
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mt-6">
-
-                      <div>
-                          <p className="text-gray-500 text-sm">Total</p>
-                          <h2 className="text-2xl font-bold">{totalEquipment}</h2>
+                  <div className="flex-1 flex flex-col justify-center mt-8">
+                      <div className="grid grid-cols-2 gap-y-10 gap-x-4">
+                          <div>
+                              <p className="text-gray-500 text-sm lg:text-base">Total</p>
+                              <h2 className="text-3xl lg:text-4xl font-bold mt-2">{totalEquipment}</h2>
+                          </div>
+                          <div>
+                              <p className="text-green-400 text-sm lg:text-base">Available</p>
+                              <h2 className="text-3xl lg:text-4xl font-bold mt-2">{availableEquipment}</h2>
+                          </div>
+                          <div>
+                              <p className="text-blue-400 text-sm lg:text-base">Booked</p>
+                              <h2 className="text-3xl lg:text-4xl font-bold mt-2">{bookedEquipment}</h2>
+                          </div>
+                          <div>
+                              <p className="text-yellow-400 text-sm lg:text-base">Maintenance</p>
+                              <h2 className="text-3xl lg:text-4xl font-bold mt-2">{maintenanceEquipment}</h2>
+                          </div>
                       </div>
-
-                      <div>
-                          <p className="text-green-400 text-sm">Available</p>
-                          <h2 className="text-2xl font-bold">{availableEquipment}</h2>
-                      </div>
-
-                      <div>
-                          <p className="text-blue-400 text-sm">Booked</p>
-                          <h2 className="text-2xl font-bold">{bookedEquipment}</h2>
-                      </div>
-
-                      <div>
-                          <p className="text-yellow-400 text-sm">Maintenance</p>
-                          <h2 className="text-2xl font-bold">{maintenanceEquipment}</h2>
-                      </div>
-
                   </div>
 
               </div>
 
-              {/* Usage Summary */}
-
-              <div
-                  onClick={() => navigate("/researcher/UsageSummary")}
-                  className="bg-[#12131a] border border-white/[0.05] rounded-2xl p-6 shadow-xl hover:border-purple-500/30 hover:-translate-y-1 transition cursor-pointer"
-              >
-
-                  <div className="flex justify-between items-center">
-
-                      <div>
-
-                          <h3 className="text-xl font-semibold">
-                              Usage Summary
-                          </h3>
-
-                          <p className="text-gray-400 mt-2 text-sm">
-                              View your equipment usage statistics and booking trends.
-                          </p>
-
-                      </div>
-
-                      <span className="text-purple-400 text-xl">
-                →
-            </span>
-
-                  </div>
-
+              {/* Booking Heatmap */}
+              <div className="md:col-span-3 h-full animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+                  <BookingHeatmap bookings={bookings} />
               </div>
 
           </div>
-
-          {/* Recommended Equipment */}
 
           {/* Recommended Equipment */}
 
