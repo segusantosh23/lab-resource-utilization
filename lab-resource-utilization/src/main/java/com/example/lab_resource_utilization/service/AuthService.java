@@ -209,6 +209,11 @@ public class AuthService {
                 "Please wait before requesting another OTP");
         }
 
+        // Store the pending user data BEFORE cleanup
+        String pendingUserName = oldOtp.getPendingUserName();
+        String pendingUserRole = oldOtp.getPendingUserRole();
+        String pendingPasswordHash = oldOtp.getPendingPasswordHash();
+
         // Delete old OTP to ensure new one is created
         System.out.println("🔄 Deleting old OTP for email: " + email);
         otpService.cleanupOtps(email, OtpType.SIGNUP_VERIFICATION);
@@ -216,15 +221,15 @@ public class AuthService {
         // Create new OTP with same pending user data
         Otp newOtp = otpService.createSignupOtp(
             email,
-            oldOtp.getPendingUserName(),
-            oldOtp.getPendingUserRole(),
-            oldOtp.getPendingPasswordHash()
+            pendingUserName,
+            pendingUserRole,
+            pendingPasswordHash
         );
 
         System.out.println("✅ New OTP created: " + newOtp.getOtpCode());
 
         // Send new OTP email
-        emailService.sendSignupOTP(email, newOtp.getOtpCode(), oldOtp.getPendingUserName());
+        emailService.sendSignupOTP(email, newOtp.getOtpCode(), pendingUserName);
 
         return new String[] {
             "New OTP sent to your email.",
