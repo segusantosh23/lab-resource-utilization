@@ -181,60 +181,50 @@ public class AuthService {
     }
 
     /**
-     * Resend OTP for signup
-     */
-    /**
      * Resend OTP for signup - returns [message, otpCode]
      */
     @Transactional
     public String[] resendSignupOtpWithCode(String email) {
-        // Check if user already exists
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
+        try {
+            // Check if user already exists
+            if (userRepository.findByEmail(email).isPresent()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
+            }
+
+            // Get the latest OTP data
+            Optional<Otp> existingOtp = otpService.getLatestValidOtp(email, OtpType.SIGNUP_VERIFICATION);
+            
+            if (existingOtp.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                    "No pending signup found. Please start the signup process again.");
+            }
+
+            Otp oldOtp = existingOtp.get();
+            String userName = oldOtp.getPendingUserName();
+            String userRole = oldOtp.getPendingUserRole();
+            String passwordHash = oldOtp.getPendingPasswordHash();
+
+            // Delete old OTP
+            otpService.cleanupOtps(email, OtpType.SIGNUP_VERIFICATION);
+
+            // Create new OTP
+            Otp newOtp = otpService.createSignupOtp(email, userName, userRole, passwordHash);
+
+            // Send email
+            emailService.sendSignupOTP(email, newOtp.getOtpCode(), userName);
+
+            return new String[] {
+                "New OTP sent to your email.",
+                newOtp.getOtpCode()
+            };
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            System.err.println("❌ Resend OTP Error: " + e.getMessage());
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
+                "Failed to resend OTP: " + e.getMessage());
         }
-
-        // Get the latest valid OTP to retrieve pending user data
-        Optional<Otp> existingOtp = otpService.getLatestValidOtp(email, OtpType.SIGNUP_VERIFICATION);
-        
-        if (existingOtp.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
-                "No pending signup found. Please start the signup process again.");
-        }
-
-        Otp oldOtp = existingOtp.get();
-
-        // Check rate limiting
-        if (otpService.isRateLimited(email, OtpType.SIGNUP_VERIFICATION)) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, 
-                "Please wait before requesting another OTP");
-        }
-
-        // Store the pending user data BEFORE cleanup
-        String pendingUserName = oldOtp.getPendingUserName();
-        String pendingUserRole = oldOtp.getPendingUserRole();
-        String pendingPasswordHash = oldOtp.getPendingPasswordHash();
-
-        // Delete old OTP to ensure new one is created
-        System.out.println("🔄 Deleting old OTP for email: " + email);
-        otpService.cleanupOtps(email, OtpType.SIGNUP_VERIFICATION);
-
-        // Create new OTP with same pending user data
-        Otp newOtp = otpService.createSignupOtp(
-            email,
-            pendingUserName,
-            pendingUserRole,
-            pendingPasswordHash
-        );
-
-        System.out.println("✅ New OTP created: " + newOtp.getOtpCode());
-
-        // Send new OTP email
-        emailService.sendSignupOTP(email, newOtp.getOtpCode(), pendingUserName);
-
-        return new String[] {
-            "New OTP sent to your email.",
-            newOtp.getOtpCode()
-        };
     }
 
     /**
@@ -360,52 +350,46 @@ public class AuthService {
      */
     @Transactional
     public String[] resendPasswordResetOtpWithCode(String email) {
-        // Check if user exists
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            // For security, don't reveal if email exists or not
-            return new String[] {
-                "If an account with this email exists, you will receive a new OTP.",
-                ""
-            };
-        }
-
-        User user = userOpt.get();
-
-        // Check if there was a recent password reset request
-        Optional<Otp> existingOtp = otpService.getLatestValidOtp(email, OtpType.PASSWORD_RESET);
-        if (existingOtp.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
-                "No pending password reset found. Please start the password reset process again.");
-        }
-
-        // Check rate limiting
-        if (otpService.isRateLimited(email, OtpType.PASSWORD_RESET)) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, 
-                "Please wait before requesting another OTP");
-        }
-
-        // Delete old OTP to ensure new one is created
-        System.out.println("🔄 Deleting old password reset OTP for email: " + email);
-        otpService.cleanupOtps(email, OtpType.PASSWORD_RESET);
-
-        // Create new OTP
-        Otp newOtp = otpService.createOtp(email, OtpType.PASSWORD_RESET);
-
-        System.out.println("✅ New password reset OTP created: " + newOtp.getOtpCode());
-
-        // Send new OTP email
         try {
-            emailService.sendPasswordResetOTP(email, newOtp.getOtpCode(), user.getName());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
-                "Failed to send OTP email. Please try again.");
-        }
+            // Check if user exists
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                return new String[] {
+                    "If an account with this email exists, you will receive a new OTP.",
+                    ""
+                };
+            }
 
-        return new String[] {
-            "New password reset OTP sent to your email.",
-            newOtp.getOtpCode()
-        };
+            User user = userOpt.get();
+
+            // Get existing OTP
+            Optional<Otp> existingOtp = otpService.getLatestValidOtp(email, OtpType.PASSWORD_RESET);
+            if (existingOtp.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                    "No pending password reset found. Please start the password reset process again.");
+            }
+
+            // Delete old OTP
+            otpService.cleanupOtps(email, OtpType.PASSWORD_RESET);
+
+            // Create new OTP
+            Otp newOtp = otpService.createOtp(email, OtpType.PASSWORD_RESET);
+
+            // Send email
+            emailService.sendPasswordResetOTP(email, newOtp.getOtpCode(), user.getName());
+
+            return new String[] {
+                "New password reset OTP sent to your email.",
+                newOtp.getOtpCode()
+            };
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            System.err.println("❌ Resend Password Reset OTP Error: " + e.getMessage());
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
+                "Failed to resend OTP: " + e.getMessage());
+        }
     }
 
     @Transactional
