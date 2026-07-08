@@ -104,7 +104,7 @@ public class OtpService {
      * Get the latest valid OTP for an email and type
      */
     public Optional<Otp> getLatestValidOtp(String email, OtpType type) {
-        return otpRepository.findLatestValidOtp(email, type, LocalDateTime.now());
+        return otpRepository.findLatestValidOtp(email, type);
     }
 
     /**

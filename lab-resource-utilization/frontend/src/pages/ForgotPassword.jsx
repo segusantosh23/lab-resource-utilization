@@ -30,14 +30,20 @@ const ForgotPassword = () => {
 
     try {
       const response = await api.post('/auth/forgot-password', { email });
-      console.log('Forgot Password Response:', response.data);
+      console.log('===== FORGOT PASSWORD RESPONSE =====');
+      console.log('Full response:', response);
+      console.log('Response data:', response.data);
+      console.log('otp_for_testing:', response.data.otp_for_testing);
+      console.log('====================================');
       setStep('verify');
       setSuccess('');
       
       // Store OTP for display
       if (response.data.otp_for_testing) {
-        console.log('Setting displayOtp to:', response.data.otp_for_testing);
+        console.log('✅ Setting displayOtp to:', response.data.otp_for_testing);
         setDisplayOtp(response.data.otp_for_testing);
+      } else {
+        console.log('❌ No otp_for_testing in response!');
       }
       
       // Start 60 second timer
@@ -54,15 +60,20 @@ const ForgotPassword = () => {
         });
       }, 1000);
     } catch (err) {
-      console.log('Forgot Password Error Response:', err.response?.data);
+      console.log('===== FORGOT PASSWORD ERROR =====');
+      console.log('Error response:', err.response?.data);
+      console.log('otp_for_testing:', err.response?.data?.otp_for_testing);
+      console.log('==================================');
       // Still proceed even if email fails
       setStep('verify');
       setSuccess('');
       
       // Store OTP for display
       if (err.response?.data?.otp_for_testing) {
-        console.log('Setting displayOtp from error to:', err.response.data.otp_for_testing);
+        console.log('✅ Setting displayOtp from error to:', err.response.data.otp_for_testing);
         setDisplayOtp(err.response.data.otp_for_testing);
+      } else {
+        console.log('❌ No otp_for_testing in error response!');
       }
       
       // Start timer
@@ -304,11 +315,6 @@ const ForgotPassword = () => {
                   <p className="text-blue-300 text-sm mt-2">OTP sent</p>
                 </div>
               )}
-              {!displayOtp && otpTimer === 0 && (
-                <div className="bg-red-900/20 border border-red-500/50 p-4 rounded-lg text-center mb-4">
-                  <p className="text-red-300 text-sm">OTP expired - Click "Resend OTP" to get a new one</p>
-                </div>
-              )}
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Enter OTP</label>
@@ -323,11 +329,7 @@ const ForgotPassword = () => {
                 />
               </div>
 
-              <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg text-center">
-                <p className="text-amber-400 text-sm">
-                  Enter the 6-digit OTP sent to your email
-                </p>
-              </div>
+
 
               <button
                 type="submit"

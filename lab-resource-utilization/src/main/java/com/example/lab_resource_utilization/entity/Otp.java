@@ -55,7 +55,7 @@ public class Otp {
     }
 
     public boolean isValid() {
-        return !used && !isExpired() && attemptCount < 3;
+        return !used && attemptCount < 3;
     }
 
     public void markAsUsed() {

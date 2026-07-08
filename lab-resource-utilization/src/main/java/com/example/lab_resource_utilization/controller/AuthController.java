@@ -107,6 +107,7 @@ public class AuthController {
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, Object>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        System.out.println("🔵 [FORGOT PASSWORD] Request received for email: " + request.getEmail());
         String[] result = authService.requestPasswordResetWithOtp(request.getEmail());
         String message = result[0];
         String otpCode = result[1];
@@ -119,8 +120,12 @@ public class AuthController {
         if (!otpCode.isEmpty()) {
             response.put("otp_for_testing", otpCode); // Direct from creation!
             response.put("note", "⚠️ OTP shown for testing purposes only. In production, OTP will be sent via email.");
+            System.out.println("✅ [FORGOT PASSWORD] OTP generated: " + otpCode + " for email: " + request.getEmail());
+        } else {
+            System.out.println("⚠️ [FORGOT PASSWORD] No OTP for email (user might not exist): " + request.getEmail());
         }
         
+        System.out.println("📤 [FORGOT PASSWORD] Response: " + response);
         return ResponseEntity.ok(response);
     }
 

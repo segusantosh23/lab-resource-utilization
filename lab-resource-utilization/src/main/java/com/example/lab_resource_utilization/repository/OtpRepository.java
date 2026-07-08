@@ -16,10 +16,10 @@ import java.util.Optional;
 public interface OtpRepository extends JpaRepository<Otp, Long> {
 
     /**
-     * Find the most recent valid OTP for a given email and type
+     * Find the most recent valid OTP for a given email and type (no expiry check)
      */
-    @Query("SELECT o FROM Otp o WHERE o.email = :email AND o.type = :type AND o.used = false AND o.expiresAt > :now ORDER BY o.createdAt DESC LIMIT 1")
-    Optional<Otp> findLatestValidOtp(@Param("email") String email, @Param("type") OtpType type, @Param("now") LocalDateTime now);
+    @Query("SELECT o FROM Otp o WHERE o.email = :email AND o.type = :type AND o.used = false ORDER BY o.createdAt DESC LIMIT 1")
+    Optional<Otp> findLatestValidOtp(@Param("email") String email, @Param("type") OtpType type);
 
     /**
      * Find OTP by email, code, and type (for verification)

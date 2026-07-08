@@ -345,10 +345,6 @@ const Signup = () => {
                   <p className="text-blue-200 text-2xl font-mono font-bold tracking-widest">{displayOtp}</p>
                   <p className="text-blue-300 text-sm mt-2">OTP sent</p>
                 </div>
-              ) : otpTimer === 0 ? (
-                <div className="bg-red-900/20 border border-red-500/50 p-4 rounded-lg text-center mb-4">
-                  <p className="text-red-300 text-sm">OTP expired - Click "Resend OTP" to get a new one</p>
-                </div>
               ) : (
                 <div className="bg-yellow-900/20 border border-yellow-500/50 p-4 rounded-lg text-center mb-4">
                   <p className="text-yellow-300 text-sm">⚠️ No OTP received - Check browser console (F12) for debugging</p>
