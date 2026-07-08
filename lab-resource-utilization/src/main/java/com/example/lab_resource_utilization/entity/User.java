@@ -1,6 +1,5 @@
 package com.example.lab_resource_utilization.entity;
 
-import com.example.lab_resource_utilization.entity.Role;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 

@@ -59,10 +59,12 @@ public class BookingLifecycleService {
         // 3. Update Status
         booking.setStatus(newStatus);
         Booking savedBooking = bookingRepository.save(booking);
-        notificationService.notifyBookingStatusChange(savedBooking);
+        if (notificationService != null) {
+            notificationService.notifyBookingStatusChange(savedBooking);
+        }
         //createNotificationForStatus(savedBooking);
         // 4. If booking freed up (CANCELLED or REJECTED), notify next waitlisted user
-        if (newStatus == BookingStatus.CANCELLED || newStatus == BookingStatus.REJECTED) {
+        if ((newStatus == BookingStatus.CANCELLED || newStatus == BookingStatus.REJECTED) && waitlistService != null) {
             Long equipmentId = booking.getEquipment().getId();
             waitlistService.notifyNext(equipmentId);
         }

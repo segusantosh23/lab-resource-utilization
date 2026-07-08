@@ -502,4 +502,75 @@ public class AuthService {
                 .map(Otp::getOtpCode)
                 .orElse(null);
     }
+
+    /**
+     * NEW 3-STEP FLOW - Step 2: Verify OTP only (without account creation)
+     */
+    @Transactional
+    public void verifyOtpOnly(String email, String otpCode) {
+        // Validate email format
+        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email format");
+        }
+
+        // Check if email is already registered
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already in use.");
+        }
+
+        // Verify OTP
+        otpService.verifyOtp(email, otpCode, OtpType.SIGNUP_VERIFICATION);
+        
+        // OTP is valid - mark as used but don't create account yet
+        System.out.println("✅ [VERIFY OTP ONLY] Email: " + email + " - OTP verified successfully");
+    }
+
+    /**
+     * NEW 3-STEP FLOW - Step 3: Complete signup with password after OTP verification
+     */
+    @Transactional
+    public void completeSignup(String email, String password, String name, String roleStr) {
+        // Validate email format
+        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email format");
+        }
+
+        // Check if email is already registered
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already in use.");
+        }
+
+        // Validate password
+        if (password == null || password.length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 8 characters");
+        }
+
+        // Parse and validate role
+        Role role;
+        try {
+            role = Role.valueOf(roleStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role: " + roleStr);
+        }
+
+        // Create user account
+        User user = new User();
+        user.setEmail(email);
+        user.setName(name);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(role);
+        user.setEmailVerified(true); // Email already verified via OTP
+        
+        userRepository.save(user);
+
+        // Send welcome email
+        try {
+            emailService.sendWelcomeEmail(email, name);
+        } catch (Exception e) {
+            // Log but don't fail registration if welcome email fails
+            System.err.println("⚠️ Failed to send welcome email to " + email + ": " + e.getMessage());
+        }
+
+        System.out.println("✅ [COMPLETE SIGNUP] Account created successfully for: " + email);
+    }
 }

@@ -21,8 +21,8 @@ public class OtpService {
     @Autowired
     private OtpRepository otpRepository;
 
-    @Value("${app.otp.expiry-minutes}")
-    private int otpExpiryMinutes;
+    @Value("${app.otp.expiry-seconds}")
+    private int otpExpirySeconds;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -56,7 +56,7 @@ public class OtpService {
 
         // Generate and save new OTP
         String otpCode = generateOtpCode();
-        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(otpExpiryMinutes);
+        LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(otpExpirySeconds);
         
         Otp otp = new Otp(email, otpCode, type, expiresAt);
         return otpRepository.save(otp);

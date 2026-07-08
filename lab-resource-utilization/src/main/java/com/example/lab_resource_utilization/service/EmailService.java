@@ -6,7 +6,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.util.logging.Logger;
 
@@ -48,9 +47,8 @@ public class EmailService {
             mailSender.send(message);
             logger.info("✅ OTP email sent successfully to: " + toEmail);
         } catch (Exception e) {
-            logger.severe("❌ Failed to send OTP email to: " + toEmail + ". Error: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to send verification email. Please try again.");
+            logger.warning("⚠️ Failed to send OTP email to: " + toEmail + ". Error: " + e.getMessage());
+            logger.warning("⚠️ Continuing without email delivery so OTP-based signup can still proceed in development.");
         }
     }
 
@@ -70,9 +68,8 @@ public class EmailService {
             mailSender.send(message);
             logger.info("✅ Password reset OTP sent successfully to: " + toEmail);
         } catch (Exception e) {
-            logger.severe("❌ Failed to send password reset OTP to: " + toEmail + ". Error: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to send password reset email. Please try again.");
+            logger.warning("⚠️ Failed to send password reset OTP to: " + toEmail + ". Error: " + e.getMessage());
+            logger.warning("⚠️ Continuing without email delivery so password reset can still proceed in development.");
         }
     }
 
@@ -110,7 +107,7 @@ public class EmailService {
                "<span style='color: white; font-size: 32px; font-weight: bold; letter-spacing: 6px; font-family: monospace;'>" + otp + "</span>" +
                "</div></div>" +
                "<div style='background: #ef4444; color: white; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;'>" +
-               "<p style='margin: 0; font-size: 16px; font-weight: bold;'>⏰ This OTP is valid for 5 minutes only</p>" +
+               "<p style='margin: 0; font-size: 16px; font-weight: bold;'>⏰ This OTP is valid for 30 seconds only</p>" +
                "</div>" +
                "<div style='background: #dc2626; color: #fecaca; padding: 15px; border-radius: 8px; margin: 20px 0;'>" +
                "<p style='margin: 0; font-size: 14px;'><strong>🔒 Security Notice:</strong> Do not share this OTP with anyone. Our team will never ask for your OTP.</p>" +

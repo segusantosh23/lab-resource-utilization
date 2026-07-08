@@ -10,6 +10,8 @@ import com.example.lab_resource_utilization.dto.LoginRequest;
 import com.example.lab_resource_utilization.dto.RegisterRequest;
 import com.example.lab_resource_utilization.dto.SignupRequest;
 import com.example.lab_resource_utilization.dto.VerifyOtpRequest;
+import com.example.lab_resource_utilization.dto.VerifyOtpOnlyRequest;
+import com.example.lab_resource_utilization.dto.CompleteSignupRequest;
 import com.example.lab_resource_utilization.dto.ResendOtpRequest;
 import com.example.lab_resource_utilization.dto.ForgotPasswordRequest;
 import com.example.lab_resource_utilization.dto.ResetPasswordRequest;
@@ -111,8 +113,8 @@ public class AuthController {
         Map<String, Object> response = new HashMap<>();
         response.put("message", message);
         response.put("email", request.getEmail());
-        response.put("otp_for_testing", otpCode); // Direct from creation, no database query needed!
-        response.put("note", "⚠️ OTP shown for testing purposes only. In production, OTP will be sent via email.");
+        response.put("otp_for_testing", otpCode);
+        response.put("note", "⚠️ OTP shown for testing purposes only. In development, the code is returned directly when email delivery is unavailable.");
         
         System.out.println("✅ OTP added to response directly: " + otpCode);
         System.out.println("📤 Final Response: " + response);
@@ -180,8 +182,8 @@ public class AuthController {
         
         // Only include OTP if it was generated (user exists)
         if (!otpCode.isEmpty()) {
-            response.put("otp_for_testing", otpCode); // Direct from creation!
-            response.put("note", "⚠️ OTP shown for testing purposes only. In production, OTP will be sent via email.");
+            response.put("otp_for_testing", otpCode);
+            response.put("note", "⚠️ OTP shown for testing purposes only. In development, the code is returned directly when email delivery is unavailable.");
             System.out.println("✅ [FORGOT PASSWORD] OTP generated: " + otpCode + " for email: " + request.getEmail());
         } else {
             System.out.println("⚠️ [FORGOT PASSWORD] No OTP for email (user might not exist): " + request.getEmail());
@@ -223,6 +225,41 @@ public class AuthController {
             response.put("otp_for_testing", otpCode); // Direct from creation!
         }
         
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * NEW 3-STEP FLOW - Step 2: Verify OTP only (without account creation)
+     * POST /auth/verify-otp-only
+     * Body: { "email": "john@example.com", "otp": "123456" }
+     */
+    @PostMapping("/verify-otp-only")
+    public ResponseEntity<Map<String, String>> verifyOtpOnly(@Valid @RequestBody VerifyOtpOnlyRequest request) {
+        authService.verifyOtpOnly(request.getEmail(), request.getOtp());
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Email verified successfully");
+        response.put("email", request.getEmail());
+        
+        System.out.println("✅ [VERIFY OTP ONLY] Email: " + request.getEmail() + " - OTP verified");
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * NEW 3-STEP FLOW - Step 3: Complete signup with password after OTP verification
+     * POST /auth/signup/complete
+     * Body: { "email": "john@example.com", "password": "Pass@123", "name": "John", "role": "RESEARCHER" }
+     */
+    @PostMapping("/signup/complete")
+    public ResponseEntity<Map<String, String>> completeSignup(@Valid @RequestBody CompleteSignupRequest request) {
+        authService.completeSignup(request.getEmail(), request.getPassword(), request.getName(), request.getRole());
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Account created successfully");
+        response.put("email", request.getEmail());
+        response.put("name", request.getName());
+        
+        System.out.println("✅ [COMPLETE SIGNUP] Email: " + request.getEmail() + " - Account created");
         return ResponseEntity.ok(response);
     }
 }
