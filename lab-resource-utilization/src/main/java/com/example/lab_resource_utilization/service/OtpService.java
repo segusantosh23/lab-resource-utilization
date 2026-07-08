@@ -39,8 +39,8 @@ public class OtpService {
      */
     @Transactional
     public Otp createOtp(String email, OtpType type) {
-        // Check for recent OTP (prevent spam)
-        LocalDateTime cooldownTime = LocalDateTime.now().minusMinutes(1);
+        // Check for recent OTP (prevent spam) - 30 second cooldown
+        LocalDateTime cooldownTime = LocalDateTime.now().minusSeconds(30);
         if (otpRepository.existsRecentOtp(email, type, cooldownTime)) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, 
                 "Please wait before requesting a new OTP");
@@ -136,7 +136,7 @@ public class OtpService {
      * Check if an email is currently rate-limited
      */
     public boolean isRateLimited(String email, OtpType type) {
-        LocalDateTime cooldownTime = LocalDateTime.now().minusMinutes(1);
+        LocalDateTime cooldownTime = LocalDateTime.now().minusSeconds(30);
         LocalDateTime hourAgo = LocalDateTime.now().minusHours(1);
         
         boolean hasRecentOtp = otpRepository.existsRecentOtp(email, type, cooldownTime);
