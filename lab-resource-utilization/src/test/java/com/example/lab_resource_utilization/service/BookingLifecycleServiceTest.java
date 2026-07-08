@@ -5,9 +5,11 @@ import com.example.lab_resource_utilization.entity.*;
 import com.example.lab_resource_utilization.exception.InvalidBookingException;
 import com.example.lab_resource_utilization.repository.BookingRepository;
 import com.example.lab_resource_utilization.repository.UserRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,6 +25,9 @@ class BookingLifecycleServiceTest {
 
     @Mock
     private BookingRepository bookingRepository;
+
+    @Mock
+    private NotificationService notificationService;
 
     @Mock
     private UserRepository userRepository;
@@ -62,13 +67,17 @@ class BookingLifecycleServiceTest {
         when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
         when(userRepository.findByEmail(manager.getEmail())).thenReturn(Optional.of(manager));
         when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
-        
+
         BookingResponse mockResponse = new BookingResponse();
         mockResponse.setId(100L);
         mockResponse.setStatus(BookingStatus.CONFIRMED);
         when(bookingService.mapToResponse(any(Booking.class))).thenReturn(mockResponse);
 
-        BookingResponse response = bookingLifecycleService.updateBookingStatus(100L, BookingStatus.CONFIRMED, manager.getEmail());
+        // ✅ FIX: prevent null issue
+        doNothing().when(notificationService).notifyBookingStatusChange(any(Booking.class));
+
+        BookingResponse response = bookingLifecycleService.updateBookingStatus(
+                100L, BookingStatus.CONFIRMED, manager.getEmail());
 
         assertNotNull(response);
         assertEquals(BookingStatus.CONFIRMED, response.getStatus());
@@ -80,7 +89,8 @@ class BookingLifecycleServiceTest {
         when(userRepository.findByEmail(researcher.getEmail())).thenReturn(Optional.of(researcher));
 
         assertThrows(InvalidBookingException.class, () ->
-            bookingLifecycleService.updateBookingStatus(100L, BookingStatus.CONFIRMED, researcher.getEmail())
+                bookingLifecycleService.updateBookingStatus(
+                        100L, BookingStatus.CONFIRMED, researcher.getEmail())
         );
     }
 
@@ -95,7 +105,11 @@ class BookingLifecycleServiceTest {
         mockResponse.setStatus(BookingStatus.CANCELLED);
         when(bookingService.mapToResponse(any(Booking.class))).thenReturn(mockResponse);
 
-        BookingResponse response = bookingLifecycleService.updateBookingStatus(100L, BookingStatus.CANCELLED, researcher.getEmail());
+        // ✅ FIX: prevent null issue
+        doNothing().when(notificationService).notifyBookingStatusChange(any(Booking.class));
+
+        BookingResponse response = bookingLifecycleService.updateBookingStatus(
+                100L, BookingStatus.CANCELLED, researcher.getEmail());
 
         assertNotNull(response);
         assertEquals(BookingStatus.CANCELLED, response.getStatus());
@@ -104,12 +118,13 @@ class BookingLifecycleServiceTest {
     @Test
     void invalidTransition_ThrowsException() {
         booking.setStatus(BookingStatus.IN_USE);
+
         when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
         when(userRepository.findByEmail(manager.getEmail())).thenReturn(Optional.of(manager));
 
-        // IN_USE cannot transition to CONFIRMED
         assertThrows(InvalidBookingException.class, () ->
-            bookingLifecycleService.updateBookingStatus(100L, BookingStatus.CONFIRMED, manager.getEmail())
+                bookingLifecycleService.updateBookingStatus(
+                        100L, BookingStatus.CONFIRMED, manager.getEmail())
         );
     }
 }
