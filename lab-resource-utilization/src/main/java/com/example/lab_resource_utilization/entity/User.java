@@ -20,7 +20,15 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+    private Integer age;
 
+    private String gender;
+
+    private String phone;
+
+    private String department;
+
+    private String institution;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -120,7 +128,45 @@ public class User {
     public Role getRole() {
         return role;
     }
+    public Integer getAge() {
+        return age;
+    }
 
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public String getInstitution() {
+        return institution;
+    }
+
+    public void setInstitution(String institution) {
+        this.institution = institution;
+    }
     public void setRole(Role role) {
         this.role = role;
     }

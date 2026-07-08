@@ -256,23 +256,41 @@ const Navbar = () => {
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-[#1a1c23] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden z-50">
-              <div className="p-4 border-b border-white/[0.05]">
-                <p className="text-sm font-bold text-white truncate">{user.name}</p>
-                <p className="text-xs text-gray-400 truncate mt-0.5">{user.email}</p>
-                <div className="mt-2 inline-block px-2 py-1 bg-purple-500/10 border border-purple-500/20 rounded-md">
-                  <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">{user.role.replace('_', ' ')}</span>
-                </div>
-              </div>
-              <div className="p-2">
-                <button 
-                  onClick={handleLogout} 
-                  className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition duration-200"
+
+              <div className="absolute right-0 top-12 w-64 bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
+
+                <button
+                    onClick={() => {
+                      navigate("/profile");
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-white/5 text-white flex items-center gap-3"
                 >
-                  Log out
+                  👤
+                  <span>View Profile</span>
                 </button>
+
+                {/*<button*/}
+                {/*    onClick={() => {*/}
+                {/*      navigate("/notifications");*/}
+                {/*      setDropdownOpen(false);*/}
+                {/*    }}*/}
+                {/*    className="w-full text-left px-4 py-3 hover:bg-white/5 text-white flex items-center gap-3"*/}
+                {/*>*/}
+                {/*  🔔*/}
+                {/*  <span>Notifications</span>*/}
+                {/*</button>*/}
+
+                <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-3 hover:bg-red-500/10 text-red-400 flex items-center gap-3"
+                >
+                  🚪
+                  <span>Logout</span>
+                </button>
+
               </div>
-            </div>
+
           )}
         </div>
       </div>
