@@ -37,7 +37,7 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(toEmail);
-            helper.setSubject("Verify Your Email - " + appName + " OTP: " + otp);
+            helper.setSubject("Email Verification");
             try {
                 helper.setFrom(senderEmail, appName);
             } catch (java.io.UnsupportedEncodingException e) {
@@ -110,14 +110,9 @@ public class EmailService {
                "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px;'>" +
                "<h1 style='color: #a855f7; text-align: center;'>🔐 Email Verification</h1>" +
                "<p style='font-size: 16px; line-height: 1.6;'>Hi " + escapeHtml(userName) + "!</p>" +
-               "<p style='font-size: 16px; line-height: 1.6;'>Thanks for signing up for " + appName + "! Please verify your email with this OTP:</p>" +
-               "<div style='text-align: center; margin: 30px 0;'>" +
-               "<div style='display: inline-block; background: linear-gradient(135deg, #7c3aed, #a855f7); padding: 20px 40px; border-radius: 12px;'>" +
-               "<div style='color: white; font-size: 36px; font-weight: bold; letter-spacing: 8px; font-family: monospace;'>" + otp + "</div>" +
-               "</div></div>" +
-               "<p style='background: #991b1b; color: #fca5a5; padding: 15px; border-radius: 8px; text-align: center;'>" +
-               "⏰ This OTP is valid for only 1 minute!</p>" +
-               "<p style='font-size: 14px; color: #cbd5e1;'>If you didn't request this, please ignore this email.</p>" +
+               "<p style='font-size: 18px; line-height: 1.8; margin: 30px 0;'>Your OTP is: <strong style='color: #a855f7; font-size: 24px; letter-spacing: 4px; font-family: monospace;'>" + otp + "</strong></p>" +
+               "<p style='font-size: 16px; line-height: 1.8; margin: 20px 0;'>This OTP is valid for <strong>5 minutes</strong>.</p>" +
+               "<p style='font-size: 16px; line-height: 1.8; color: #fca5a5; margin: 20px 0;'><strong>Do not share this OTP with anyone.</strong></p>" +
                "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
                "<p style='font-size: 12px; color: #64748b; text-align: center;'>" +
                "Copyright 2024 " + appName + " | <a href='mailto:" + supportEmail + "' style='color: #a855f7;'>" + supportEmail + "</a>" +
