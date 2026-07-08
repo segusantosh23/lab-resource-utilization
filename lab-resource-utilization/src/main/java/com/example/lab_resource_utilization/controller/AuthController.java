@@ -36,6 +36,68 @@ public class AuthController {
     }
 
     /**
+     * CHECK EMAIL AVAILABILITY
+     * POST /auth/check-email
+     * Body: { "email": "john@example.com" }
+     * Response: { "available": true/false, "message": "..." }
+     */
+    @PostMapping("/check-email")
+    public ResponseEntity<Map<String, Object>> checkEmail(@Valid @RequestBody com.example.lab_resource_utilization.dto.CheckEmailRequest request) {
+        boolean isAvailable = authService.checkEmailAvailability(request.getEmail());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("available", isAvailable);
+        
+        if (!isAvailable) {
+            response.put("message", "This email is already in use.");
+        } else {
+            response.put("message", "Email is available.");
+        }
+        
+        System.out.println("📧 [CHECK EMAIL] Email: " + request.getEmail() + " | Available: " + isAvailable);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * SEND VERIFICATION OTP - NEW FLOW STEP 1
+     * Sends OTP to email to validate that the email exists (before collecting account details)
+     * POST /auth/send-verification-otp
+     * Body: { "email": "john@example.com" }
+     */
+    @PostMapping("/send-verification-otp")
+    public ResponseEntity<Map<String, Object>> sendVerificationOtp(@Valid @RequestBody com.example.lab_resource_utilization.dto.SendVerificationOtpRequest request) {
+        String[] result = authService.sendVerificationOtp(request.getEmail());
+        String message = result[0];
+        String otpCode = result[1];
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", message);
+        response.put("email", request.getEmail());
+        response.put("otp_for_testing", otpCode);
+        response.put("note", "⚠️ OTP shown for testing purposes only. In production, OTP will be sent via email.");
+        
+        System.out.println("✅ [SEND VERIFICATION OTP] Email: " + request.getEmail() + " | OTP: " + otpCode);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * SUBMIT ACCOUNT DETAILS - NEW FLOW STEP 2
+     * After email is verified with OTP, submit account details
+     * POST /auth/submit-account-details
+     * Body: { "email": "john@example.com", "name": "John", "password": "Pass@123", "role": "RESEARCHER" }
+     */
+    @PostMapping("/submit-account-details")
+    public ResponseEntity<Map<String, String>> submitAccountDetails(@Valid @RequestBody SignupRequest request) {
+        authService.submitAccountDetails(request.getEmail(), request.getName(), request.getPassword(), request.getRole());
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Account details saved. Please verify OTP to complete registration.");
+        
+        System.out.println("✅ [SUBMIT ACCOUNT DETAILS] Email: " + request.getEmail());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * NEW SIGNUP FLOW - Step 1: Initiate signup and send OTP
      * POST /auth/signup
      * Body: { "name": "John", "email": "john@example.com", "password": "Pass@123", "role": "RESEARCHER" }

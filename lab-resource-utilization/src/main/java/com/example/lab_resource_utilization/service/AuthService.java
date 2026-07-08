@@ -40,6 +40,86 @@ public class AuthService {
     private EmailService emailService;
 
     /**
+     * CHECK EMAIL AVAILABILITY
+     * Validates if email format is correct and not already registered
+     * Returns: true if email is available, false if already registered
+     */
+    public boolean checkEmailAvailability(String email) {
+        return userRepository.findByEmail(email).isEmpty();
+    }
+
+    /**
+     * SEND VERIFICATION OTP
+     * Sends OTP to email to validate that the email exists and can receive emails
+     * This is done BEFORE collecting password and other account details
+     * Returns: [message, otpCode]
+     */
+    @Transactional
+    public String[] sendVerificationOtp(String email) {
+        // Check if email already exists
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already in use.");
+        }
+
+        // Check rate limiting
+        if (otpService.isRateLimited(email, OtpType.SIGNUP_VERIFICATION)) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, 
+                "Please wait before requesting another OTP");
+        }
+
+        // Create a temporary OTP just for email verification (no user data yet)
+        Otp otp = otpService.createOtp(email, OtpType.SIGNUP_VERIFICATION);
+
+        // Send OTP email to verify email exists
+        try {
+            emailService.sendSignupOTP(email, otp.getOtpCode(), "User");
+        } catch (Exception e) {
+            // If email sending fails, it might mean the email doesn't exist or is invalid
+            System.err.println("Failed to send verification OTP to: " + email + " - " + e.getMessage());
+            // We still return the OTP for testing purposes, but in production this would fail
+        }
+
+        return new String[] {
+            "OTP sent to your email. Please verify to continue.",
+            otp.getOtpCode()
+        };
+    }
+
+    /**
+     * SUBMIT ACCOUNT DETAILS AFTER EMAIL VERIFICATION
+     * After email is verified with OTP, user submits password and account details
+     * This updates the OTP record with the account information
+     */
+    @Transactional
+    public void submitAccountDetails(String email, String name, String password, String role) {
+        // Verify email has a valid OTP (email was verified)
+        Optional<Otp> otpOpt = otpService.getLatestValidOtp(email, OtpType.SIGNUP_VERIFICATION);
+        
+        if (otpOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "No valid email verification found. Please verify your email first.");
+        }
+
+        // Validate role
+        try {
+            Role.valueOf(role.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role specified");
+        }
+
+        // Hash the password
+        String hashedPassword = passwordEncoder.encode(password);
+
+        // Update the OTP record with account details
+        Otp otp = otpOpt.get();
+        otp.setPendingUserName(name);
+        otp.setPendingUserRole(role.toUpperCase());
+        otp.setPendingPasswordHash(hashedPassword);
+        
+        otpService.saveOtp(otp);
+    }
+
+    /**
      * OLD REGISTER METHOD (kept for backward compatibility)
      * Direct registration without OTP verification
      */

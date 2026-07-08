@@ -108,6 +108,14 @@ public class OtpService {
     }
 
     /**
+     * Save/update an OTP record
+     */
+    @Transactional
+    public Otp saveOtp(Otp otp) {
+        return otpRepository.save(otp);
+    }
+
+    /**
      * Clean up expired OTPs and completed verification data
      */
     @Transactional
