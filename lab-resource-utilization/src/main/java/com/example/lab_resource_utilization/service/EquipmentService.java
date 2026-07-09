@@ -52,6 +52,7 @@ public class EquipmentService {
         equipment.setStatus(request.getStatus());
     }
 
+
     // Add Equipment
     public EquipmentResponse addEquipment(EquipmentRequest request) {
         Equipment equipment = new Equipment();

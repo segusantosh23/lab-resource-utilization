@@ -10,6 +10,8 @@ export const getEquipmentById = async (id) => {
     return response.data;
 };
 
+
+
 export const createEquipment = async (data) => {
     const response = await api.post('/equipment', data);
     return response.data;

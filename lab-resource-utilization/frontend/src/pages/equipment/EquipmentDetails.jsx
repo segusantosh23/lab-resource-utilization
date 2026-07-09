@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from "react-router-dom";
 import api from '../../services/api';
 
 const EquipmentDetails = () => {
@@ -124,8 +124,11 @@ const EquipmentDetails = () => {
           {/* Action Bar */}
           <div className="bg-[#161720] border-t border-white/[0.05] p-6 flex items-center justify-between">
             <p className="text-sm text-gray-500">To edit this item, return to the inventory list.</p>
-            <button onClick={() => navigate('/equipment')} className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg transition shadow-lg shadow-purple-500/20">
-              View All Equipment
+            <button
+                onClick={() => navigate(-1)}
+                className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 transition shadow-lg shadow-purple-500/20 font-medium"
+            >
+              ← Back
             </button>
           </div>
           
