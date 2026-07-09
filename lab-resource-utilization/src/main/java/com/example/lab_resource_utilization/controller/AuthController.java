@@ -244,7 +244,7 @@ public ResponseEntity<?> verifySignupOtp(@Valid @RequestBody VerifyOtpRequest re
      */
     @PostMapping("/signup/complete")
     public ResponseEntity<Map<String, String>> completeSignup(@Valid @RequestBody CompleteSignupRequest request) {
-        authService.completeSignup(request.getEmail(), request.getPassword(), request.getName(), request.getRole());
+        authService.completeSignup(request);
         
         Map<String, String> response = new HashMap<>();
         response.put("message", "Account created successfully");

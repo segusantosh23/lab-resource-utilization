@@ -75,32 +75,27 @@ public class OtpService {
      * Verify OTP code
      */
     @Transactional
-    public Optional<Otp> verifyOtp(String email, String enteredOtp, OtpType type) {
-        Optional<Otp> otpOpt =
-            otpRepository.findTopByEmailAndOtpCodeAndTypeOrderByCreatedAtDesc(
-                email,
-                enteredOtp,
-                type
-            );
+    public Otp verifyOtp(String email, String enteredOtp, OtpType type) {
+        Optional<Otp> latestOtpOpt = getLatestValidOtp(email, type);
 
-        if (otpOpt.isEmpty()) {
-            return Optional.empty();
+        if (latestOtpOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No active OTP found. Please request a new one.");
         }
 
-        Otp otp = otpOpt.get();
+        Otp otp = latestOtpOpt.get();
 
         if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
-            return Optional.empty();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OTP has expired.");
         }
 
-        if (otp.isUsed()) {
-            return Optional.empty();
+        if (!otp.getOtpCode().equals(enteredOtp)) {
+            otp.setAttemptCount(otp.getAttemptCount() + 1);
+            otpRepository.save(otp);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP.");
         }
 
         otp.setUsed(true);
-        otpRepository.save(otp);
-
-        return Optional.of(otp);
+        return otpRepository.save(otp);
     }
 
     /**

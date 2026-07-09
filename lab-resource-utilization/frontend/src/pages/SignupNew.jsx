@@ -14,7 +14,14 @@ const SignupNew = () => {
   const [displayOtp, setDisplayOtp] = useState(''); // For testing
   const [countdown, setCountdown] = useState(0);
   
-  // Step 3: Password
+  // Step 3: Password & Profile
+  const [fullName, setFullName] = useState('');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
+  const [phone, setPhone] = useState('');
+  const [department, setDepartment] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [role, setRole] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
@@ -175,8 +182,13 @@ const SignupNew = () => {
       const response = await api.post('/auth/signup/complete', {
         email: email,
         password: password,
-        name: email.split('@')[0], // Use email username as default name
-        role: 'RESEARCHER'
+        name: fullName || email.split('@')[0], 
+        age: age ? parseInt(age) : null,
+        gender: gender,
+        phone: phone,
+        department: department,
+        institution: institution,
+        role: role
       });
 
       setSuccess('Account created successfully! Redirecting to login...');
@@ -211,13 +223,16 @@ const SignupNew = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f0f23] via-[#1a0033] to-[#0f0f23] text-white p-4 md:p-12 font-sans flex items-center justify-center">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#0d0e12] px-4 md:p-12 relative overflow-hidden font-sans text-white">
+      {/* Background Neon Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-purple-900/20 blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-violet-900/20 blur-[120px] pointer-events-none"></div>
+      <div className={`w-full relative z-10 transition-all duration-500 ${step === 'password' ? 'max-w-2xl' : 'max-w-md'}`}>
         
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold tracking-tight mb-2">
-            <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
               Lab Resource
             </span>
           </h1>
@@ -225,7 +240,7 @@ const SignupNew = () => {
         </div>
 
         {/* Card */}
-        <div className="bg-[#12131a] border border-white/[0.08] rounded-2xl p-8 shadow-2xl">
+        <div className="bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-2xl p-8 shadow-2xl transition-all duration-300 hover:border-purple-500/30">
           
           {/* Step Indicator */}
           <div className="flex gap-2 mb-8">
@@ -279,7 +294,7 @@ const SignupNew = () => {
               <button
                 type="submit"
                 disabled={loading || !email}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300 shadow-lg shadow-purple-500/20 active:scale-[0.98] disabled:opacity-50 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -331,7 +346,7 @@ const SignupNew = () => {
               <button
                 type="submit"
                 disabled={loading || otp.length !== 6}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300 shadow-lg shadow-purple-500/20 active:scale-[0.98] disabled:opacity-50 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -371,43 +386,128 @@ const SignupNew = () => {
                 <p className="text-xs mt-1">✓ Email verified</p>
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setError('');
-                  }}
-                  placeholder="Enter password"
-                  required
-                  className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Min 8 chars, uppercase, lowercase, number, special character
-                </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter full name"
+                    required
+                    className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Age</label>
+                  <input
+                    type="number"
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    placeholder="Enter age"
+                    className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Gender</label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white transition"
+                  >
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Enter phone number"
+                    className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Department</label>
+                  <input
+                    type="text"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    placeholder="Enter department"
+                    className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Institution</label>
+                  <input
+                    type="text"
+                    value={institution}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    placeholder="Enter institution"
+                    className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-gray-400 mb-2">Role</label>
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    required
+                    className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white transition"
+                  >
+                    <option value="" disabled>Select Role</option>
+                    <option value="RESEARCHER">Researcher</option>
+                    <option value="LAB_TECHNICIAN">Lab Technician</option>
+                    <option value="LAB_MANAGER">Lab Manager</option>
+                    <option value="DEPARTMENT_HEAD">Department Head</option>
+                    <option value="INSTITUTION_ADMIN">Institution Admin</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Confirm Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    setError('');
-                  }}
-                  placeholder="Confirm password"
-                  required
-                  className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setError('');
+                    }}
+                    placeholder="Enter password"
+                    required
+                    className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Min 8 chars, upper, lower, number, special char
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Confirm Password</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      setError('');
+                    }}
+                    placeholder="Confirm password"
+                    required
+                    className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
-                disabled={loading || !password || !confirmPassword || password !== confirmPassword}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                disabled={loading || !password || !confirmPassword || password !== confirmPassword || !role}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300 shadow-lg shadow-purple-500/20 active:scale-[0.98] disabled:opacity-50 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

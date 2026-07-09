@@ -214,18 +214,11 @@ public class AuthService {
         }
 
         // Verify OTP
-        Optional<Otp> otpOpt = otpService.verifyOtp(
+        Otp otp = otpService.verifyOtp(
             request.getEmail(), 
             request.getOtp(), 
             OtpType.SIGNUP_VERIFICATION
         );
-
-        if (otpOpt.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "Invalid or expired OTP. Please request a new one.");
-        }
-
-        Otp otp = otpOpt.get();
 
         // Create user from OTP data
         User user = new User();
@@ -408,11 +401,7 @@ public class AuthService {
         User user = userOpt.get();
 
         // Verify OTP
-        Optional<Otp> otpOpt = otpService.verifyOtp(email, otp, OtpType.PASSWORD_RESET);
-        if (otpOpt.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "Invalid or expired OTP. Please request a new one.");
-        }
+        otpService.verifyOtp(email, otp, OtpType.PASSWORD_RESET);
 
         // Update password
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -509,18 +498,11 @@ public class AuthService {
     @Transactional
     public void verifyOtpOnly(String email, String otpCode) {
 
-        Optional<Otp> otpOpt = otpService.verifyOtp(
+        otpService.verifyOtp(
             email,
             otpCode,
             OtpType.SIGNUP_VERIFICATION
         );
-
-        if (otpOpt.isEmpty()) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Invalid or expired OTP"
-            );
-        }
 
         // ✅ Nothing else needed
         // OTP is already marked as USED inside verifyOtp()
@@ -528,7 +510,11 @@ public class AuthService {
      /* NEW 3-STEP FLOW - Step 3: Complete signup with password after OTP verification
      */
     @Transactional
-    public void completeSignup(String email, String password, String name, String roleStr) {
+    public void completeSignup(com.example.lab_resource_utilization.dto.CompleteSignupRequest request) {
+        String email = request.getEmail();
+        String password = request.getPassword();
+        String name = request.getName();
+        String roleStr = request.getRole();
         // Validate email format
         if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email format");
@@ -559,6 +545,11 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(role);
         user.setEmailVerified(true); // Email already verified via OTP
+        user.setAge(request.getAge());
+        user.setGender(request.getGender());
+        user.setPhone(request.getPhone());
+        user.setDepartment(request.getDepartment());
+        user.setInstitution(request.getInstitution());
         
         userRepository.save(user);
 

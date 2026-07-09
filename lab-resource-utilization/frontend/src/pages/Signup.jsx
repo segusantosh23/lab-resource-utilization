@@ -223,13 +223,16 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f0f23] via-[#1a0033] to-[#0f0f23] text-white p-4 md:p-12 font-sans flex items-center justify-center">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#0d0e12] px-4 md:p-12 relative overflow-hidden font-sans text-white">
+      {/* Background Neon Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-purple-900/20 blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-violet-900/20 blur-[120px] pointer-events-none"></div>
+      <div className="w-full max-w-md relative z-10">
         
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold tracking-tight mb-2">
-            <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
               Lab Resource
             </span>
           </h1>
@@ -237,7 +240,7 @@ const Signup = () => {
         </div>
 
         {/* Card */}
-        <div className="bg-[#12131a] border border-white/[0.08] rounded-2xl p-8 shadow-2xl">
+        <div className="bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-2xl p-8 shadow-2xl transition-all duration-300 hover:border-purple-500/30">
           
           {/* Step Indicator */}
           <div className="flex gap-2 mb-8">
@@ -291,7 +294,7 @@ const Signup = () => {
               <button
                 type="submit"
                 disabled={loading || !email}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300 shadow-lg shadow-purple-500/20 active:scale-[0.98] disabled:opacity-50 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -339,7 +342,7 @@ const Signup = () => {
               <button
                 type="submit"
                 disabled={loading || emailOtp.length !== 6}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300 shadow-lg shadow-purple-500/20 active:scale-[0.98] disabled:opacity-50 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -425,7 +428,7 @@ const Signup = () => {
               <button
                 type="submit"
                 disabled={loading || !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/.test(formData.password)}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300 shadow-lg shadow-purple-500/20 active:scale-[0.98] disabled:opacity-50 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
