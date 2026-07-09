@@ -13,9 +13,7 @@ public class EquipmentRequest {
     @NotBlank(message = "Equipment name is required")
     private String name;
 
-    @NotBlank(message = "Category is required")
-    private String category;
-
+    // Category field removed - not in database
     private String description;
 
     private String manufacturer;

@@ -24,7 +24,7 @@ public class EquipmentService {
         EquipmentResponse response = new EquipmentResponse();
         response.setId(equipment.getId());
         response.setName(equipment.getName());
-        response.setCategory(equipment.getCategory());
+        // response.setCategory(equipment.getCategory()); // Removed - category not in entity
         response.setDescription(equipment.getDescription());
         response.setManufacturer(equipment.getManufacturer());
         response.setModelNumber(equipment.getModelNumber());
@@ -40,7 +40,7 @@ public class EquipmentService {
     // Map Request DTO -> Entity (for create and update)
     private void mapToEntity(EquipmentRequest request, Equipment equipment) {
         equipment.setName(request.getName());
-        equipment.setCategory(request.getCategory());
+        // equipment.setCategory(request.getCategory()); // Removed - category not in entity
         equipment.setDescription(request.getDescription());
         equipment.setManufacturer(request.getManufacturer());
         equipment.setModelNumber(request.getModelNumber());

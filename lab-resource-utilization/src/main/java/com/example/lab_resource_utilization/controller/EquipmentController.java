@@ -32,7 +32,6 @@ public class EquipmentController {
 
     // Get All Equipment — 200 OK
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<EquipmentResponse>> getAll() {
         List<EquipmentResponse> equipment = service.getAllEquipment();
         return ResponseEntity.ok(equipment);
@@ -40,7 +39,6 @@ public class EquipmentController {
 
     // Get Equipment By ID — 200 OK
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<EquipmentResponse> getById(@PathVariable Long id) {
         EquipmentResponse response = service.getEquipmentById(id);
         return ResponseEntity.ok(response);
