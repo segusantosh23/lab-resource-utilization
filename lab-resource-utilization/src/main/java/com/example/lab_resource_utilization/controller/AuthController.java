@@ -75,8 +75,6 @@ public class AuthController {
         Map<String, Object> response = new HashMap<>();
         response.put("message", message);
         response.put("email", request.getEmail());
-        response.put("otp_for_testing", otpCode);
-        response.put("note", "⚠️ OTP shown for testing purposes only. In production, OTP will be sent via email.");
         
         System.out.println("✅ [SEND VERIFICATION OTP] Email: " + request.getEmail() + " | OTP: " + otpCode);
         return ResponseEntity.ok(response);
@@ -113,8 +111,6 @@ public class AuthController {
         Map<String, Object> response = new HashMap<>();
         response.put("message", message);
         response.put("email", request.getEmail());
-        response.put("otp_for_testing", otpCode);
-        response.put("note", "⚠️ OTP shown for testing purposes only. In development, the code is returned directly when email delivery is unavailable.");
         
         System.out.println("✅ OTP added to response directly: " + otpCode);
         System.out.println("📤 Final Response: " + response);
@@ -126,12 +122,11 @@ public class AuthController {
      * POST /auth/signup/verify
      * Body: { "email": "john@example.com", "otp": "123456" }
      */
-    @PostMapping("/signup/verify")
-    public ResponseEntity<LoginResponse> verifySignupOtp(@Valid @RequestBody VerifyOtpRequest request) {
-        LoginResponse response = authService.verifySignupOtp(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
+@PostMapping("/signup/verify")
+public ResponseEntity<?> verifySignupOtp(@Valid @RequestBody VerifyOtpRequest request) {
+    LoginResponse response = authService.verifySignupOtp(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+}
     /**
      * Resend OTP for signup verification
      * POST /auth/signup/resend
@@ -145,7 +140,7 @@ public class AuthController {
         
         Map<String, Object> response = new HashMap<>();
         response.put("message", message);
-        response.put("otp_for_testing", otpCode); // Direct from creation!
+    
         
         return ResponseEntity.ok(response);
     }
@@ -182,8 +177,8 @@ public class AuthController {
         
         // Only include OTP if it was generated (user exists)
         if (!otpCode.isEmpty()) {
-            response.put("otp_for_testing", otpCode);
-            response.put("note", "⚠️ OTP shown for testing purposes only. In development, the code is returned directly when email delivery is unavailable.");
+           
+            
             System.out.println("✅ [FORGOT PASSWORD] OTP generated: " + otpCode + " for email: " + request.getEmail());
         } else {
             System.out.println("⚠️ [FORGOT PASSWORD] No OTP for email (user might not exist): " + request.getEmail());
@@ -219,12 +214,6 @@ public class AuthController {
         
         Map<String, Object> response = new HashMap<>();
         response.put("message", message);
-        
-        // Only include OTP if it was generated
-        if (!otpCode.isEmpty()) {
-            response.put("otp_for_testing", otpCode); // Direct from creation!
-        }
-        
         return ResponseEntity.ok(response);
     }
 
@@ -234,16 +223,19 @@ public class AuthController {
      * Body: { "email": "john@example.com", "otp": "123456" }
      */
     @PostMapping("/verify-otp-only")
+    
     public ResponseEntity<Map<String, String>> verifyOtpOnly(@Valid @RequestBody VerifyOtpOnlyRequest request) {
+        // This method will throw exception automatically if OTP is wrong
         authService.verifyOtpOnly(request.getEmail(), request.getOtp());
-        
+
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Email verified successfully");
         response.put("email", request.getEmail());
-        
-        System.out.println("✅ [VERIFY OTP ONLY] Email: " + request.getEmail() + " - OTP verified");
+        response.put("message", "Email verified successfully");
+
         return ResponseEntity.ok(response);
+
     }
+
 
     /**
      * NEW 3-STEP FLOW - Step 3: Complete signup with password after OTP verification

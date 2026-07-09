@@ -459,7 +459,7 @@ public class AuthService {
             emailService.sendPasswordResetOTP(email, newOtp.getOtpCode(), user.getName());
 
             return new String[] {
-                "New password reset OTP sent to your email.",
+                "Password reset OTP sent to your email. Please verify within 1 minute.",
                 newOtp.getOtpCode()
             };
         } catch (ResponseStatusException e) {
@@ -508,25 +508,24 @@ public class AuthService {
      */
     @Transactional
     public void verifyOtpOnly(String email, String otpCode) {
-        // Validate email format
-        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email format");
+
+        Optional<Otp> otpOpt = otpService.verifyOtp(
+            email,
+            otpCode,
+            OtpType.SIGNUP_VERIFICATION
+        );
+
+        if (otpOpt.isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Invalid or expired OTP"
+            );
         }
 
-        // Check if email is already registered
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already in use.");
-        }
-
-        // Verify OTP
-        otpService.verifyOtp(email, otpCode, OtpType.SIGNUP_VERIFICATION);
-        
-        // OTP is valid - mark as used but don't create account yet
-        System.out.println("✅ [VERIFY OTP ONLY] Email: " + email + " - OTP verified successfully");
+        // ✅ Nothing else needed
+        // OTP is already marked as USED inside verifyOtp()
     }
-
-    /**
-     * NEW 3-STEP FLOW - Step 3: Complete signup with password after OTP verification
+     /* NEW 3-STEP FLOW - Step 3: Complete signup with password after OTP verification
      */
     @Transactional
     public void completeSignup(String email, String password, String name, String roleStr) {

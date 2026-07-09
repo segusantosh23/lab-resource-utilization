@@ -30,7 +30,7 @@ public class OtpService {
      * Generate a 6-digit OTP
      */
     private String generateOtpCode() {
-        int otp = 100000 + secureRandom.nextInt(900000); // 6-digit number
+        int otp = 100000 + secureRandom.nextInt(900000);
         return String.valueOf(otp);
     }
 
@@ -39,25 +39,22 @@ public class OtpService {
      */
     @Transactional
     public Otp createOtp(String email, OtpType type) {
-        // Check for recent OTP (prevent spam) - 30 second cooldown
         LocalDateTime cooldownTime = LocalDateTime.now().minusSeconds(30);
         if (otpRepository.existsRecentOtp(email, type, cooldownTime)) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, 
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
                 "Please wait before requesting a new OTP");
         }
 
-        // Check for failed attempts (security measure)
         LocalDateTime hourAgo = LocalDateTime.now().minusHours(1);
         long failedAttempts = otpRepository.countFailedAttempts(email, type, hourAgo);
         if (failedAttempts >= 3) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, 
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
                 "Too many failed attempts. Please try again later");
         }
 
-        // Generate and save new OTP
         String otpCode = generateOtpCode();
         LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(otpExpirySeconds);
-        
+
         Otp otp = new Otp(email, otpCode, type, expiresAt);
         return otpRepository.save(otp);
     }
@@ -78,25 +75,31 @@ public class OtpService {
      * Verify OTP code
      */
     @Transactional
-    public Optional<Otp> verifyOtp(String email, String otpCode, OtpType type) {
-        Optional<Otp> otpOpt = otpRepository.findByEmailAndOtpCodeAndTypeAndUsedFalse(email, otpCode, type);
-        
+    public Optional<Otp> verifyOtp(String email, String enteredOtp, OtpType type) {
+        Optional<Otp> otpOpt =
+            otpRepository.findTopByEmailAndOtpCodeAndTypeOrderByCreatedAtDesc(
+                email,
+                enteredOtp,
+                type
+            );
+
         if (otpOpt.isEmpty()) {
             return Optional.empty();
         }
 
         Otp otp = otpOpt.get();
-        otp.incrementAttempt();
 
-        if (!otp.isValid()) {
-            otpRepository.save(otp);
+        if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
             return Optional.empty();
         }
 
-        // Mark as used and save
-        otp.markAsUsed();
+        if (otp.isUsed()) {
+            return Optional.empty();
+        }
+
+        otp.setUsed(true);
         otpRepository.save(otp);
-        
+
         return Optional.of(otp);
     }
 
@@ -104,7 +107,7 @@ public class OtpService {
      * Get the latest valid OTP for an email and type
      */
     public Optional<Otp> getLatestValidOtp(String email, OtpType type) {
-        return otpRepository.findLatestValidOtp(email, type);
+        return otpRepository.findTopByEmailAndTypeAndUsedFalseOrderByCreatedAtDesc(email, type);
     }
 
     /**
@@ -126,7 +129,7 @@ public class OtpService {
     /**
      * Scheduled cleanup of expired OTPs (runs every 10 minutes)
      */
-    @Scheduled(fixedRate = 600000) // 10 minutes
+    @Scheduled(fixedRate = 600000)
     @Transactional
     public void cleanupExpiredOtps() {
         otpRepository.deleteExpiredOtps(LocalDateTime.now());
@@ -138,10 +141,10 @@ public class OtpService {
     public boolean isRateLimited(String email, OtpType type) {
         LocalDateTime cooldownTime = LocalDateTime.now().minusSeconds(30);
         LocalDateTime hourAgo = LocalDateTime.now().minusHours(1);
-        
+
         boolean hasRecentOtp = otpRepository.existsRecentOtp(email, type, cooldownTime);
         long failedAttempts = otpRepository.countFailedAttempts(email, type, hourAgo);
-        
+
         return hasRecentOtp || failedAttempts >= 3;
     }
 }
