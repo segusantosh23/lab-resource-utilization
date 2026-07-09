@@ -281,7 +281,7 @@ const ResearcherDashboard = () => {
 
               <div
                   onClick={() => navigate("/researcher/equipment")}
-                  className="md:col-span-1 h-full bg-[#12131a] border border-white/[0.05] rounded-2xl p-8 shadow-xl hover:border-purple-500/30 hover:-translate-y-1 transition cursor-pointer flex flex-col justify-between"
+                  className="md:col-span-1 h-full bg-[#12131a] border border-white/[0.05] rounded-2xl p-6 shadow-xl hover:border-purple-500/30 hover:-translate-y-1 transition cursor-pointer flex flex-col justify-between"
               >
 
                   <div className="flex justify-between items-start">
@@ -304,8 +304,8 @@ const ResearcherDashboard = () => {
 
                   </div>
 
-                  <div className="flex-1 flex flex-col justify-center mt-8">
-                      <div className="grid grid-cols-2 gap-y-10 gap-x-4">
+                  <div className="flex-1 flex flex-col justify-center mt-4">
+                      <div className="grid grid-cols-2 gap-y-6 gap-x-4">
                           <div>
                               <p className="text-gray-500 text-sm lg:text-base">Total</p>
                               <h2 className="text-3xl lg:text-4xl font-bold mt-2">{totalEquipment}</h2>

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Async;
 
 import jakarta.mail.internet.MimeMessage;
 import java.util.logging.Logger;
@@ -29,6 +30,7 @@ public class EmailService {
     @Value("${app.support-email}")
     private String supportEmail;
 
+    @Async
     public void sendSignupOTP(String toEmail, String otp, String userName) {
         logger.info("📧 [OTP GENERATED] Email: " + toEmail + " | OTP: " + otp + " | User: " + userName);
         try {
@@ -52,6 +54,7 @@ public class EmailService {
         }
     }
 
+    @Async
     public void sendPasswordResetOTP(String toEmail, String otp, String userName) {
         logger.info("🔐 [PASSWORD RESET OTP] Email: " + toEmail + " | OTP: " + otp + " | User: " + userName);
         try {
@@ -73,6 +76,7 @@ public class EmailService {
         }
     }
 
+    @Async
     public void sendWelcomeEmail(String toEmail, String userName) {
         logger.info("🎉 [WELCOME EMAIL] Sent to: " + toEmail);
         try {
