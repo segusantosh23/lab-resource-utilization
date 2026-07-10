@@ -218,6 +218,19 @@ public ResponseEntity<?> verifySignupOtp(@Valid @RequestBody VerifyOtpRequest re
     }
 
     /**
+     * FORGOT PASSWORD FLOW - Verify OTP before allowing password reset
+     * POST /auth/forgot-password/verify
+     * Body: { "email": "john@example.com", "otp": "123456" }
+     */
+    @PostMapping("/forgot-password/verify")
+    public ResponseEntity<Map<String, String>> verifyForgotPasswordOtp(@Valid @RequestBody VerifyOtpOnlyRequest request) {
+        authService.checkPasswordResetOtp(request.getEmail(), request.getOtp());
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "OTP verified successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * NEW 3-STEP FLOW - Step 2: Verify OTP only (without account creation)
      * POST /auth/verify-otp-only
      * Body: { "email": "john@example.com", "otp": "123456" }

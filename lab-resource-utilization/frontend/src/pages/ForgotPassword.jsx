@@ -21,6 +21,14 @@ const ForgotPassword = () => {
   const [success, setSuccess] = useState('');
   const [otpTimer, setOtpTimer] = useState(0);
   const [canResend, setCanResend] = useState(false);
+  const [otpExpiryTimer, setOtpExpiryTimer] = useState(0);
+
+  useEffect(() => {
+    if (otpExpiryTimer > 0) {
+      const timer = setTimeout(() => setOtpExpiryTimer(otpExpiryTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpExpiryTimer]);
 
   // Step 1: Request password reset OTP
   const handleRequestReset = async (e) => {
@@ -49,6 +57,7 @@ const ForgotPassword = () => {
       // Start 60 second timer
       setOtpTimer(60);
       setCanResend(false);
+      setOtpExpiryTimer(300);
       const timer = setInterval(() => {
         setOtpTimer(prev => {
           if (prev <= 1) {
@@ -106,10 +115,23 @@ const ForgotPassword = () => {
       return;
     }
 
-    // In real scenario, we would verify OTP first, but for now move to reset step
-    setStep('reset');
-    setSuccess('OTP verified! Now enter your new password.');
-    setLoading(false);
+    try {
+      await api.post('/auth/forgot-password/verify', { email, otp });
+      setStep('reset');
+      setSuccess('OTP verified! Now enter your new password.');
+    } catch (err) {
+      let msg = err.response?.data?.message || 'Invalid OTP. Please try again.';
+      if (msg.includes('Invalid OTP')) {
+        msg = 'Invalid OTP';
+      } else if (msg.includes('expired')) {
+        msg = 'OTP has expired';
+      } else if (msg.includes('400 BAD_REQUEST')) {
+        msg = msg.replace('400 BAD_REQUEST "', '').replace('"', '').trim();
+      }
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Step 3: Reset password
@@ -174,6 +196,7 @@ const ForgotPassword = () => {
       setOtp(''); // Clear old OTP input
       setOtpTimer(60);
       setCanResend(false);
+      setOtpExpiryTimer(300);
 
       const timer = setInterval(() => {
         setOtpTimer(prev => {
@@ -195,6 +218,7 @@ const ForgotPassword = () => {
       setOtp(''); // Clear old OTP input
       setOtpTimer(60);
       setCanResend(false);
+      setOtpExpiryTimer(300);
 
       const timer = setInterval(() => {
         setOtpTimer(prev => {
@@ -216,6 +240,7 @@ const ForgotPassword = () => {
     if (step === 'verify') {
       setStep('request');
       setOtp('');
+      setOtpExpiryTimer(0);
     } else if (step === 'reset') {
       setStep('verify');
       setNewPassword('');
@@ -226,27 +251,27 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f0f23] via-[#1a0033] to-[#0f0f23] text-white p-4 md:p-12 font-sans flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-[#0d0e12] px-4 relative overflow-hidden font-sans">
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-purple-900/20 blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-violet-900/20 blur-[120px] pointer-events-none"></div>
       <div className="w-full max-w-md">
         
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">
-            <span className="bg-gradient-to-r from-amber-400 to-orange-600 bg-clip-text text-transparent">
-              Reset Password
-            </span>
+          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
+            Reset Password
           </h1>
           <p className="text-gray-400">Recover your account access</p>
         </div>
 
         {/* Card */}
-        <div className="bg-[#12131a] border border-white/[0.08] rounded-2xl p-8 shadow-2xl">
+        <div className="bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-2xl p-8 shadow-2xl relative z-10 transition-all duration-300 hover:border-purple-500/30">
           
           {/* Step Indicator */}
           <div className="flex gap-2 mb-8">
-            <div className={`flex-1 h-2 rounded-full transition-all ${['request', 'verify', 'reset'].includes(step) ? 'bg-amber-600' : 'bg-white/20'}`}></div>
-            <div className={`flex-1 h-2 rounded-full transition-all ${['verify', 'reset'].includes(step) ? 'bg-amber-600' : 'bg-white/20'}`}></div>
-            <div className={`flex-1 h-2 rounded-full transition-all ${step === 'reset' ? 'bg-amber-600' : 'bg-white/20'}`}></div>
+            <div className={`flex-1 h-2 rounded-full transition-all ${['request', 'verify', 'reset'].includes(step) ? 'bg-purple-600' : 'bg-white/20'}`}></div>
+            <div className={`flex-1 h-2 rounded-full transition-all ${['verify', 'reset'].includes(step) ? 'bg-purple-600' : 'bg-white/20'}`}></div>
+            <div className={`flex-1 h-2 rounded-full transition-all ${step === 'reset' ? 'bg-purple-600' : 'bg-white/20'}`}></div>
           </div>
 
           {/* Success Message */}
@@ -280,7 +305,7 @@ const ForgotPassword = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="john@example.com"
                   required
-                  className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  className="w-full bg-[#16171d] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
                 />
               </div>
 
@@ -291,7 +316,7 @@ const ForgotPassword = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -325,16 +350,20 @@ const ForgotPassword = () => {
                   placeholder="000000"
                   maxLength="6"
                   required
-                  className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-2xl text-center font-mono tracking-widest focus:ring-2 focus:ring-amber-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  className="w-full bg-[#16171d] border border-white/[0.08] rounded-lg px-4 py-3 text-2xl text-center font-mono tracking-widest focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
                 />
               </div>
 
-
-
-              <button
+              <div className="bg-red-500/10 border border-red-500/20 text-red-300 p-3 rounded-lg text-center text-sm">
+                {otpExpiryTimer > 0 ? (
+                  <p>⏳ OTP expires in {Math.floor(otpExpiryTimer / 60)}:{(otpExpiryTimer % 60).toString().padStart(2, '0')}</p>
+                ) : (
+                  <p>⏳ OTP has expired. Please request a new one.</p>
+                )}
+              </div>              <button
                 type="submit"
                 disabled={loading || otp.length !== 6}
-                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -369,7 +398,7 @@ const ForgotPassword = () => {
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
                   required
-                  className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  className="w-full bg-[#16171d] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Example: <span className="text-gray-400">Password@123</span> (Min 8 chars, uppercase, lowercase, number, special character)
@@ -384,14 +413,14 @@ const ForgotPassword = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm password"
                   required
-                  className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  className="w-full bg-[#16171d] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading || !newPassword || !confirmPassword}
-                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -416,7 +445,7 @@ const ForgotPassword = () => {
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-white/[0.08] text-center">
             <p className="text-gray-400 text-sm">
-              Remember your password? <Link to="/login" className="text-amber-400 hover:text-amber-300 font-semibold transition">Login</Link>
+              Remember your password? <Link to="/login" className="text-purple-400 hover:text-purple-300 font-semibold transition">Login</Link>
             </p>
           </div>
         </div>

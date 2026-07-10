@@ -507,6 +507,15 @@ public class AuthService {
         // ✅ Nothing else needed
         // OTP is already marked as USED inside verifyOtp()
     }
+
+    @Transactional
+    public void checkPasswordResetOtp(String email, String otpCode) {
+        otpService.checkOtp(
+            email,
+            otpCode,
+            OtpType.PASSWORD_RESET
+        );
+    }
      /* NEW 3-STEP FLOW - Step 3: Complete signup with password after OTP verification
      */
     @Transactional
