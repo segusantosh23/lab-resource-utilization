@@ -98,6 +98,27 @@ public class OtpService {
         return otpRepository.save(otp);
     }
 
+    @Transactional
+    public void checkOtp(String email, String enteredOtp, OtpType type) {
+        Optional<Otp> latestOtpOpt = getLatestValidOtp(email, type);
+
+        if (latestOtpOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No active OTP found. Please request a new one.");
+        }
+
+        Otp otp = latestOtpOpt.get();
+
+        if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OTP has expired.");
+        }
+
+        if (!otp.getOtpCode().equals(enteredOtp)) {
+            otp.setAttemptCount(otp.getAttemptCount() + 1);
+            otpRepository.save(otp);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP.");
+        }
+    }
+
     /**
      * Get the latest valid OTP for an email and type
      */
