@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-
+import { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 const EquipmentList = () => {
+
+  const { user } = useContext(AuthContext);
   const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -61,13 +64,32 @@ const EquipmentList = () => {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      await api.put(`/equipment/${selectedItem.id}`, formData);
+
+      if (user.role === "LAB_TECHNICIAN") {
+
+        await api.put(
+            `/equipment/${selectedItem.id}/status?status=${formData.status}`
+        );
+
+      } else {
+
+        await api.put(
+            `/equipment/${selectedItem.id}`,
+            formData
+        );
+
+      }
+
       setIsEditOpen(false);
       fetchEquipment();
       resetForm();
+
     } catch (err) {
-      alert(err.response?.data?.message || 'Error updating equipment');
+
+      alert(err.response?.data?.message || "Error updating equipment");
+
     }
   };
 
@@ -131,9 +153,17 @@ const EquipmentList = () => {
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
 
-            <button onClick={() => { resetForm(); setIsAddOpen(true); }} className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition shadow-lg shadow-purple-500/20 font-medium text-sm w-full md:w-auto">
-              + Add Equipment
-            </button>
+            {user.role !== "LAB_TECHNICIAN" && (
+                <button
+                    onClick={() => {
+                      resetForm();
+                      setIsAddOpen(true);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition shadow-lg shadow-purple-500/20 font-medium text-sm w-full md:w-auto"
+                >
+                  + Add Equipment
+                </button>
+            )}
           </div>
         </div>
 
@@ -215,8 +245,38 @@ const EquipmentList = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button onClick={() => openEditModal(item)} className="text-purple-400 hover:text-purple-300 mx-2 text-sm">Edit</button>
-                        <button onClick={() => openDeleteModal(item)} className="text-red-400 hover:text-red-300 text-sm">Delete</button>
+                        <td className="px-6 py-4 text-right">
+
+                          {user.role === "LAB_TECHNICIAN" ? (
+
+                              <button
+                                  onClick={() => openEditModal(item)}
+                                  className="text-amber-400 hover:text-amber-300 text-sm"
+                              >
+                                Update Status
+                              </button>
+
+                          ) : (
+
+                              <>
+                                <button
+                                    onClick={() => openEditModal(item)}
+                                    className="text-purple-400 hover:text-purple-300 mx-2 text-sm"
+                                >
+                                  Edit
+                                </button>
+
+                                <button
+                                    onClick={() => openDeleteModal(item)}
+                                    className="text-red-400 hover:text-red-300 text-sm"
+                                >
+                                  Delete
+                                </button>
+                              </>
+
+                          )}
+
+                        </td>
                       </td>
                     </tr>
                   ))}
@@ -233,49 +293,145 @@ const EquipmentList = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-[#12131a] border border-white/[0.08] rounded-2xl p-6 w-full max-w-2xl shadow-2xl my-8">
             <h2 className="text-xl font-bold mb-6">{isEditOpen ? 'Edit Equipment' : 'Add New Equipment'}</h2>
-            
+
             <form onSubmit={isEditOpen ? handleEditSubmit : handleAddSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Name *</label>
-                  <input required name="name" value={formData.name} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Category *</label>
-                  <input required name="category" value={formData.category} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Manufacturer</label>
-                  <input name="manufacturer" value={formData.manufacturer} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Quantity *</label>
-                  <input required type="number" min="1" name="quantity" value={formData.quantity} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Department</label>
-                  <input name="department" value={formData.department} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Institution</label>
-                  <input name="institution" value={formData.institution} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Status *</label>
-                  <select name="status" value={formData.status} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500">
-                    <option value="AVAILABLE">Available</option>
-                    <option value="BOOKED">Booked</option>
-                    <option value="UNDER_MAINTENANCE">Under Maintenance</option>
-                    <option value="OUT_OF_SERVICE">Out of Service</option>
-                    <option value="RETIRED">Retired</option>
-                  </select>
-                </div>
-              </div>
+
+              {user.role === "LAB_TECHNICIAN" && isEditOpen ? (
+
+                  <div>
+
+                    <label className="block text-sm text-gray-400 mb-1">
+                      Equipment Status
+                    </label>
+
+                    <select
+                        name="status"
+                        value={formData.status}
+                        onChange={handleInputChange}
+                        className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="AVAILABLE">Available</option>
+                      <option value="BOOKED">Booked</option>
+                      <option value="UNDER_MAINTENANCE">Under Maintenance</option>
+                      <option value="OUT_OF_SERVICE">Out of Service</option>
+                      <option value="RETIRED">Retired</option>
+                    </select>
+
+                  </div>
+
+              ) : (
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Name *</label>
+                      <input
+                          required
+                          name="name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Category *</label>
+                      <input
+                          required
+                          name="category"
+                          value={formData.category}
+                          onChange={handleInputChange}
+                          className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Manufacturer</label>
+                      <input
+                          name="manufacturer"
+                          value={formData.manufacturer}
+                          onChange={handleInputChange}
+                          className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Quantity *</label>
+                      <input
+                          required
+                          type="number"
+                          min="1"
+                          name="quantity"
+                          value={formData.quantity}
+                          onChange={handleInputChange}
+                          className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Department</label>
+                      <input
+                          name="department"
+                          value={formData.department}
+                          onChange={handleInputChange}
+                          className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Institution</label>
+                      <input
+                          name="institution"
+                          value={formData.institution}
+                          onChange={handleInputChange}
+                          className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Status *</label>
+                      <select
+                          name="status"
+                          value={formData.status}
+                          onChange={handleInputChange}
+                          className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="AVAILABLE">Available</option>
+                        <option value="BOOKED">Booked</option>
+                        <option value="UNDER_MAINTENANCE">Under Maintenance</option>
+                        <option value="OUT_OF_SERVICE">Out of Service</option>
+                        <option value="RETIRED">Retired</option>
+                      </select>
+                    </div>
+
+                  </div>
+
+              )}
 
               <div className="flex justify-end gap-3 pt-6 border-t border-white/[0.05] mt-6">
-                <button type="button" onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }} className="px-4 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-sm transition">Cancel</button>
-                <button type="submit" className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20">Save Equipment</button>
+
+                <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddOpen(false);
+                      setIsEditOpen(false);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-sm transition"
+                >
+                  Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20"
+                >
+                  {user.role === "LAB_TECHNICIAN"
+                      ? "Update Status"
+                      : "Save Equipment"}
+                </button>
+
               </div>
+
             </form>
           </div>
         </div>
