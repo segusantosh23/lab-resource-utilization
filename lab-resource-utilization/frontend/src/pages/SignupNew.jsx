@@ -17,6 +17,7 @@ const SignupNew = () => {
   
   // Step 3: Password & Profile
   const [fullName, setFullName] = useState('');
+  const [universityId, setUniversityId] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
   const [phone, setPhone] = useState('');
@@ -193,15 +194,16 @@ const SignupNew = () => {
     try {
       // Create account
       const response = await api.post('/auth/signup/complete', {
-        email: email,
-        password: password,
-        name: fullName || email.split('@')[0], 
+        email,
+        password,
+        name: fullName,
+        universityId,
         age: age ? parseInt(age) : null,
-        gender: gender,
-        phone: phone,
-        department: department,
-        institution: institution,
-        role: role
+        gender,
+        phone,
+        department,
+        institution,
+        role
       });
 
       setSuccess('Account created successfully! Redirecting to login...');
@@ -426,6 +428,24 @@ const SignupNew = () => {
                     className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    University ID
+                  </label>
+
+                  <input
+                      type="text"
+                      value={universityId}
+                      onChange={(e) => setUniversityId(e.target.value)}
+                      placeholder="Enter University ID"
+                      required
+                      className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-white placeholder-gray-600 transition"
+                  />
+                </div>
+
+
+
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Age</label>
                   <input
@@ -569,7 +589,15 @@ const SignupNew = () => {
 
               <button
                 type="submit"
-                disabled={loading || !password || !confirmPassword || password !== confirmPassword || !role}
+                disabled={
+                    loading ||
+                    !fullName ||
+                    !universityId ||
+                    !password ||
+                    !confirmPassword ||
+                    password !== confirmPassword ||
+                    !role
+                }
                 className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300 shadow-lg shadow-purple-500/20 active:scale-[0.98] disabled:opacity-50 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 {loading ? (

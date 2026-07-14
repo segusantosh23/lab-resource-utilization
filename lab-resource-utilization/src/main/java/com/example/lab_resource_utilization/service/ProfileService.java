@@ -56,6 +56,7 @@ public class ProfileService {
 
         // Read Only
         response.setEmail(user.getEmail());
+        response.setUniversityId(user.getUniversityId());
         response.setRole(user.getRole());
 
         response.setAge(user.getAge());

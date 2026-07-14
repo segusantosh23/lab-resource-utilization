@@ -5,7 +5,7 @@ import authService from '../services/authService';
 
 const Login = () => {
   const { login } = useContext(AuthContext);
-  const [email, setEmail] = useState('');
+  const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,8 +15,7 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    const result = await login(email, password);
+    const result = await login(loginId, password);
     setLoading(false);
 
     if (result.success) {
@@ -67,17 +66,21 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5" htmlFor="email">
-              Email Address
+            <label
+                className="block text-sm font-medium text-gray-300 mb-1.5"
+                htmlFor="login"
+            >
+              University ID / Email
             </label>
+
             <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@university.edu"
-              className="w-full bg-[#16171d] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition duration-200 placeholder-gray-600"
+                id="login"
+                type="text"
+                required
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
+                placeholder="e.g. 23CSE1045 or abc@xyz.edu"
+                className="w-full bg-[#16171d] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition duration-200 placeholder-gray-600"
             />
           </div>
 

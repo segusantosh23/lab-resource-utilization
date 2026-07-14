@@ -11,6 +11,10 @@ public class SignupRequest {
     @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     private String name;
 
+    @NotBlank(message = "University ID is required")
+    @Size(min = 3, max = 30, message = "University ID must be between 3 and 30 characters")
+    private String universityId;
+
     @NotBlank(message = "Email is required")
     @Email(message = "Please provide a valid email address")
     private String email;
@@ -18,21 +22,30 @@ public class SignupRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 100, message = "Password must be at least 8 characters")
     @Pattern(
-        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$",
-        message = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#)"
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$",
+            message = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#)"
     )
     private String password;
 
     @NotBlank(message = "Role is required")
     private String role;
 
-    // Getters and Setters
+    // ---------------- GETTERS & SETTERS ----------------
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getUniversityId() {
+        return universityId;
+    }
+
+    public void setUniversityId(String universityId) {
+        this.universityId = universityId;
     }
 
     public String getEmail() {

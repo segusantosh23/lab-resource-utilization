@@ -7,6 +7,7 @@ public class ProfileResponse {
     private Long id;
     private String name;
     private String email;
+    private String universityId;
     private Role role;
 
     private Integer age;
@@ -17,7 +18,13 @@ public class ProfileResponse {
 
     public ProfileResponse() {
     }
+    public String getUniversityId() {
+        return universityId;
+    }
 
+    public void setUniversityId(String universityId) {
+        this.universityId = universityId;
+    }
     public Long getId() {
         return id;
     }

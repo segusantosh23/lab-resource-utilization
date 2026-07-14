@@ -88,8 +88,13 @@ public class AuthController {
      */
     @PostMapping("/submit-account-details")
     public ResponseEntity<Map<String, String>> submitAccountDetails(@Valid @RequestBody SignupRequest request) {
-        authService.submitAccountDetails(request.getEmail(), request.getName(), request.getPassword(), request.getRole());
-        
+        authService.submitAccountDetails(
+                request.getEmail(),
+                request.getName(),
+                request.getUniversityId(),
+                request.getPassword(),
+                request.getRole()
+        );
         Map<String, String> response = new HashMap<>();
         response.put("message", "Account details saved. Please verify OTP to complete registration.");
         

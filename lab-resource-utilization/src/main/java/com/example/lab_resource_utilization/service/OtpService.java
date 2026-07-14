@@ -63,11 +63,19 @@ public class OtpService {
      * Create OTP for signup with pending user data
      */
     @Transactional
-    public Otp createSignupOtp(String email, String userName, String userRole, String passwordHash) {
+    public Otp createSignupOtp(String email,
+                               String userName,
+                               String universityId,
+                               String userRole,
+                               String passwordHash) {
+
         Otp otp = createOtp(email, OtpType.SIGNUP_VERIFICATION);
+
         otp.setPendingUserName(userName);
+        otp.setPendingUniversityId(universityId);
         otp.setPendingUserRole(userRole);
         otp.setPendingPasswordHash(passwordHash);
+
         return otpRepository.save(otp);
     }
 

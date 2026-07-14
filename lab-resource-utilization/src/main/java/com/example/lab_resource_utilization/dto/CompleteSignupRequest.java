@@ -21,11 +21,15 @@ public class CompleteSignupRequest {
         message = "Password must contain at least 8 characters with uppercase, lowercase, number, and special character"
     )
     private String password;
-    
+
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     private String name;
-    
+
+    @NotBlank(message = "University ID is required")
+    @Size(min = 3, max = 30, message = "University ID must be between 3 and 30 characters")
+    private String universityId;
+
     @NotBlank(message = "Role is required")
     private String role;
 
@@ -37,11 +41,15 @@ public class CompleteSignupRequest {
 
     // Constructors
     public CompleteSignupRequest() {}
-
-    public CompleteSignupRequest(String email, String password, String name, String role) {
+    public CompleteSignupRequest(String email,
+                                 String password,
+                                 String name,
+                                 String universityId,
+                                 String role) {
         this.email = email;
         this.password = password;
         this.name = name;
+        this.universityId = universityId;
         this.role = role;
     }
 
@@ -68,6 +76,14 @@ public class CompleteSignupRequest {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getUniversityId() {
+        return universityId;
+    }
+
+    public void setUniversityId(String universityId) {
+        this.universityId = universityId;
     }
 
     public String getRole() {

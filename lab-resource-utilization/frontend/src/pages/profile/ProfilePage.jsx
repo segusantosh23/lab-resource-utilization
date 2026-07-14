@@ -8,6 +8,7 @@ const ProfilePage = () => {
     const [profile, setProfile] = useState({
         name: "",
         email: "",
+        universityId: "",
         role: "",
         age: "",
         gender: "",
@@ -177,6 +178,7 @@ const ProfilePage = () => {
 
                                     </label>
 
+
                                     <div className="mt-2 bg-[#1d1f27] rounded-lg px-4 py-3 border border-white/10 text-gray-300">
 
                                         {profile.email}
@@ -184,6 +186,22 @@ const ProfilePage = () => {
                                     </div>
 
                                 </div>
+
+                                <div>
+
+                                    <label className="text-gray-400 text-sm">
+                                        University ID
+                                    </label>
+
+                                    <div className="mt-2 bg-[#1d1f27] rounded-lg px-4 py-3 border border-white/10 text-gray-300">
+
+                                        {profile.universityId}
+
+                                    </div>
+
+                                </div>
+
+
 
                                 <div>
 
@@ -241,7 +259,10 @@ const ProfilePage = () => {
 
                         </div>
 
+
+
                         {/* Age */}
+
 
                         <div>
 

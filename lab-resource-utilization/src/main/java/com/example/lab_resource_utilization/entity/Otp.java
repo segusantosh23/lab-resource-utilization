@@ -37,6 +37,7 @@ public class Otp {
     private String pendingUserName;
     private String pendingUserRole;
     private String pendingPasswordHash;
+    private String pendingUniversityId;
 
     // Constructors
     public Otp() {}
@@ -154,4 +155,13 @@ public class Otp {
     public void setPendingPasswordHash(String pendingPasswordHash) {
         this.pendingPasswordHash = pendingPasswordHash;
     }
+
+    public String getPendingUniversityId() {
+        return pendingUniversityId;
+    }
+
+    public void setPendingUniversityId(String pendingUniversityId) {
+        this.pendingUniversityId = pendingUniversityId;
+    }
+
 }
