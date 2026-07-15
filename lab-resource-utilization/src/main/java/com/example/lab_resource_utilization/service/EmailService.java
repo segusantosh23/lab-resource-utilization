@@ -98,6 +98,27 @@ public class EmailService {
         }
     }
 
+    @Async
+    public void sendWaitlistNotification(String toEmail, String userName, String equipmentName) {
+        logger.info("⏳ [WAITLIST NOTIFICATION EMAIL] Sent to: " + toEmail);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(toEmail);
+            helper.setSubject("Equipment Available - " + equipmentName);
+            helper.setFrom(senderEmail, appName);
+
+            String htmlContent = buildWaitlistNotificationEmail(userName, equipmentName);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            logger.info("✅ Waitlist notification email sent successfully to: " + toEmail);
+        } catch (Exception e) {
+            logger.warning("⚠️ Failed to send waitlist notification email to: " + toEmail + ". Error: " + e.getMessage());
+        }
+    }
+
     private String buildSignupOTPEmail(String userName, String otp) {
         return "<html><body style='background: #0f1419; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px;'>" +
                "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>" +
@@ -175,6 +196,25 @@ public class EmailService {
                "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
                "© 2024 " + appName + " | " +
                "<a href='mailto:" + supportEmail + "' style='color: #10b981; text-decoration: none;'>" + supportEmail + "</a>" +
+               "</p></div></div></body></html>";
+    }
+
+    private String buildWaitlistNotificationEmail(String userName, String equipmentName) {
+        return "<html><body style='background: #0f1419; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px;'>" +
+               "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>" +
+               "<div style='text-align: center; margin-bottom: 30px;'>" +
+               "<h1 style='color: #3b82f6; margin: 0; font-size: 28px;'>⏳ Equipment Available!</h1>" +
+               "</div>" +
+               "<p style='font-size: 18px; line-height: 1.6; margin-bottom: 20px;'>Hi " + escapeHtml(userName) + ",</p>" +
+               "<p style='font-size: 16px; line-height: 1.6; margin-bottom: 30px;'>Good news! The equipment <strong>" + escapeHtml(equipmentName) + "</strong> you were waitlisted for is now available to book.</p>" +
+               "<div style='text-align: center; margin: 30px 0;'>" +
+               "<a href='" + baseUrl + "/bookings' style='display: inline-block; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;'>" +
+               "📅 Book Now</a></div>" +
+               "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
+               "<div style='text-align: center;'>" +
+               "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
+               "© 2024 " + appName + " | " +
+               "<a href='mailto:" + supportEmail + "' style='color: #3b82f6; text-decoration: none;'>" + supportEmail + "</a>" +
                "</p></div></div></body></html>";
     }
 

@@ -25,6 +25,12 @@ public class WaitlistService {
     private WaitlistRepository waitlistRepository;
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -112,6 +118,21 @@ public class WaitlistService {
             Waitlist first = queue.get(0);
             first.setStatus(WaitlistStatus.NOTIFIED);
             waitlistRepository.save(first);
+            
+            // Send email notification to the user
+            emailService.sendWaitlistNotification(
+                first.getUser().getEmail(), 
+                first.getUser().getName(), 
+                first.getEquipment().getName()
+            );
+
+            // Add in-app dashboard notification
+            notificationService.createNotification(
+                first.getUser(),
+                "Equipment Available",
+                "The equipment '" + first.getEquipment().getName() + "' you were waitlisting is now available. You are next in line!",
+                "INFO"
+            );
         }
     }
 }
