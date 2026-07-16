@@ -48,24 +48,8 @@ const EquipmentDetails = () => {
     if (id) checkWaitlist();
   }, [id]);
 
-  const handleJoinWaitlist = async () => {
-    setJoining(true);
-    setWaitlistMsg('');
-    setWaitlistErr('');
-    try {
-      const res = await api.post('/waitlist', { equipmentId: parseInt(id) });
-      setWaitlistEntry(res.data);
-      setWaitlistMsg(`✓ You have joined the waitlist at position #${res.data.position}. We'll notify you when it's available.`);
-    } catch (err) {
-      const msg = err.response?.data?.message || '';
-      if (msg.toLowerCase().includes('already')) {
-        setWaitlistMsg('You are already on the waitlist for this equipment.');
-      } else {
-        setWaitlistErr(msg || 'Failed to join waitlist. Please try again.');
-      }
-    } finally {
-      setJoining(false);
-    }
+  const handleJoinWaitlist = () => {
+    navigate(`/bookings?add=true&equipmentId=${id}`);
   };
 
   if (loading) return (
@@ -147,27 +131,17 @@ const EquipmentDetails = () => {
               </div>
             </div>
 
-            {/* Join button — hidden once joined */}
+            {/* Join button — redirects to booking form now */}
             {!waitlistEntry && !waitlistMsg && (
               <button
                 id="join-waitlist-btn"
                 onClick={handleJoinWaitlist}
-                disabled={joining}
-                className="shrink-0 px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium text-sm flex items-center gap-2 shadow-lg shadow-amber-500/20"
+                className="shrink-0 px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 transition font-medium text-sm flex items-center gap-2 shadow-lg shadow-amber-500/20"
               >
-                {joining ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Joining...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Join Waitlist
-                  </>
-                )}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Go to Booking Form to Waitlist
               </button>
             )}
 
@@ -270,13 +244,13 @@ const EquipmentDetails = () => {
                 : 'To edit this item, return to the inventory list.'}
             </p>
             <div className="flex items-center gap-3">
-              {/* If available, offer quick book */}
-              {equipment.status === 'AVAILABLE' && (
+              {/* Always offer reserve button since waitlisting requires it too, or only if available */}
+              {equipment.status !== 'RETIRED' && equipment.status !== 'OUT_OF_SERVICE' && (
                 <button
-                  onClick={() => navigate(`/bookings?add=true`)}
+                  onClick={() => navigate(`/bookings?add=true&equipmentId=${equipment.id}`)}
                   className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 transition shadow-lg shadow-purple-500/20 font-medium text-sm"
                 >
-                  + Reserve Equipment
+                  {equipment.status === 'AVAILABLE' ? '+ Reserve Equipment' : '+ Reserve or Waitlist'}
                 </button>
               )}
               <button

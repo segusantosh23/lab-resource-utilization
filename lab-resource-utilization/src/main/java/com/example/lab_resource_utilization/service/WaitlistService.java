@@ -9,6 +9,10 @@ import com.example.lab_resource_utilization.entity.WaitlistStatus;
 import com.example.lab_resource_utilization.repository.EquipmentRepository;
 import com.example.lab_resource_utilization.repository.UserRepository;
 import com.example.lab_resource_utilization.repository.WaitlistRepository;
+import com.example.lab_resource_utilization.repository.BookingRepository;
+import com.example.lab_resource_utilization.entity.Booking;
+import com.example.lab_resource_utilization.entity.BookingStatus;
+import com.example.lab_resource_utilization.entity.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -35,6 +39,9 @@ public class WaitlistService {
 
     @Autowired
     private EquipmentRepository equipmentRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     /** Get current user's waitlist entries */
     public List<WaitlistResponse> getMyWaitlist(String email) {
@@ -82,6 +89,10 @@ public class WaitlistService {
         entry.setEquipment(equipment);
         entry.setPosition(nextPosition);
         entry.setStatus(WaitlistStatus.WAITING);
+        entry.setStartTime(request.getStartTime());
+        entry.setEndTime(request.getEndTime());
+        entry.setQuantity(request.getQuantity());
+        entry.setPurpose(request.getPurpose());
         if (existing != null) {
             entry.setJoinedAt(java.time.LocalDateTime.now());
             entry.setNotifiedAt(null);
@@ -118,14 +129,26 @@ public class WaitlistService {
         }
     }
 
-    /** Notify the first person in the queue when equipment becomes available */
+    /** Notify the first person in the queue when equipment becomes available and auto-book */
     @Transactional
     public void notifyNext(Long equipmentId) {
         List<Waitlist> queue = waitlistRepository.findWaitingByEquipmentIdOrdered(equipmentId);
         if (!queue.isEmpty()) {
             Waitlist first = queue.get(0);
             first.setStatus(WaitlistStatus.NOTIFIED);
+            first.setNotifiedAt(java.time.LocalDateTime.now());
             waitlistRepository.save(first);
+
+            // Auto-create booking request
+            Booking booking = new Booking();
+            booking.setUser(first.getUser());
+            booking.setEquipment(first.getEquipment());
+            booking.setStartTime(first.getStartTime());
+            booking.setEndTime(first.getEndTime());
+            booking.setQuantity(first.getQuantity());
+            booking.setPurpose(first.getPurpose());
+            booking.setStatus(BookingStatus.PENDING_APPROVAL);
+            bookingRepository.save(booking);
             
             // Send email notification to the user
             emailService.sendWaitlistNotification(
@@ -134,13 +157,24 @@ public class WaitlistService {
                 first.getEquipment().getName()
             );
 
-            // Add in-app dashboard notification
+            // Add in-app dashboard notification to user
             notificationService.createNotification(
                 first.getUser(),
-                "Equipment Available",
-                "The equipment '" + first.getEquipment().getName() + "' you were waitlisting is now available. You are next in line!",
+                "Waitlist Converted to Booking",
+                "Your waitlist request for '" + first.getEquipment().getName() + "' has been automatically converted into a pending booking request.",
                 "INFO"
             );
+
+            // Notify lab managers about the new pending booking
+            List<User> managers = userRepository.findByRole(Role.LAB_MANAGER);
+            for (User manager : managers) {
+                notificationService.createNotification(
+                    manager, 
+                    "New Auto-Booking from Waitlist", 
+                    first.getUser().getName() + " was automatically booked for " + first.getEquipment().getName() + " from the waitlist.", 
+                    "INFO"
+                );
+            }
         }
     }
 }

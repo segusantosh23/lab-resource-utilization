@@ -143,7 +143,13 @@ const Bookings = () => {
     setWaitlistSuccess('');
     setWaitlistInfo('');
     try {
-      await api.post('/waitlist', { equipmentId: parseInt(formData.equipmentId) });
+      await api.post('/waitlist', {
+        equipmentId: parseInt(formData.equipmentId),
+        quantity: parseInt(formData.quantity) || 1,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        purpose: formData.purpose
+      });
       setWaitlistSuccess('✅ You have been added to the waitlist! We will notify you when this equipment becomes available.');
       setSubmitError('');
       setIsConflict(false);
@@ -215,9 +221,12 @@ const Bookings = () => {
       fetchBookings();
     } catch (err) {
       const msg = err.response?.data?.message || 'Error creating booking.';
-      const isConflictErr = msg.toLowerCase().includes('already booked') ||
-                            msg.toLowerCase().includes('conflict') ||
-                            msg.toLowerCase().includes('time slot');
+      const msgLower = msg.toLowerCase();
+      const isConflictErr = msgLower.includes('already booked') ||
+                            msgLower.includes('conflict') ||
+                            msgLower.includes('time slot') ||
+                            msgLower.includes('not available') ||
+                            msgLower.includes('insufficient');
       setIsConflict(isConflictErr);
       setSubmitError(msg);
     } finally {
@@ -432,7 +441,7 @@ const Bookings = () => {
                       <td className="px-6 py-4 text-sm text-gray-400">
                         {new Date(item.endTime).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-400 max-w-[180px] truncate" title={item.purpose}>
+                      <td className="px-6 py-4 text-sm text-gray-400" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
                         {item.purpose}
                       </td>
                       <td className="px-6 py-4 text-sm">
@@ -542,61 +551,6 @@ const Bookings = () => {
                     </option>
                   ))}
                 </select>
-                
-                {/* Show unavailable warning and waitlist button */}
-                {formData.equipmentId && (() => {
-                  const selectedEq = equipmentList.find(e => e.id == formData.equipmentId);
-                  const isUnavailable = selectedEq && (
-                    UNAVAILABLE_STATUSES.includes(selectedEq.status) || 
-                    selectedEq.availableQuantity === 0
-                  );
-                  
-                  if (isUnavailable) {
-                    return (
-                      <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                        <div className="flex items-start gap-2 mb-2">
-                          <svg className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <div className="flex-1">
-                            <p className="text-xs font-medium text-amber-400">Equipment Currently Unavailable</p>
-                            <p className="text-xs text-amber-400/80 mt-1">
-                              This equipment is {selectedEq.status.replace(/_/g, ' ').toLowerCase()}. Join the waitlist to be notified when it becomes available.
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleJoinWaitlist}
-                          disabled={joiningWaitlist || waitlistSuccess || !!waitlistInfo}
-                          className="w-full px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium text-sm flex items-center justify-center gap-2"
-                        >
-                          {joiningWaitlist ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              Joining Waitlist...
-                            </>
-                          ) : waitlistSuccess ? (
-                            <>
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                              </svg>
-                              On Waitlist
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                              </svg>
-                              Join Waitlist
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
               </div>
 
               {/* Quantity */}
@@ -783,34 +737,22 @@ const Bookings = () => {
                 >
                   {waitlistSuccess || waitlistInfo ? 'Close' : 'Cancel'}
                 </button>
-                {/* Only show Book button if equipment is available */}
-                {(() => {
-                  const selectedEq = equipmentList.find(e => e.id == formData.equipmentId);
-                  const isUnavailable = selectedEq && (
-                    UNAVAILABLE_STATUSES.includes(selectedEq.status) || 
-                    selectedEq.availableQuantity === 0
-                  );
-                  
-                  if (!isUnavailable && !waitlistSuccess && !waitlistInfo) {
-                    return (
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-60"
-                      >
-                        {submitting ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Verifying…
-                          </>
-                        ) : (
-                          'Book Equipment'
-                        )}
-                      </button>
-                    );
-                  }
-                  return null;
-                })()}
+                {!waitlistSuccess && !waitlistInfo && (
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-60"
+                  >
+                    {submitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Verifying…
+                      </>
+                    ) : (
+                      'Book Equipment'
+                    )}
+                  </button>
+                )}
               </div>
             </form>
           </div>

@@ -40,6 +40,12 @@ const AvailabilityCalendar = () => {
   const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isConflict,  setIsConflict]  = useState(false);
+  
+  /* waitlist state */
+  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState('');
+  const [waitlistInfo, setWaitlistInfo] = useState('');
+
   const [formData, setFormData] = useState({
     equipmentId:        '',
     quantity:           1,
@@ -142,6 +148,12 @@ const AvailabilityCalendar = () => {
         ? { recurrencePattern: '', recurrenceEndDate: '' }
         : {}),
     }));
+    if (name === 'equipmentId') {
+      setWaitlistSuccess('');
+      setWaitlistInfo('');
+      setSubmitError('');
+      setIsConflict(false);
+    }
   };
 
   const resetForm = () => {
@@ -151,6 +163,46 @@ const AvailabilityCalendar = () => {
     });
     setSubmitError('');
     setIsConflict(false);
+    setWaitlistSuccess('');
+    setWaitlistInfo('');
+  };
+
+  /* ── join waitlist ─────────────────────────────────────────── */
+  const handleJoinWaitlist = async () => {
+    if (!formData.equipmentId) return;
+    setJoiningWaitlist(true);
+    setSubmitError('');
+    setWaitlistSuccess('');
+    setWaitlistInfo('');
+    try {
+      await api.post('/waitlist', {
+        equipmentId: parseInt(formData.equipmentId),
+        quantity: parseInt(formData.quantity) || 1,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        purpose: formData.purpose
+      });
+      setWaitlistSuccess('✅ You have been added to the waitlist! We will notify you when this equipment becomes available.');
+      setSubmitError('');
+      setIsConflict(false);
+      setTimeout(() => {
+        setIsAddOpen(false);
+        resetForm();
+      }, 2000);
+    } catch (err) {
+      const msg = err.response?.data?.message || '';
+      if (msg.toLowerCase().includes('already')) {
+        setWaitlistInfo('You are already on the waitlist for this equipment.');
+        setTimeout(() => {
+          setIsAddOpen(false);
+          resetForm();
+        }, 2000);
+      } else {
+        setSubmitError('Failed to join waitlist. ' + (msg || 'Please try again.'));
+      }
+    } finally {
+      setJoiningWaitlist(false);
+    }
   };
 
   const handleAddSubmit = async (e) => {
@@ -192,7 +244,14 @@ const AvailabilityCalendar = () => {
       fetchBookings();
     } catch (err) {
       const msg = err.response?.data?.message || 'Error creating booking.';
-      setIsConflict(msg.toLowerCase().includes('already booked') || msg.toLowerCase().includes('conflict') || msg.toLowerCase().includes('time slot'));
+      const msgLower = msg.toLowerCase();
+      setIsConflict(
+        msgLower.includes('already booked') || 
+        msgLower.includes('conflict') || 
+        msgLower.includes('time slot') ||
+        msgLower.includes('not available') ||
+        msgLower.includes('insufficient')
+      );
       setSubmitError(msg);
     } finally {
       setSubmitting(false);
@@ -478,6 +537,24 @@ const AvailabilityCalendar = () => {
               </div>
             )}
 
+            {waitlistSuccess && (
+              <div className="mb-4 p-3 rounded-lg text-sm border bg-emerald-500/10 border-emerald-500/20 text-emerald-400 flex gap-2 items-start">
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <p>{waitlistSuccess}</p>
+              </div>
+            )}
+
+            {waitlistInfo && (
+              <div className="mb-4 p-3 rounded-lg text-sm border bg-blue-500/10 border-blue-500/20 text-blue-400 flex gap-2 items-start">
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p>{waitlistInfo}</p>
+              </div>
+            )}
+
             <form onSubmit={handleAddSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Equipment *</label>
@@ -538,10 +615,14 @@ const AvailabilityCalendar = () => {
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.05] mt-2">
-                <button type="button" disabled={submitting} onClick={() => { setIsAddOpen(false); resetForm(); }} className="px-4 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-sm transition">Cancel</button>
-                <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-60">
-                  {submitting ? 'Verifying…' : 'Book Equipment'}
+                <button type="button" disabled={submitting} onClick={() => { setIsAddOpen(false); resetForm(); }} className="px-4 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-sm transition">
+                  {waitlistSuccess || waitlistInfo ? 'Close' : 'Cancel'}
                 </button>
+                {!waitlistSuccess && !waitlistInfo && (
+                  <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-60">
+                    {submitting ? 'Verifying…' : 'Book Equipment'}
+                  </button>
+                )}
               </div>
             </form>
           </div>

@@ -15,6 +15,10 @@ public class WaitlistResponse {
     private String status;
     private LocalDateTime joinedAt;
     private LocalDateTime notifiedAt;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private Integer quantity;
+    private String purpose;
 
     public WaitlistResponse() {}
 
@@ -30,6 +34,10 @@ public class WaitlistResponse {
         r.setStatus(w.getStatus().name());
         r.setJoinedAt(w.getJoinedAt());
         r.setNotifiedAt(w.getNotifiedAt());
+        r.setStartTime(w.getStartTime());
+        r.setEndTime(w.getEndTime());
+        r.setQuantity(w.getQuantity());
+        r.setPurpose(w.getPurpose());
         return r;
     }
 
@@ -63,4 +71,16 @@ public class WaitlistResponse {
 
     public LocalDateTime getNotifiedAt() { return notifiedAt; }
     public void setNotifiedAt(LocalDateTime notifiedAt) { this.notifiedAt = notifiedAt; }
+
+    public LocalDateTime getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+    public String getPurpose() { return purpose; }
+    public void setPurpose(String purpose) { this.purpose = purpose; }
 }

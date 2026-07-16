@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import { createBooking } from "../../services/bookingService";
+import { useSearchParams, useNavigate } from "react-router-dom";
+
 const NewBooking = () => {
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const initialEquipmentId = searchParams.get("equipmentId") || "";
 
     const [equipment, setEquipment] = useState([]);
 
     const [form, setForm] = useState({
-        equipmentId: "",
+        equipmentId: initialEquipmentId,
         purpose: "",
         quantity: 1,
         startTime: "",
@@ -17,6 +22,7 @@ const NewBooking = () => {
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [showWaitlistOption, setShowWaitlistOption] = useState(false);
 
     useEffect(() => {
 
@@ -26,11 +32,10 @@ const NewBooking = () => {
 
                 const response = await api.get("/equipment");
 
-                const availableEquipment = response.data.filter(
-                    item => item.status === "AVAILABLE"
+                const validEquipment = response.data.filter(
+                    item => item.status !== "RETIRED" && item.status !== "OUT_OF_SERVICE"
                 );
-
-                setEquipment(availableEquipment);
+                setEquipment(validEquipment);
 
             } catch (error) {
 
@@ -60,9 +65,9 @@ const NewBooking = () => {
     const handleSubmit = async (e) => {
 
         e.preventDefault();
-
         setMessage("");
         setError("");
+        setShowWaitlistOption(false);
         setSubmitting(true);
 
         try {
@@ -89,17 +94,13 @@ const NewBooking = () => {
             );
 
         } catch (err) {
-
-            if (err.response?.data?.message) {
-
-                setError(err.response.data.message);
-
-            } else {
-
-                setError("Unable to submit booking.");
-
+            const errorMsg = err.response?.data?.message || "Unable to submit booking.";
+            setError(errorMsg);
+            
+            // If booking fails due to availability, show waitlist option
+            if (errorMsg.includes("not available") || errorMsg.includes("Insufficient equipment quantity")) {
+                setShowWaitlistOption(true);
             }
-
         } finally {
 
             setSubmitting(false);
@@ -117,6 +118,34 @@ const NewBooking = () => {
         );
 
     }
+
+    const handleJoinWaitlist = async () => {
+        setSubmitting(true);
+        setError("");
+        setMessage("");
+        try {
+            await api.post("/waitlist", {
+                equipmentId: form.equipmentId,
+                startTime: form.startTime,
+                endTime: form.endTime,
+                quantity: form.quantity,
+                purpose: form.purpose
+            });
+            setMessage("Successfully joined the waitlist! We will notify you when it's available.");
+            setShowWaitlistOption(false);
+            setForm({
+                equipmentId: "",
+                purpose: "",
+                quantity: 1,
+                startTime: "",
+                endTime: ""
+            });
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to join waitlist.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     return (
 
@@ -310,12 +339,26 @@ const NewBooking = () => {
 
                     </div>
 
-                    <button
-                        disabled={submitting}
-                        className="px-6 py-3 rounded-lg bg-purple-600 hover:bg-purple-500 transition"
-                    >
-                        {submitting ? "Submitting..." : "Submit Booking"}
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="px-6 py-3 rounded-lg bg-purple-600 hover:bg-purple-500 transition"
+                        >
+                            {submitting ? "Submitting..." : "Submit Booking"}
+                        </button>
+
+                        {showWaitlistOption && (
+                            <button
+                                type="button"
+                                onClick={handleJoinWaitlist}
+                                disabled={submitting}
+                                className="px-6 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 transition shadow-lg shadow-amber-500/20"
+                            >
+                                {submitting ? "Joining..." : "Join Waitlist Instead"}
+                            </button>
+                        )}
+                    </div>
 
                 </form>
 

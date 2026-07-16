@@ -2964,3 +2964,64 @@ ROLE: LAB_MANAGER
 Hibernate: select u1_0.id,u1_0.age,u1_0.created_at,u1_0.department,u1_0.email,u1_0.email_verified,u1_0.email_verified_at,u1_0.gender,u1_0.institution,u1_0.last_login_at,u1_0.name,u1_0.password,u1_0.password_reset_at,u1_0.phone,u1_0.role,u1_0.university_id,u1_0.updated_at from users u1_0 where u1_0.email=?
 Hibernate: select n1_0.id,n1_0.created_at,n1_0.is_read,n1_0.message,n1_0.title,n1_0.type,n1_0.user_id from notifications n1_0 where n1_0.user_id=? order by n1_0.created_at desc
 Hibernate: select b1_0.id,b1_0.created_at,b1_0.end_time,b1_0.equipment_id,b1_0.overdue_notified,b1_0.parent_booking_id,b1_0.purpose,b1_0.quantity,b1_0.recurrence_end_date,b1_0.recurrence_type,b1_0.start_time,b1_0.status,b1_0.updated_at,b1_0.user_id from bookings b1_0 where b1_0.status='IN_USE' and b1_0.end_time<? and b1_0.overdue_notified=false
+AUTH HEADER: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzZWd1c2FudGhvc2gyM0BnbWFpbC5jb20iLCJyb2xlIjoiUkVTRUFSQ0hFUiIsImlhdCI6MTc4NDE4NTc1NiwiZXhwIjoxNzg0MTg5MzU2fQ.emLrXIbpqxH_5O0FzMNP-6JfcHlgtre5qoBtxNOhVNI
+EMAIL: segusanthosh23@gmail.com
+ROLE: RESEARCHER
+? AUTHENTICATED: segusanthosh23@gmail.com -> RESEARCHER
+Hibernate: select u1_0.id,u1_0.age,u1_0.created_at,u1_0.department,u1_0.email,u1_0.email_verified,u1_0.email_verified_at,u1_0.gender,u1_0.institution,u1_0.last_login_at,u1_0.name,u1_0.password,u1_0.password_reset_at,u1_0.phone,u1_0.role,u1_0.university_id,u1_0.updated_at from users u1_0 where u1_0.email=?
+Hibernate: select n1_0.id,n1_0.created_at,n1_0.is_read,n1_0.message,n1_0.title,n1_0.type,n1_0.user_id from notifications n1_0 where n1_0.user_id=? order by n1_0.created_at desc
+AUTH HEADER: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzZWd1c2FudGhvc2gyM0BnbWFpbC5jb20iLCJyb2xlIjoiUkVTRUFSQ0hFUiIsImlhdCI6MTc4NDE4NTc1NiwiZXhwIjoxNzg0MTg5MzU2fQ.emLrXIbpqxH_5O0FzMNP-6JfcHlgtre5qoBtxNOhVNI
+AUTH HEADER: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzZWd1c2FudGhvc2gyM0BnbWFpbC5jb20iLCJyb2xlIjoiUkVTRUFSQ0hFUiIsImlhdCI6MTc4NDE4NTc1NiwiZXhwIjoxNzg0MTg5MzU2fQ.emLrXIbpqxH_5O0FzMNP-6JfcHlgtre5qoBtxNOhVNI
+EMAIL: segusanthosh23@gmail.com
+ROLE: RESEARCHER
+? AUTHENTICATED: segusanthosh23@gmail.com -> RESEARCHER
+Hibernate: select u1_0.id,u1_0.age,u1_0.created_at,u1_0.department,u1_0.email,u1_0.email_verified,u1_0.email_verified_at,u1_0.gender,u1_0.institution,u1_0.last_login_at,u1_0.name,u1_0.password,u1_0.password_reset_at,u1_0.phone,u1_0.role,u1_0.university_id,u1_0.updated_at from users u1_0 where u1_0.email=?
+AUTH HEADER: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzZWd1c2FudGhvc2gyM0BnbWFpbC5jb20iLCJyb2xlIjoiUkVTRUFSQ0hFUiIsImlhdCI6MTc4NDE4NTc1NiwiZXhwIjoxNzg0MTg5MzU2fQ.emLrXIbpqxH_5O0FzMNP-6JfcHlgtre5qoBtxNOhVNI
+Hibernate: select n1_0.id,n1_0.created_at,n1_0.is_read,n1_0.message,n1_0.title,n1_0.type,n1_0.user_id from notifications n1_0 where n1_0.user_id=? order by n1_0.created_at desc
+EMAIL: segusanthosh23@gmail.com
+ROLE: RESEARCHER
+? AUTHENTICATED: segusanthosh23@gmail.com -> RESEARCHER
+Hibernate: select w1_0.id,w1_0.equipment_id,w1_0.joined_at,w1_0.notified_at,w1_0.position,w1_0.status,w1_0.user_id from waitlist w1_0 left join users u1_0 on u1_0.id=w1_0.user_id where u1_0.email=? order by w1_0.joined_at
+AUTH HEADER: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzZWd1c2FudGhvc2gyM0BnbWFpbC5jb20iLCJyb2xlIjoiUkVTRUFSQ0hFUiIsImlhdCI6MTc4NDE4NTc1NiwiZXhwIjoxNzg0MTg5MzU2fQ.emLrXIbpqxH_5O0FzMNP-6JfcHlgtre5qoBtxNOhVNI
+Hibernate: select e1_0.id,e1_0.category,e1_0.department,e1_0.description,e1_0.institution,e1_0.manufacturer,e1_0.model_number,e1_0.name,e1_0.purchase_date,e1_0.quantity,e1_0.serial_number,e1_0.status from equipment e1_0 where e1_0.id=?
+Hibernate: select u1_0.id,u1_0.age,u1_0.created_at,u1_0.department,u1_0.email,u1_0.email_verified,u1_0.email_verified_at,u1_0.gender,u1_0.institution,u1_0.last_login_at,u1_0.name,u1_0.password,u1_0.password_reset_at,u1_0.phone,u1_0.role,u1_0.university_id,u1_0.updated_at from users u1_0 where u1_0.id=?
+EMAIL: segusanthosh23@gmail.com
+ROLE: RESEARCHER
+? AUTHENTICATED: segusanthosh23@gmail.com -> RESEARCHER
+Hibernate: select e1_0.id,e1_0.category,e1_0.department,e1_0.description,e1_0.institution,e1_0.manufacturer,e1_0.model_number,e1_0.name,e1_0.purchase_date,e1_0.quantity,e1_0.serial_number,e1_0.status from equipment e1_0 where e1_0.id=?
+EMAIL: segusanthosh23@gmail.com
+ROLE: RESEARCHER
+? AUTHENTICATED: segusanthosh23@gmail.com -> RESEARCHER
+Hibernate: select e1_0.id,e1_0.category,e1_0.department,e1_0.description,e1_0.institution,e1_0.manufacturer,e1_0.model_number,e1_0.name,e1_0.purchase_date,e1_0.quantity,e1_0.serial_number,e1_0.status from equipment e1_0
+AUTH HEADER: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzZWd1c2FudGhvc2gyM0BnbWFpbC5jb20iLCJyb2xlIjoiUkVTRUFSQ0hFUiIsImlhdCI6MTc4NDE4NTc1NiwiZXhwIjoxNzg0MTg5MzU2fQ.emLrXIbpqxH_5O0FzMNP-6JfcHlgtre5qoBtxNOhVNI
+Hibernate: select u1_0.id,u1_0.age,u1_0.created_at,u1_0.department,u1_0.email,u1_0.email_verified,u1_0.email_verified_at,u1_0.gender,u1_0.institution,u1_0.last_login_at,u1_0.name,u1_0.password,u1_0.password_reset_at,u1_0.phone,u1_0.role,u1_0.university_id,u1_0.updated_at from users u1_0 where u1_0.email=?
+Hibernate: select n1_0.id,n1_0.created_at,n1_0.is_read,n1_0.message,n1_0.title,n1_0.type,n1_0.user_id from notifications n1_0 where n1_0.user_id=? order by n1_0.created_at desc
+Hibernate: select coalesce(sum(b1_0.quantity),0) from bookings b1_0 where b1_0.equipment_id=? and b1_0.status in ('PENDING_APPROVAL','CONFIRMED','IN_USE') and b1_0.end_time>?
+Hibernate: select coalesce(sum(b1_0.quantity),0) from bookings b1_0 where b1_0.equipment_id=? and b1_0.status in ('PENDING_APPROVAL','CONFIRMED','IN_USE') and b1_0.end_time>?
+EMAIL: segusanthosh23@gmail.com
+ROLE: RESEARCHER
+? AUTHENTICATED: segusanthosh23@gmail.com -> RESEARCHER
+Hibernate: select w1_0.id,w1_0.equipment_id,w1_0.joined_at,w1_0.notified_at,w1_0.position,w1_0.status,w1_0.user_id from waitlist w1_0 left join users u1_0 on u1_0.id=w1_0.user_id where u1_0.email=? order by w1_0.joined_at
+AUTH HEADER: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzZWd1c2FudGhvc2gyM0BnbWFpbC5jb20iLCJyb2xlIjoiUkVTRUFSQ0hFUiIsImlhdCI6MTc4NDE4NTc1NiwiZXhwIjoxNzg0MTg5MzU2fQ.emLrXIbpqxH_5O0FzMNP-6JfcHlgtre5qoBtxNOhVNI
+Hibernate: select e1_0.id,e1_0.category,e1_0.department,e1_0.description,e1_0.institution,e1_0.manufacturer,e1_0.model_number,e1_0.name,e1_0.purchase_date,e1_0.quantity,e1_0.serial_number,e1_0.status from equipment e1_0 where e1_0.id=?
+Hibernate: select u1_0.id,u1_0.age,u1_0.created_at,u1_0.department,u1_0.email,u1_0.email_verified,u1_0.email_verified_at,u1_0.gender,u1_0.institution,u1_0.last_login_at,u1_0.name,u1_0.password,u1_0.password_reset_at,u1_0.phone,u1_0.role,u1_0.university_id,u1_0.updated_at from users u1_0 where u1_0.id=?
+Hibernate: select e1_0.id,e1_0.category,e1_0.department,e1_0.description,e1_0.institution,e1_0.manufacturer,e1_0.model_number,e1_0.name,e1_0.purchase_date,e1_0.quantity,e1_0.serial_number,e1_0.status from equipment e1_0 where e1_0.id=?
+EMAIL: segusanthosh23@gmail.com
+ROLE: RESEARCHER
+? AUTHENTICATED: segusanthosh23@gmail.com -> RESEARCHER
+Hibernate: select e1_0.id,e1_0.category,e1_0.department,e1_0.description,e1_0.institution,e1_0.manufacturer,e1_0.model_number,e1_0.name,e1_0.purchase_date,e1_0.quantity,e1_0.serial_number,e1_0.status from equipment e1_0
+Hibernate: select coalesce(sum(b1_0.quantity),0) from bookings b1_0 where b1_0.equipment_id=? and b1_0.status in ('PENDING_APPROVAL','CONFIRMED','IN_USE') and b1_0.end_time>?
+Hibernate: select coalesce(sum(b1_0.quantity),0) from bookings b1_0 where b1_0.equipment_id=? and b1_0.status in ('PENDING_APPROVAL','CONFIRMED','IN_USE') and b1_0.end_time>?
+Hibernate: select b1_0.id,b1_0.created_at,b1_0.end_time,b1_0.equipment_id,b1_0.overdue_notified,b1_0.parent_booking_id,b1_0.purpose,b1_0.quantity,b1_0.recurrence_end_date,b1_0.recurrence_type,b1_0.start_time,b1_0.status,b1_0.updated_at,b1_0.user_id from bookings b1_0 where b1_0.status='IN_USE' and b1_0.end_time<? and b1_0.overdue_notified=false
+AUTH HEADER: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzZWd1c2FudGhvc2gyM0BnbWFpbC5jb20iLCJyb2xlIjoiUkVTRUFSQ0hFUiIsImlhdCI6MTc4NDE4NTc1NiwiZXhwIjoxNzg0MTg5MzU2fQ.emLrXIbpqxH_5O0FzMNP-6JfcHlgtre5qoBtxNOhVNI
+EMAIL: segusanthosh23@gmail.com
+ROLE: RESEARCHER
+? AUTHENTICATED: segusanthosh23@gmail.com -> RESEARCHER
+Hibernate: select u1_0.id,u1_0.age,u1_0.created_at,u1_0.department,u1_0.email,u1_0.email_verified,u1_0.email_verified_at,u1_0.gender,u1_0.institution,u1_0.last_login_at,u1_0.name,u1_0.password,u1_0.password_reset_at,u1_0.phone,u1_0.role,u1_0.university_id,u1_0.updated_at from users u1_0 where u1_0.email=?
+Hibernate: select n1_0.id,n1_0.created_at,n1_0.is_read,n1_0.message,n1_0.title,n1_0.type,n1_0.user_id from notifications n1_0 where n1_0.user_id=? order by n1_0.created_at desc
+AUTH HEADER: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzZWd1c2FudGhvc2gyM0BnbWFpbC5jb20iLCJyb2xlIjoiUkVTRUFSQ0hFUiIsImlhdCI6MTc4NDE4NTc1NiwiZXhwIjoxNzg0MTg5MzU2fQ.emLrXIbpqxH_5O0FzMNP-6JfcHlgtre5qoBtxNOhVNI
+EMAIL: segusanthosh23@gmail.com
+ROLE: RESEARCHER
+? AUTHENTICATED: segusanthosh23@gmail.com -> RESEARCHER
+Hibernate: select u1_0.id,u1_0.age,u1_0.created_at,u1_0.department,u1_0.email,u1_0.email_verified,u1_0.email_verified_at,u1_0.gender,u1_0.institution,u1_0.last_login_at,u1_0.name,u1_0.password,u1_0.password_reset_at,u1_0.phone,u1_0.role,u1_0.university_id,u1_0.updated_at from users u1_0 where u1_0.email=?
+Hibernate: select n1_0.id,n1_0.created_at,n1_0.is_read,n1_0.message,n1_0.title,n1_0.type,n1_0.user_id from notifications n1_0 where n1_0.user_id=? order by n1_0.created_at desc
