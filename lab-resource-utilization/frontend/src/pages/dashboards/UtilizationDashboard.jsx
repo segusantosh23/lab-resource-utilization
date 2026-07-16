@@ -169,7 +169,7 @@ const UtilizationDashboard = () => {
 
             {/* ── Booking Status Breakdown ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-              <div className="bg-[#12131a] border border-white/[0.05] rounded-xl p-6">
+              <div className="bg-[#12131a] border border-white/20 rounded-xl p-6">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Booking Status Breakdown</h2>
                 <div className="space-y-3">
                   <Bar label="Pending Approval" value={data.pendingBookings}   max={data.totalBookings} color="amber" />
@@ -182,7 +182,7 @@ const UtilizationDashboard = () => {
               </div>
 
               {/* Summary numbers */}
-              <div className="bg-[#12131a] border border-white/[0.05] rounded-xl p-6">
+              <div className="bg-[#12131a] border border-white/20 rounded-xl p-6">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Summary Numbers</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <StatCard label="Total Bookings" value={data.totalBookings}    color="purple" icon="📋" />
@@ -194,101 +194,103 @@ const UtilizationDashboard = () => {
               </div>
             </div>
 
-            {/* ── Real-Time Tracking ── */}
-            <div className="bg-[#12131a] border border-white/[0.05] rounded-xl p-6 mb-10">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Real-Time Equipment Usage Tracking</h2>
-              {realTimeData.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">No equipment is currently in use.</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-gray-300">
-                    <thead className="bg-white/[0.02] border-b border-white/[0.05]">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold text-gray-400">Equipment</th>
-                        <th className="px-4 py-3 font-semibold text-gray-400">Category</th>
-                        <th className="px-4 py-3 font-semibold text-gray-400">Status</th>
-                        <th className="px-4 py-3 font-semibold text-gray-400">Current User</th>
-                        <th className="px-4 py-3 font-semibold text-gray-400">End Time</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/[0.02]">
-                      {realTimeData.map((item) => (
-                        <tr key={item.equipmentId} className="hover:bg-white/[0.01] transition-colors">
-                          <td className="px-4 py-3 font-medium text-white">{item.equipmentName}</td>
-                          <td className="px-4 py-3 text-xs">{item.category}</td>
-                          <td className="px-4 py-3">
-                            <span className="px-2 py-1 text-[10px] font-semibold rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                              {item.status.replace(/_/g, ' ')}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">{item.currentUserName}</td>
-                          <td className="px-4 py-3 text-xs text-gray-400">
-                            {new Date(item.endTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                          </td>
+            {/* ── Real-Time Tracking & Idle Equipment ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+              <div className="bg-[#12131a] border border-white/20 rounded-xl p-6 flex flex-col">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Real-Time Equipment Usage Tracking</h2>
+                {realTimeData.length === 0 ? (
+                  <div className="text-center text-gray-400 py-8">No equipment is currently in use.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-gray-300">
+                      <thead className="bg-white/[0.02] border-b border-white/20">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold text-gray-400">Equipment</th>
+                          <th className="px-4 py-3 font-semibold text-gray-400">Category</th>
+                          <th className="px-4 py-3 font-semibold text-gray-400">Status</th>
+                          <th className="px-4 py-3 font-semibold text-gray-400">Current User</th>
+                          <th className="px-4 py-3 font-semibold text-gray-400">End Time</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody className="divide-y divide-white/[0.02]">
+                        {realTimeData.map((item) => (
+                          <tr key={item.equipmentId} className="hover:bg-white/[0.01] transition-colors">
+                            <td className="px-4 py-3 font-medium text-white">{item.equipmentName}</td>
+                            <td className="px-4 py-3 text-xs">{item.category}</td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-1 text-[10px] font-semibold rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                {item.status.replace(/_/g, ' ')}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">{item.currentUserName}</td>
+                            <td className="px-4 py-3 text-xs text-gray-400">
+                              {new Date(item.endTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Idle Equipment Alerts ── */}
+              <div className="bg-[#12131a] border border-rose-500/[0.2] rounded-xl p-6 shadow-[0_0_15px_rgba(244,63,94,0.05)] flex flex-col">
+                <h2 className="text-sm font-semibold text-rose-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                  Idle Equipment Alerts (&ge; 14 Days)
+                </h2>
+                {idleEquip.length === 0 ? (
+                  <div className="text-center text-gray-400 py-8 bg-white/[0.01] rounded-lg">No equipment is currently sitting idle. Excellent!</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-gray-300">
+                      <thead className="bg-white/[0.02] border-b border-white/20">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold text-gray-400">Equipment</th>
+                          <th className="px-4 py-3 font-semibold text-gray-400">Category</th>
+                          <th className="px-4 py-3 font-semibold text-gray-400">Days Idle</th>
+                          <th className="px-4 py-3 font-semibold text-gray-400 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/[0.02]">
+                        {idleEquip.map((item) => (
+                          <tr key={item.equipmentId} className="hover:bg-white/[0.01] transition-colors">
+                            <td className="px-4 py-3 font-medium text-white">{item.equipmentName}</td>
+                            <td className="px-4 py-3 text-xs">{item.category}</td>
+                            <td className="px-4 py-3">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400">
+                                {item.daysIdle >= 999 ? 'Never Used' : `${item.daysIdle} days`}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button className="text-xs font-medium text-indigo-400 hover:text-indigo-300">Review</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* ── Shared vs Exclusive Usage Patterns ── */}
-            {usagePatterns && (
-              <div className="bg-[#12131a] border border-white/[0.05] rounded-xl p-6 mb-10">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Shared vs. Exclusive Usage Patterns</h2>
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
-                      <span className="text-gray-300">Shared Usage (Cross-Department)</span>
-                    </div>
-                    <span className="font-semibold text-white">{usagePatterns.sharedBookingsCount} bookings</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
-                      <span className="text-gray-300">Exclusive Usage (Same Department)</span>
-                    </div>
-                    <span className="font-semibold text-white">{usagePatterns.exclusiveBookingsCount} bookings</span>
-                  </div>
-                  
-                  {/* Visual Bar */}
-                  <div className="w-full h-4 bg-white/[0.05] rounded-full overflow-hidden flex mt-2">
-                    {usagePatterns.sharedBookingsCount + usagePatterns.exclusiveBookingsCount > 0 ? (
-                      <>
-                        <div 
-                          className="h-full bg-cyan-400" 
-                          style={{ width: `${(usagePatterns.sharedBookingsCount / (usagePatterns.sharedBookingsCount + usagePatterns.exclusiveBookingsCount)) * 100}%` }}
-                        ></div>
-                        <div 
-                          className="h-full bg-indigo-500" 
-                          style={{ width: `${(usagePatterns.exclusiveBookingsCount / (usagePatterns.sharedBookingsCount + usagePatterns.exclusiveBookingsCount)) * 100}%` }}
-                        ></div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full bg-gray-700"></div>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    * Shared usage implies an equipment was booked by a user outside of its assigned department.
-                  </p>
-                </div>
-              </div>
-            )}
+
 
             {/* ── Utilization Heatmap ── */}
-            {heatmap && (
-              <div className="bg-[#12131a] border border-white/[0.05] rounded-xl p-6 mb-10 overflow-x-auto">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Utilization Heatmap (Last 30 Days)</h2>
-                <div className="min-w-[800px]">
+            {heatmap && (() => {
+              const globalMax = Math.max(1, ...Object.values(heatmap).flatMap(dayObj => Object.values(dayObj || {})));
+              
+              return (
+              <div className="bg-[#12131a] border border-white/20 rounded-xl p-6 mb-10 overflow-hidden">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Weekly Utilization Pattern (Last 30 Days)</h2>
+                <div className="w-full">
                   <div className="flex text-xs text-gray-500 mb-2 pl-16">
                     {Array.from({ length: 24 }).map((_, h) => (
                       <div key={h} className="flex-1 text-center">{h}h</div>
                     ))}
                   </div>
                   {['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'].map(day => {
-                    const maxForDay = Math.max(...Object.values(heatmap[day] || {}), 1);
                     return (
                       <div key={day} className="flex items-center mb-1 gap-1">
                         <div className="w-16 text-xs text-gray-400 font-medium">{day.slice(0, 3)}</div>
@@ -296,7 +298,7 @@ const UtilizationDashboard = () => {
                           const count = heatmap[day]?.[hour] || 0;
                           let bgClass = "bg-white/[0.02]";
                           if (count > 0) {
-                            const intensity = count / maxForDay;
+                            const intensity = count / globalMax;
                             if (intensity > 0.75) bgClass = "bg-[#7866ff]";
                             else if (intensity > 0.5) bgClass = "bg-[#5c4ce1]";
                             else if (intensity > 0.25) bgClass = "bg-[#44389e]";
@@ -308,7 +310,7 @@ const UtilizationDashboard = () => {
                               className={`flex-1 h-6 rounded-sm ${bgClass} group relative cursor-pointer hover:ring-1 hover:ring-white/50 transition-all`}
                             >
                               <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black border border-white/[0.1] text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
-                                {count} bookings
+                                {day.slice(0, 3)} {hour}:00 - {count} booking{count !== 1 ? 's' : ''}
                               </div>
                             </div>
                           );
@@ -327,92 +329,103 @@ const UtilizationDashboard = () => {
                   <span>More</span>
                 </div>
               </div>
-            )}
+              );
+            })()}
 
-            {/* ── Idle Equipment Alerts ── */}
-            <div className="bg-[#12131a] border border-rose-500/[0.2] rounded-xl p-6 mb-10 shadow-[0_0_15px_rgba(244,63,94,0.05)]">
-              <h2 className="text-sm font-semibold text-rose-500 uppercase tracking-wider mb-5 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                Idle Equipment Alerts (&ge; 14 Days)
-              </h2>
-              {idleEquip.length === 0 ? (
-                <div className="text-center text-gray-400 py-8 bg-white/[0.01] rounded-lg">No equipment is currently sitting idle. Excellent!</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-gray-300">
-                    <thead className="bg-white/[0.02] border-b border-white/[0.05]">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold text-gray-400">Equipment</th>
-                        <th className="px-4 py-3 font-semibold text-gray-400">Category</th>
-                        <th className="px-4 py-3 font-semibold text-gray-400">Days Idle</th>
-                        <th className="px-4 py-3 font-semibold text-gray-400 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/[0.02]">
-                      {idleEquip.map((item) => (
-                        <tr key={item.equipmentId} className="hover:bg-white/[0.01] transition-colors">
-                          <td className="px-4 py-3 font-medium text-white">{item.equipmentName}</td>
-                          <td className="px-4 py-3 text-xs">{item.category}</td>
-                          <td className="px-4 py-3">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400">
-                              {item.daysIdle >= 999 ? 'Never Used' : `${item.daysIdle} days`}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <button className="text-xs font-medium text-indigo-400 hover:text-indigo-300">Review</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+
+
+            {/* ── Shared/Exclusive & Equipment Rates ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+              
+              {/* ── Shared vs Exclusive Usage Patterns ── */}
+              {usagePatterns && (
+                <div className="bg-[#12131a] border border-white/20 rounded-xl p-6">
+                  <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Shared vs. Exclusive Usage Patterns</h2>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
+                        <span className="text-gray-300">Shared Usage (Cross-Department)</span>
+                      </div>
+                      <span className="font-semibold text-white">{usagePatterns.sharedBookingsCount} bookings</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
+                        <span className="text-gray-300">Exclusive Usage (Same Department)</span>
+                      </div>
+                      <span className="font-semibold text-white">{usagePatterns.exclusiveBookingsCount} bookings</span>
+                    </div>
+                    
+                    {/* Visual Bar */}
+                    <div className="w-full h-4 bg-white/[0.05] rounded-full overflow-hidden flex mt-2">
+                      {usagePatterns.sharedBookingsCount + usagePatterns.exclusiveBookingsCount > 0 ? (
+                        <>
+                          <div 
+                            className="h-full bg-cyan-400" 
+                            style={{ width: `${(usagePatterns.sharedBookingsCount / (usagePatterns.sharedBookingsCount + usagePatterns.exclusiveBookingsCount)) * 100}%` }}
+                          ></div>
+                          <div 
+                            className="h-full bg-indigo-500" 
+                            style={{ width: `${(usagePatterns.exclusiveBookingsCount / (usagePatterns.sharedBookingsCount + usagePatterns.exclusiveBookingsCount)) * 100}%` }}
+                          ></div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full bg-gray-700"></div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      * Shared usage implies an equipment was booked by a user outside of its assigned department.
+                    </p>
+                  </div>
                 </div>
               )}
-            </div>
 
-            {/* ── Utilization Rate per Equipment ── */}
-            <div className="bg-[#12131a] border border-white/[0.05] rounded-xl p-6 mb-10">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Utilization Rate per Equipment (Last 30 Days)</h2>
-              {ratesData.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">No equipment available.</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-gray-300">
-                    <thead className="bg-white/[0.02] border-b border-white/[0.05]">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold text-gray-400">Equipment</th>
-                        <th className="px-4 py-3 font-semibold text-gray-400">Utilization Rate</th>
-                        <th className="px-4 py-3 font-semibold text-gray-400 text-right">Performance</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/[0.02]">
-                      {ratesData.map((eq) => (
-                        <tr key={eq.equipmentId} className="hover:bg-white/[0.01] transition-colors">
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-white">{eq.equipmentName}</div>
-                            <div className="text-xs text-gray-500">{eq.category}</div>
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <div className="w-full bg-white/[0.05] rounded-full h-2">
-                              <div 
-                                className={`h-2 rounded-full ${eq.utilizationRate > 80 ? 'bg-indigo-500' : 'bg-blue-400'}`} 
-                                style={{ width: `${eq.utilizationRate}%` }}
-                              ></div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300 font-semibold text-right">
-                            {eq.utilizationRate}%
-                          </td>
+              {/* ── Utilization Rate per Equipment ── */}
+              <div className="bg-[#12131a] border border-white/20 rounded-xl p-6">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Utilization Rate per Equipment (Last 30 Days)</h2>
+                {ratesData.length === 0 ? (
+                  <div className="text-center text-gray-400 py-8">No equipment available.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-gray-300">
+                      <thead className="bg-white/[0.02] border-b border-white/20">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold text-gray-400">Equipment</th>
+                          <th className="px-4 py-3 font-semibold text-gray-400">Utilization Rate</th>
+                          <th className="px-4 py-3 font-semibold text-gray-400 text-right">Performance</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody className="divide-y divide-white/[0.02]">
+                        {ratesData.map((eq) => (
+                          <tr key={eq.equipmentId} className="hover:bg-white/[0.01] transition-colors">
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-white">{eq.equipmentName}</div>
+                              <div className="text-xs text-gray-500">{eq.category}</div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className="w-full bg-white/[0.05] rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full ${eq.utilizationRate > 80 ? 'bg-indigo-500' : 'bg-blue-400'}`} 
+                                  style={{ width: `${eq.utilizationRate}%` }}
+                                ></div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300 font-semibold text-right">
+                              {eq.utilizationRate}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
               {/* ── Utilization Rate per Department ── */}
-              <div className="bg-[#12131a] border border-white/[0.05] rounded-xl p-6">
+              <div className="bg-[#12131a] border border-white/20 rounded-xl p-6">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Utilization Rate per Department (Last 30 Days)</h2>
                 {deptRates.length === 0 ? (
                   <div className="text-center text-gray-400 py-8">No departments available.</div>
@@ -453,7 +466,7 @@ const UtilizationDashboard = () => {
               </div>
 
               {/* ── Utilization Rate per Institution ── */}
-              <div className="bg-[#12131a] border border-white/[0.05] rounded-xl p-6">
+              <div className="bg-[#12131a] border border-white/20 rounded-xl p-6">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Utilization Rate per Institution (Last 30 Days)</h2>
                 {instRates.length === 0 ? (
                   <div className="text-center text-gray-400 py-8">No institutions available.</div>

@@ -61,6 +61,9 @@ public class Booking {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "overdue_notified", nullable = false, columnDefinition = "boolean default false")
+    private boolean overdueNotified = false;
+
     public Booking() {
     }
 
@@ -165,4 +168,7 @@ public class Booking {
 
     public Long getParentBookingId() { return parentBookingId; }
     public void setParentBookingId(Long parentBookingId) { this.parentBookingId = parentBookingId; }
+
+    public boolean isOverdueNotified() { return overdueNotified; }
+    public void setOverdueNotified(boolean overdueNotified) { this.overdueNotified = overdueNotified; }
 }

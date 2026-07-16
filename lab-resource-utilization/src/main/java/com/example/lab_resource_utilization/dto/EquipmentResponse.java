@@ -17,6 +17,7 @@ public class EquipmentResponse {
     private String department;
     private String institution;
     private Integer quantity;
+    private Integer availableQuantity;  // quantity - currently active booked quantity
     private EquipmentStatus status;
 
     public EquipmentResponse() {
@@ -118,5 +119,13 @@ public class EquipmentResponse {
 
     public void setStatus(EquipmentStatus status) {
         this.status = status;
+    }
+
+    public Integer getAvailableQuantity() {
+        return availableQuantity;
+    }
+
+    public void setAvailableQuantity(Integer availableQuantity) {
+        this.availableQuantity = availableQuantity;
     }
 }

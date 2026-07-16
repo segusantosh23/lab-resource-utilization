@@ -64,20 +64,28 @@ public class WaitlistService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipment not found"));
 
         // Check if already on waitlist
-        waitlistRepository.findByUserEmailAndEquipmentId(email, request.getEquipmentId())
-                .ifPresent(w -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT,
-                            "You are already on the waitlist for this equipment");
-                });
+        Waitlist existing = waitlistRepository.findByUserEmailAndEquipmentId(email, request.getEquipmentId()).orElse(null);
+
+        if (existing != null) {
+            if (existing.getStatus() == WaitlistStatus.WAITING) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "You are already on the waitlist for this equipment");
+            }
+            // If NOTIFIED, they can join again. We will recycle the entry.
+        }
 
         // Calculate next position
         int nextPosition = waitlistRepository.countWaitingByEquipmentId(request.getEquipmentId()) + 1;
 
-        Waitlist entry = new Waitlist();
+        Waitlist entry = existing != null ? existing : new Waitlist();
         entry.setUser(user);
         entry.setEquipment(equipment);
         entry.setPosition(nextPosition);
         entry.setStatus(WaitlistStatus.WAITING);
+        if (existing != null) {
+            entry.setJoinedAt(java.time.LocalDateTime.now());
+            entry.setNotifiedAt(null);
+        }
 
         return WaitlistResponse.from(waitlistRepository.save(entry));
     }

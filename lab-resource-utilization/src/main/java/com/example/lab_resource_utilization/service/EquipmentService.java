@@ -1,5 +1,6 @@
 package com.example.lab_resource_utilization.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,13 @@ public class EquipmentService {
         response.setInstitution(equipment.getInstitution());
         response.setQuantity(equipment.getQuantity());
         response.setStatus(equipment.getStatus());
+
+        // Calculate available quantity = total - currently active future bookings
+        Integer activeQty = bookingRepository.sumFutureActiveQuantity(equipment.getId(), LocalDateTime.now());
+        if (activeQty == null) activeQty = 0;
+        int available = Math.max(0, equipment.getQuantity() - activeQty);
+        response.setAvailableQuantity(available);
+
         return response;
     }
 

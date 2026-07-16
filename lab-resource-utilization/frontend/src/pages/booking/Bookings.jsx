@@ -54,6 +54,7 @@ const Bookings = () => {
   /* waitlist state */
   const [joiningWaitlist, setJoiningWaitlist] = useState(false);
   const [waitlistSuccess, setWaitlistSuccess] = useState('');
+  const [waitlistInfo, setWaitlistInfo] = useState('');
 
   /* form state — includes recurring fields */
   const [formData, setFormData] = useState({
@@ -82,7 +83,8 @@ const Bookings = () => {
     try {
       const endpoint = (viewTab === 'all' && canViewAllBookings) ? '/bookings' : '/bookings/my';
       const res = await api.get(endpoint);
-      setBookings(res.data);
+      const sorted = res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setBookings(sorted);
     } catch {
       setError('Failed to fetch bookings.');
     } finally {
@@ -116,6 +118,7 @@ const Bookings = () => {
     // Clear waitlist success when changing equipment
     if (name === 'equipmentId') {
       setWaitlistSuccess('');
+      setWaitlistInfo('');
       setSubmitError('');
       setIsConflict(false);
     }
@@ -129,6 +132,7 @@ const Bookings = () => {
     setSubmitError('');
     setIsConflict(false);
     setWaitlistSuccess('');
+    setWaitlistInfo('');
   };
 
   /* ── join waitlist ─────────────────────────────────────────── */
@@ -137,15 +141,24 @@ const Bookings = () => {
     setJoiningWaitlist(true);
     setSubmitError('');
     setWaitlistSuccess('');
+    setWaitlistInfo('');
     try {
       await api.post('/waitlist', { equipmentId: parseInt(formData.equipmentId) });
-      setWaitlistSuccess('✓ You have been added to the waitlist! We will notify you when this equipment becomes available.');
+      setWaitlistSuccess('✅ You have been added to the waitlist! We will notify you when this equipment becomes available.');
       setSubmitError('');
       setIsConflict(false);
+      setTimeout(() => {
+        setIsAddOpen(false);
+        resetForm();
+      }, 2000);
     } catch (err) {
       const msg = err.response?.data?.message || '';
       if (msg.toLowerCase().includes('already')) {
-        setWaitlistSuccess('You are already on the waitlist for this equipment.');
+        setWaitlistInfo('You are already on the waitlist for this equipment.');
+        setTimeout(() => {
+          setIsAddOpen(false);
+          resetForm();
+        }, 2000);
       } else {
         setSubmitError('Failed to join waitlist. ' + (msg || 'Please try again.'));
       }
@@ -259,7 +272,7 @@ const Bookings = () => {
   }, {});
 
   /* ── visibility helpers ─────────────────────────────────────── */
-  const showActionsColumn = !(viewTab === 'all' && !isManagerOrAdmin);
+  const showActionsColumn = true;
 
   /* ── render ─────────────────────────────────────────────────── */
   return (
@@ -510,69 +523,6 @@ const Bookings = () => {
           <div className="bg-[#12131a] border border-white/[0.08] rounded-2xl p-6 w-full max-w-lg shadow-2xl my-8">
             <h2 className="text-xl font-bold mb-4">New Reservation</h2>
 
-            {submitError && (
-              <div className={`mb-4 p-3 rounded-lg text-sm border flex gap-2 items-start
-                ${isConflict
-                  ? 'bg-orange-500/10 border-orange-500/20 text-orange-400'
-                  : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <div className="w-full">
-                  <p className="font-medium">{isConflict ? 'Time Slot Conflict' : 'Booking Error'}</p>
-                  <p className="text-xs mt-0.5 opacity-90">{submitError}</p>
-                  {isConflict && (
-                    <div className="mt-3 space-y-3">
-                      <p className="text-xs opacity-75">
-                        Please choose a different time slot or check the{' '}
-                        <Link to="/bookings/calendar" onClick={() => setIsAddOpen(false)}
-                          className="underline hover:opacity-100">
-                          availability calendar
-                        </Link>.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleJoinWaitlist}
-                        disabled={joiningWaitlist || waitlistSuccess}
-                        className="w-full px-3 py-1.5 rounded bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 transition text-xs font-medium flex items-center justify-center gap-2 text-orange-400"
-                      >
-                        {joiningWaitlist ? (
-                          <>
-                            <div className="w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
-                            Joining Waitlist...
-                          </>
-                        ) : waitlistSuccess ? (
-                          <>
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            On Waitlist
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Join Waitlist
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {waitlistSuccess && (
-              <div className="mb-4 p-3 rounded-lg text-sm border bg-emerald-500/10 border-emerald-500/20 text-emerald-400 flex gap-2 items-start">
-                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <p>{waitlistSuccess}</p>
-              </div>
-            )}
-
             <form onSubmit={handleAddSubmit} className="space-y-4">
 
               {/* Equipment select */}
@@ -596,7 +546,10 @@ const Bookings = () => {
                 {/* Show unavailable warning and waitlist button */}
                 {formData.equipmentId && (() => {
                   const selectedEq = equipmentList.find(e => e.id == formData.equipmentId);
-                  const isUnavailable = selectedEq && UNAVAILABLE_STATUSES.includes(selectedEq.status);
+                  const isUnavailable = selectedEq && (
+                    UNAVAILABLE_STATUSES.includes(selectedEq.status) || 
+                    selectedEq.availableQuantity === 0
+                  );
                   
                   if (isUnavailable) {
                     return (
@@ -615,7 +568,7 @@ const Bookings = () => {
                         <button
                           type="button"
                           onClick={handleJoinWaitlist}
-                          disabled={joiningWaitlist || waitlistSuccess}
+                          disabled={joiningWaitlist || waitlistSuccess || !!waitlistInfo}
                           className="w-full px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium text-sm flex items-center justify-center gap-2"
                         >
                           {joiningWaitlist ? (
@@ -658,6 +611,85 @@ const Bookings = () => {
                   className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
+
+            {submitError && (
+              <div className={`mb-4 p-3 rounded-lg text-sm border flex gap-2 items-start
+                ${isConflict
+                  ? 'bg-orange-500/10 border-orange-500/20 text-orange-400'
+                  : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div className="w-full">
+                  <p className="font-medium">{isConflict ? 'Time Slot Conflict' : 'Booking Error'}</p>
+                  <p className="text-xs mt-0.5 opacity-90">{submitError}</p>
+                  {isConflict && (
+                    <div className="mt-3 space-y-3">
+                      <p className="text-xs opacity-75">
+                        Please choose a different time slot or check the{' '}
+                        <Link to="/bookings/calendar" onClick={() => setIsAddOpen(false)}
+                          className="underline hover:opacity-100">
+                          availability calendar
+                        </Link>.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleJoinWaitlist}
+                        disabled={joiningWaitlist || waitlistSuccess || !!waitlistInfo}
+                        className="w-full px-3 py-1.5 rounded bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 transition text-xs font-medium flex items-center justify-center gap-2 text-orange-400"
+                      >
+                        {joiningWaitlist ? (
+                          <>
+                            <div className="w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                            Joining Waitlist...
+                          </>
+                        ) : waitlistSuccess ? (
+                          <>
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            On Waitlist
+                          </>
+                        ) : waitlistInfo ? (
+                          <>
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Already on Waitlist
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Join Waitlist
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {waitlistSuccess && (
+              <div className="mb-4 p-3 rounded-lg text-sm border bg-emerald-500/10 border-emerald-500/20 text-emerald-400 flex gap-2 items-start">
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <p>{waitlistSuccess}</p>
+              </div>
+            )}
+
+            {waitlistInfo && (
+              <div className="mb-4 p-3 rounded-lg text-sm border bg-blue-500/10 border-blue-500/20 text-blue-400 flex gap-2 items-start">
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p>{waitlistInfo}</p>
+              </div>
+            )}
 
               {/* Time range */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -749,14 +781,17 @@ const Bookings = () => {
                   onClick={() => { setIsAddOpen(false); resetForm(); }}
                   className="px-4 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-sm transition"
                 >
-                  {waitlistSuccess ? 'Close' : 'Cancel'}
+                  {waitlistSuccess || waitlistInfo ? 'Close' : 'Cancel'}
                 </button>
                 {/* Only show Book button if equipment is available */}
                 {(() => {
                   const selectedEq = equipmentList.find(e => e.id == formData.equipmentId);
-                  const isUnavailable = selectedEq && UNAVAILABLE_STATUSES.includes(selectedEq.status);
+                  const isUnavailable = selectedEq && (
+                    UNAVAILABLE_STATUSES.includes(selectedEq.status) || 
+                    selectedEq.availableQuantity === 0
+                  );
                   
-                  if (!isUnavailable && !waitlistSuccess) {
+                  if (!isUnavailable && !waitlistSuccess && !waitlistInfo) {
                     return (
                       <button
                         type="submit"
@@ -847,3 +882,4 @@ const Bookings = () => {
 };
 
 export default Bookings;
+
