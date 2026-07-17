@@ -157,7 +157,7 @@ public class BookingService {
     }
 
     public List<BookingResponse> getAllBookings() {
-        return bookingRepository.findAll()
+        return bookingRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -170,7 +170,7 @@ public class BookingService {
     }
 
     public List<BookingResponse> getUserBookings(String userEmail) {
-        return bookingRepository.findByUserEmail(userEmail)
+        return bookingRepository.findByUserEmailOrderByCreatedAtDesc(userEmail)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());

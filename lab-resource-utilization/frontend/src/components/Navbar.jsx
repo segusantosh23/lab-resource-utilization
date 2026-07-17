@@ -1,5 +1,5 @@
 //import React, { useContext, useState } from 'react';
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import {
@@ -61,6 +61,23 @@ const Navbar = () => {
   const unreadCount = notifications.filter(
       n => !n.read
   ).length;
+
+  const profileRef = useRef(null);
+  const notificationRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setNotificationOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   if (!user) return null;
 
   // Retrieve the authorized links for the current user's role
@@ -141,7 +158,7 @@ const Navbar = () => {
 
           {/* Notification Bell */}
 
-          <div className="relative">
+          <div className="relative" ref={notificationRef}>
 
             <button
 
@@ -244,7 +261,7 @@ const Navbar = () => {
           </div>
 
          {/* User Profile & Actions */}
-        <div className="relative flex items-center shrink-0">
+        <div className="relative flex items-center shrink-0" ref={profileRef}>
           <button 
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.08] transition duration-200 cursor-pointer"

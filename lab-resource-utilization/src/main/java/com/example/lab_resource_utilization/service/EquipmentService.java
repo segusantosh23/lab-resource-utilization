@@ -1,5 +1,6 @@
 package com.example.lab_resource_utilization.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,11 +14,18 @@ import com.example.lab_resource_utilization.entity.EquipmentStatus;
 import com.example.lab_resource_utilization.exception.ResourceNotFoundException;
 import com.example.lab_resource_utilization.repository.EquipmentRepository;
 
+import com.example.lab_resource_utilization.repository.BookingRepository;
+import com.example.lab_resource_utilization.entity.Booking;
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 public class EquipmentService {
 
     @Autowired
     private EquipmentRepository repository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     // Convert Entity -> Response DTO
     private EquipmentResponse mapToResponse(Equipment equipment) {
@@ -34,6 +42,13 @@ public class EquipmentService {
         response.setInstitution(equipment.getInstitution());
         response.setQuantity(equipment.getQuantity());
         response.setStatus(equipment.getStatus());
+
+        // Calculate available quantity = total - currently active future bookings
+        Integer activeQty = bookingRepository.sumFutureActiveQuantity(equipment.getId(), LocalDateTime.now());
+        if (activeQty == null) activeQty = 0;
+        int available = Math.max(0, equipment.getQuantity() - activeQty);
+        response.setAvailableQuantity(available);
+
         return response;
     }
 
@@ -44,7 +59,11 @@ public class EquipmentService {
         equipment.setDescription(request.getDescription());
         equipment.setManufacturer(request.getManufacturer());
         equipment.setModelNumber(request.getModelNumber());
-        equipment.setSerialNumber(request.getSerialNumber());
+        String serialNumber = request.getSerialNumber();
+        if (serialNumber != null && serialNumber.trim().isEmpty()) {
+            serialNumber = null;
+        }
+        equipment.setSerialNumber(serialNumber);
         equipment.setPurchaseDate(request.getPurchaseDate());
         equipment.setDepartment(request.getDepartment());
         equipment.setInstitution(request.getInstitution());
@@ -92,10 +111,18 @@ public class EquipmentService {
     }
 
     // Delete
+    @Transactional
     public void deleteEquipment(Long id) {
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("Equipment not found with id: " + id);
         }
+        
+        // Delete all bookings associated with this equipment first to prevent foreign key constraint violations
+        List<Booking> associatedBookings = bookingRepository.findByEquipmentId(id);
+        if (!associatedBookings.isEmpty()) {
+            bookingRepository.deleteAll(associatedBookings);
+        }
+        
         repository.deleteById(id);
     }
 }

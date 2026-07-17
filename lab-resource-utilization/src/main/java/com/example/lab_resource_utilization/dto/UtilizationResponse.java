@@ -21,6 +21,7 @@ public class UtilizationResponse {
 
     // Rates
     private double utilizationPercentage;   // (CONFIRMED + IN_USE) / totalEquipment * 100
+    private double historicalUtilizationPercentage; // past days 31-60
     private double completionRate;           // COMPLETED / (COMPLETED + CANCELLED + REJECTED) * 100
     private double approvalRate;             // CONFIRMED / (CONFIRMED + REJECTED) * 100
 
@@ -72,6 +73,9 @@ public class UtilizationResponse {
 
     public double getUtilizationPercentage() { return utilizationPercentage; }
     public void setUtilizationPercentage(double v) { this.utilizationPercentage = v; }
+
+    public double getHistoricalUtilizationPercentage() { return historicalUtilizationPercentage; }
+    public void setHistoricalUtilizationPercentage(double v) { this.historicalUtilizationPercentage = v; }
 
     public double getCompletionRate() { return completionRate; }
     public void setCompletionRate(double v) { this.completionRate = v; }

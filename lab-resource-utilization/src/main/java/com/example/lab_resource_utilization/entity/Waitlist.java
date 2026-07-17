@@ -33,6 +33,18 @@ public class Waitlist {
     @Column(name = "notified_at")
     private LocalDateTime notifiedAt;
 
+    @Column(name = "start_time")
+    private LocalDateTime startTime;
+
+    @Column(name = "end_time")
+    private LocalDateTime endTime;
+
+    @Column(nullable = false, columnDefinition = "integer default 1")
+    private Integer quantity = 1;
+
+    @Column(length = 1000)
+    private String purpose;
+
     @PrePersist
     protected void onCreate() {
         joinedAt = LocalDateTime.now();
@@ -59,4 +71,16 @@ public class Waitlist {
 
     public LocalDateTime getNotifiedAt() { return notifiedAt; }
     public void setNotifiedAt(LocalDateTime notifiedAt) { this.notifiedAt = notifiedAt; }
+
+    public LocalDateTime getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+    public String getPurpose() { return purpose; }
+    public void setPurpose(String purpose) { this.purpose = purpose; }
 }

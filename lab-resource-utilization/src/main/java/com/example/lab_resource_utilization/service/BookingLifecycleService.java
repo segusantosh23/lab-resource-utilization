@@ -5,11 +5,13 @@ import com.example.lab_resource_utilization.entity.*;
 import com.example.lab_resource_utilization.exception.InvalidBookingException;
 import com.example.lab_resource_utilization.exception.ResourceNotFoundException;
 import com.example.lab_resource_utilization.repository.BookingRepository;
+import com.example.lab_resource_utilization.repository.EquipmentRepository;
 import com.example.lab_resource_utilization.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.lab_resource_utilization.service.NotificationService;
+import java.time.LocalDateTime;
 /**
  * Manages the status transitions and lifecycle of laboratory equipment bookings.
  *
@@ -39,6 +41,8 @@ public class BookingLifecycleService {
     private WaitlistService waitlistService;
     @Autowired
     private NotificationService notificationService;
+    @Autowired
+    private EquipmentRepository equipmentRepository;
 
     public BookingResponse updateBookingStatus(Long bookingId, BookingStatus newStatus, String userEmail) {
         System.out.println("🔥 BookingLifecycleService.updateBookingStatus called");
@@ -63,13 +67,41 @@ public class BookingLifecycleService {
             notificationService.notifyBookingStatusChange(savedBooking);
         }
         //createNotificationForStatus(savedBooking);
-        // 4. If booking freed up (CANCELLED or REJECTED), notify next waitlisted user
-        if ((newStatus == BookingStatus.CANCELLED || newStatus == BookingStatus.REJECTED) && waitlistService != null) {
+        // 4. If booking freed up (COMPLETED, CANCELLED, or REJECTED), notify next waitlisted user
+        if ((newStatus == BookingStatus.COMPLETED || newStatus == BookingStatus.CANCELLED || newStatus == BookingStatus.REJECTED) && waitlistService != null) {
             Long equipmentId = booking.getEquipment().getId();
             waitlistService.notifyNext(equipmentId);
         }
 
+        // 5. Sync equipment BOOKED/AVAILABLE status based on current active bookings
+        syncEquipmentStatus(booking.getEquipment());
+
         return bookingService.mapToResponse(savedBooking);
+    }
+
+    /**
+     * Recalculates equipment status based on total future active booking quantity.
+     * - If all capacity is consumed by active (PENDING/CONFIRMED/IN_USE) bookings → BOOKED
+     * - Otherwise → AVAILABLE (unless already UNDER_MAINTENANCE / OUT_OF_SERVICE / RETIRED)
+     */
+    private void syncEquipmentStatus(Equipment equipment) {
+        // Don't override manually set maintenance/retired statuses
+        if (equipment.getStatus() == EquipmentStatus.UNDER_MAINTENANCE ||
+            equipment.getStatus() == EquipmentStatus.OUT_OF_SERVICE ||
+            equipment.getStatus() == EquipmentStatus.RETIRED) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        Integer activeQty = bookingRepository.sumFutureActiveQuantity(equipment.getId(), now);
+        if (activeQty == null) activeQty = 0;
+
+        if (activeQty >= equipment.getQuantity()) {
+            equipment.setStatus(EquipmentStatus.BOOKED);
+        } else {
+            equipment.setStatus(EquipmentStatus.AVAILABLE);
+        }
+        equipmentRepository.save(equipment);
     }
 
     private void validateTransition(BookingStatus current, BookingStatus target) {

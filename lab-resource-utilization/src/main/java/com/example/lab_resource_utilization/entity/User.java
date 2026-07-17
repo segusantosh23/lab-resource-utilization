@@ -16,7 +16,8 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String email;
-
+    @Column(nullable = false, unique = true)
+    private String universityId;
     @Column(nullable = false)
     private String password;
     private Integer age;
@@ -57,10 +58,11 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public User(String name, String email, String password, Role role) {
+    public User(String name, String email, String universityId, String password, Role role) {
         this();
         this.name = name;
         this.email = email;
+        this.universityId = universityId;
         this.password = password;
         this.role = role;
     }
@@ -115,6 +117,16 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
+
+
+    public String getUniversityId() {
+        return universityId;
+    }
+
+    public void setUniversityId(String universityId) {
+        this.universityId = universityId;
+    }
+
 
     public String getPassword() {
         return password;
