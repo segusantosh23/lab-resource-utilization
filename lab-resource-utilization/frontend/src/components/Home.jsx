@@ -109,7 +109,7 @@ const Home = () => {
               <Link to="/login" className="px-4 py-2 hover:text-purple-400 transition duration-200 text-sm font-medium">
                 Sign In
               </Link>
-              <Link to="/register" className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition duration-200 text-sm font-medium shadow-md shadow-purple-500/10">
+              <Link to="/signup" className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition duration-200 text-sm font-medium shadow-md shadow-purple-500/10">
                 Sign Up
               </Link>
             </>

@@ -35,6 +35,16 @@ const Login = () => {
 
       <div className="w-full max-w-md bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-2xl p-8 shadow-2xl relative z-10 transition-all duration-300 hover:border-purple-500/30">
         
+        {/* Back Button */}
+        <div className="mb-6">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 transition-all w-fit">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back
+          </Link>
+        </div>
+
         {/* Title & Subtitle */}
         <div className="text-center mb-8">
           <div className="inline-flex p-3 rounded-full bg-purple-500/10 text-purple-400 mb-3 animate-pulse border border-purple-500/20">

@@ -13,6 +13,7 @@ const SignupNew = () => {
   const [otp, setOtp] = useState('');
   const [displayOtp, setDisplayOtp] = useState(''); // For testing
   const [countdown, setCountdown] = useState(0);
+  const [otpExpiryTimer, setOtpExpiryTimer] = useState(0);
   
   // Step 3: Password & Profile
   const [fullName, setFullName] = useState('');
@@ -37,6 +38,14 @@ const SignupNew = () => {
       return () => clearTimeout(timer);
     }
   }, [countdown]);
+
+  // Countdown timer for OTP expiry
+  useEffect(() => {
+    if (otpExpiryTimer > 0) {
+      const timer = setTimeout(() => setOtpExpiryTimer(otpExpiryTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpExpiryTimer]);
 
   // Email validation
   const isValidEmail = (email) => {
@@ -79,6 +88,7 @@ const SignupNew = () => {
       setStep('otp');
       setDisplayOtp(response.data.otp_for_testing || ''); // For development
       setCountdown(30); // 30-second countdown
+      setOtpExpiryTimer(300); // 5-minute expiry countdown
       setSuccess('OTP sent to your email');
 
       // Clear success message after 3 seconds
@@ -146,6 +156,7 @@ const SignupNew = () => {
       setDisplayOtp(response.data.otp_for_testing || '');
       setOtp('');
       setCountdown(30);
+      setOtpExpiryTimer(300);
       setSuccess('New OTP sent to your email');
       
       setTimeout(() => setSuccess(''), 3000);
@@ -210,6 +221,7 @@ const SignupNew = () => {
     setOtp('');
     setDisplayOtp('');
     setCountdown(0);
+    setOtpExpiryTimer(0);
     setError('');
     setSuccess('');
   };
@@ -242,6 +254,16 @@ const SignupNew = () => {
         {/* Card */}
         <div className="bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-2xl p-8 shadow-2xl transition-all duration-300 hover:border-purple-500/30">
           
+          {/* Back Button */}
+          <div className="mb-6">
+            <Link to="/" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 transition-all w-fit">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Home
+            </Link>
+          </div>
+
           {/* Step Indicator */}
           <div className="flex gap-2 mb-8">
             <div className={`flex-1 h-2 rounded-full transition-all ${['email', 'otp', 'password'].includes(step) ? 'bg-purple-600' : 'bg-white/20'}`}></div>
@@ -340,7 +362,11 @@ const SignupNew = () => {
               </div>
 
               <div className="bg-red-500/10 border border-red-500/20 text-red-300 p-3 rounded-lg text-center text-sm">
-                <p>⏰ OTP expires in 30 seconds</p>
+                {otpExpiryTimer > 0 ? (
+                  <p>⏰ OTP expires in {Math.floor(otpExpiryTimer / 60)}:{(otpExpiryTimer % 60).toString().padStart(2, '0')}</p>
+                ) : (
+                  <p>⏰ OTP has expired. Please request a new one.</p>
+                )}
               </div>
 
               <button
@@ -465,6 +491,7 @@ const SignupNew = () => {
                     <option value="LAB_MANAGER">Lab Manager</option>
                     <option value="DEPARTMENT_HEAD">Department Head</option>
                     <option value="INSTITUTION_ADMIN">Institution Admin</option>
+                    <option value="SYSTEM_ADMIN">System Administrator</option>
                   </select>
                 </div>
               </div>
