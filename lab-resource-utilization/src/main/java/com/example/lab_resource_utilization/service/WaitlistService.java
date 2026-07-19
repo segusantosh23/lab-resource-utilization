@@ -150,12 +150,8 @@ public class WaitlistService {
             booking.setStatus(BookingStatus.PENDING_APPROVAL);
             bookingRepository.save(booking);
             
-            // Send email notification to the user
-            emailService.sendWaitlistNotification(
-                first.getUser().getEmail(), 
-                first.getUser().getName(), 
-                first.getEquipment().getName()
-            );
+            // Send waitlist promotion email using proper DTO
+            sendWaitlistPromotionEmail(first);
 
             // Add in-app dashboard notification to user
             notificationService.createNotification(
@@ -175,6 +171,33 @@ public class WaitlistService {
                     "INFO"
                 );
             }
+        }
+    }
+    
+    /**
+     * Send waitlist promotion email notification
+     */
+    private void sendWaitlistPromotionEmail(Waitlist waitlist) {
+        try {
+            java.time.format.DateTimeFormatter dateTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+            
+            String fromDateTime = waitlist.getStartTime().format(dateTimeFormatter);
+            String toDateTime = waitlist.getEndTime().format(dateTimeFormatter);
+            
+            com.example.lab_resource_utilization.dto.WaitlistPromotionEmailDTO emailDTO = 
+                com.example.lab_resource_utilization.dto.WaitlistPromotionEmailDTO.builder()
+                .toEmail(waitlist.getUser().getEmail())
+                .userName(waitlist.getUser().getName())
+                .equipmentName(waitlist.getEquipment().getName())
+                .bookingDate(null)  // Not needed anymore
+                .bookingTime("from " + fromDateTime + " to " + toDateTime)
+                .newBookingStatus("PENDING_APPROVAL")
+                .confirmationMessage("Your waitlist request has been automatically converted to a booking. Please wait for manager approval.")
+                .build();
+                
+            emailService.sendWaitlistPromotionEmail(emailDTO);
+        } catch (Exception e) {
+            System.err.println("❌ Failed to send waitlist promotion email: " + e.getMessage());
         }
     }
 }

@@ -125,7 +125,7 @@ public class AnalyticsService {
             trackingList.add(new RealTimeUsageDTO(
                     b.getEquipment().getId(),
                     b.getEquipment().getName(),
-                    b.getEquipment().getCategory(),
+                    "", // Category field removed from Equipment
                     b.getEquipment().getStatus().name(),
                     userName,
                     b.getStartTime(),
@@ -155,7 +155,7 @@ public class AnalyticsService {
             double rate = (totalBookedHours / availableHours) * 100.0;
             if (rate > 100.0) rate = 100.0;
             result.add(new EquipmentUtilizationDTO(
-                    eq.getId(), eq.getName(), eq.getCategory(), Math.round(rate * 10.0) / 10.0,
+                    eq.getId(), eq.getName(), "", Math.round(rate * 10.0) / 10.0, // Category field removed
                     Math.round(totalBookedHours * 10.0) / 10.0, availableHours
             ));
         }
@@ -242,7 +242,7 @@ public class AnalyticsService {
             }
 
             if (daysIdle >= 14) {
-                idleList.add(new IdleEquipmentDTO(eq.getId(), eq.getName(), eq.getCategory(), daysIdle));
+                idleList.add(new IdleEquipmentDTO(eq.getId(), eq.getName(), "", daysIdle)); // Category field removed
             }
         }
         

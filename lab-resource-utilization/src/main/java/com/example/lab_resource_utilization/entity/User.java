@@ -16,7 +16,7 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String email;
-    @Column(nullable = false, unique = true)
+    @Column(unique = true) // Made nullable to support existing users
     private String universityId;
     @Column(nullable = false)
     private String password;
