@@ -91,7 +91,12 @@ public class AuthService {
      * This updates the OTP record with the account information
      */
     @Transactional
-    public void submitAccountDetails(String email, String name, String password, String role) {
+    public void submitAccountDetails(
+            String email,
+            String name,
+            String universityId,
+            String password,
+            String role){
         // Verify email has a valid OTP (email was verified)
         Optional<Otp> otpOpt = otpService.getLatestValidOtp(email, OtpType.SIGNUP_VERIFICATION);
         
@@ -113,6 +118,7 @@ public class AuthService {
         // Update the OTP record with account details
         Otp otp = otpOpt.get();
         otp.setPendingUserName(name);
+        otp.setPendingUniversityId(universityId);
         otp.setPendingUserRole(role.toUpperCase());
         otp.setPendingPasswordHash(hashedPassword);
         
@@ -177,10 +183,11 @@ public class AuthService {
 
         // Create OTP with pending user data
         Otp otp = otpService.createSignupOtp(
-            request.getEmail(),
-            request.getName(),
-            request.getRole().toUpperCase(),
-            hashedPassword
+                request.getEmail(),
+                request.getName(),
+                request.getUniversityId(),
+                request.getRole().toUpperCase(),
+                hashedPassword
         );
 
         // Send OTP email
@@ -223,8 +230,9 @@ public class AuthService {
         // Create user from OTP data
         User user = new User();
         user.setName(otp.getPendingUserName());
+        user.setUniversityId(otp.getPendingUniversityId());
         user.setEmail(otp.getEmail());
-        user.setPassword(otp.getPendingPasswordHash()); // Already hashed
+        user.setPassword(otp.getPendingPasswordHash());
         user.setRole(Role.valueOf(otp.getPendingUserRole()));
         user.markEmailAsVerified(); // Mark as verified immediately
 
@@ -275,14 +283,20 @@ public class AuthService {
             Otp oldOtp = existingOtp.get();
             String userName = oldOtp.getPendingUserName();
             String userRole = oldOtp.getPendingUserRole();
+            String universityId = oldOtp.getPendingUniversityId();
             String passwordHash = oldOtp.getPendingPasswordHash();
 
             // Delete old OTP
             otpService.cleanupOtps(email, OtpType.SIGNUP_VERIFICATION);
 
             // Create new OTP
-            Otp newOtp = otpService.createSignupOtp(email, userName, userRole, passwordHash);
-
+            Otp newOtp = otpService.createSignupOtp(
+                    email,
+                    userName,
+                    universityId,
+                    userRole,
+                    passwordHash
+            );
             // Send email
             emailService.sendSignupOTP(email, newOtp.getOtpCode(), userName);
 
@@ -313,7 +327,11 @@ public class AuthService {
      */
     public LoginResponse login(LoginRequest request) {
 
-        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        Optional<User> userOpt =
+                userRepository.findByEmailOrUniversityId(
+                        request.getLogin(),
+                        request.getLogin()
+                );
 
         if (userOpt.isEmpty()) {
             return new LoginResponse("User not found");
@@ -507,6 +525,15 @@ public class AuthService {
         // ✅ Nothing else needed
         // OTP is already marked as USED inside verifyOtp()
     }
+
+    @Transactional
+    public void checkPasswordResetOtp(String email, String otpCode) {
+        otpService.checkOtp(
+            email,
+            otpCode,
+            OtpType.PASSWORD_RESET
+        );
+    }
      /* NEW 3-STEP FLOW - Step 3: Complete signup with password after OTP verification
      */
     @Transactional
@@ -540,8 +567,9 @@ public class AuthService {
 
         // Create user account
         User user = new User();
-        user.setEmail(email);
-        user.setName(name);
+        user.setName(request.getName());
+        user.setUniversityId(request.getUniversityId());
+        user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(role);
         user.setEmailVerified(true); // Email already verified via OTP

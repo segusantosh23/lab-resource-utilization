@@ -1,5 +1,6 @@
 package com.example.lab_resource_utilization.service;
 
+import com.example.lab_resource_utilization.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -8,12 +9,38 @@ import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Async;
 
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.MessagingException;
+import org.springframework.mail.MailAuthenticationException;
+import org.springframework.mail.MailSendException;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
 
+/**
+ * Production-ready SMTP Email Notification Service
+ * Handles all email notifications for the Lab Resource Utilization Platform
+ * 
+ * Features:
+ * - Booking notifications (approved, rejected)
+ * - Maintenance reminders
+ * - Calibration alerts
+ * - Waitlist promotions
+ * - Custom email sending
+ * - Professional HTML templates
+ * - Comprehensive error handling
+ * - Detailed logging
+ * 
+ * @author Lab Resource Utilization Team
+ * @version 2.0
+ */
 @Service
 public class EmailService {
 
     private static final Logger logger = Logger.getLogger(EmailService.class.getName());
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("h:mm a");
+    private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("MMMM d, yyyy 'at' h:mm a");
 
     @Autowired
     private JavaMailSender mailSender;
@@ -98,6 +125,27 @@ public class EmailService {
         }
     }
 
+    @Async
+    public void sendWaitlistNotification(String toEmail, String userName, String equipmentName) {
+        logger.info("⏳ [WAITLIST NOTIFICATION EMAIL] Sent to: " + toEmail);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(toEmail);
+            helper.setSubject("Equipment Available - " + equipmentName);
+            helper.setFrom(senderEmail, appName);
+
+            String htmlContent = buildWaitlistNotificationEmail(userName, equipmentName);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            logger.info("✅ Waitlist notification email sent successfully to: " + toEmail);
+        } catch (Exception e) {
+            logger.warning("⚠️ Failed to send waitlist notification email to: " + toEmail + ". Error: " + e.getMessage());
+        }
+    }
+
     private String buildSignupOTPEmail(String userName, String otp) {
         return "<html><body style='background: #0f1419; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px;'>" +
                "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>" +
@@ -119,8 +167,7 @@ public class EmailService {
                "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
                "<div style='text-align: center;'>" +
                "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
-               "© 2024 " + appName + " | " +
-               "<a href='mailto:" + supportEmail + "' style='color: #a855f7; text-decoration: none;'>" + supportEmail + "</a>" +
+               "© 2026 " + appName +
                "</p></div></div></body></html>";
     }
 
@@ -145,8 +192,7 @@ public class EmailService {
                "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
                "<div style='text-align: center;'>" +
                "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
-               "© 2024 " + appName + " | " +
-               "<a href='mailto:" + supportEmail + "' style='color: #f59e0b; text-decoration: none;'>" + supportEmail + "</a>" +
+               "© 2026 " + appName +
                "</p></div></div></body></html>";
     }
 
@@ -173,8 +219,25 @@ public class EmailService {
                "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
                "<div style='text-align: center;'>" +
                "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
-               "© 2024 " + appName + " | " +
-               "<a href='mailto:" + supportEmail + "' style='color: #10b981; text-decoration: none;'>" + supportEmail + "</a>" +
+               "© 2026 " + appName +
+               "</p></div></div></body></html>";
+    }
+
+    private String buildWaitlistNotificationEmail(String userName, String equipmentName) {
+        return "<html><body style='background: #0f1419; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px;'>" +
+               "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>" +
+               "<div style='text-align: center; margin-bottom: 30px;'>" +
+               "<h1 style='color: #3b82f6; margin: 0; font-size: 28px;'>⏳ Equipment Available!</h1>" +
+               "</div>" +
+               "<p style='font-size: 18px; line-height: 1.6; margin-bottom: 20px;'>Hi " + escapeHtml(userName) + ",</p>" +
+               "<p style='font-size: 16px; line-height: 1.6; margin-bottom: 30px;'>Good news! The equipment <strong>" + escapeHtml(equipmentName) + "</strong> you were waitlisted for is now available to book.</p>" +
+               "<div style='text-align: center; margin: 30px 0;'>" +
+               "<a href='" + baseUrl + "/bookings' style='display: inline-block; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;'>" +
+               "📅 Book Now</a></div>" +
+               "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
+               "<div style='text-align: center;'>" +
+               "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
+               "© 2026 " + appName +
                "</p></div></div></body></html>";
     }
 
@@ -186,4 +249,457 @@ public class EmailService {
                    .replace("\"", "&quot;")
                    .replace("'", "&#39;");
     }
+
+    // ========================================
+    // WEEK 3: SMTP EMAIL NOTIFICATION METHODS
+    // ========================================
+
+    /**
+     * Send Booking Approved Email
+     * Notifies user when their booking request has been approved
+     */
+    @Async
+    public void sendBookingApprovedEmail(BookingApprovedEmailDTO dto) {
+        logger.info("📧 [BOOKING APPROVED EMAIL] Sending to: " + dto.getToEmail());
+        try {
+            validateEmailDTO(dto.getToEmail(), "Booking Approved", "booking approved notification");
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(dto.getToEmail());
+            helper.setSubject("✅ Booking Approved - " + dto.getEquipmentName());
+            helper.setFrom(senderEmail, appName);
+
+            String htmlContent = buildBookingApprovedEmail(dto);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            logger.info("✅ Booking approved email sent successfully to: " + dto.getToEmail() + 
+                       " | Equipment: " + dto.getEquipmentName() + 
+                       " | Time: " + LocalDateTime.now());
+        } catch (MailAuthenticationException e) {
+            logger.severe("🔐 Mail authentication failed for booking approved email to: " + dto.getToEmail() + 
+                         ". Error: " + e.getMessage());
+            throw new RuntimeException("Email authentication failed. Please check SMTP credentials.", e);
+        } catch (MailSendException e) {
+            logger.severe("📧 Failed to send booking approved email to: " + dto.getToEmail() + 
+                         ". Error: " + e.getMessage());
+            throw new RuntimeException("Failed to send email. Please check recipient address.", e);
+        } catch (MessagingException e) {
+            logger.severe("⚠️ Messaging error while sending booking approved email to: " + dto.getToEmail() + 
+                         ". Error: " + e.getMessage());
+            throw new RuntimeException("Error preparing email message.", e);
+        } catch (Exception e) {
+            logger.severe("❌ Unexpected error sending booking approved email to: " + dto.getToEmail() + 
+                         ". Error: " + e.getMessage());
+            throw new RuntimeException("Unexpected error occurred while sending email.", e);
+        }
+    }
+
+    /**
+     * Send Booking Rejected Email
+     * Notifies user when their booking request has been rejected
+     */
+    @Async
+    public void sendBookingRejectedEmail(BookingRejectedEmailDTO dto) {
+        logger.info("📧 [BOOKING REJECTED EMAIL] Sending to: " + dto.getToEmail());
+        try {
+            validateEmailDTO(dto.getToEmail(), "Booking Rejected", "booking rejected notification");
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(dto.getToEmail());
+            helper.setSubject("❌ Booking Rejected - " + dto.getEquipmentName());
+            helper.setFrom(senderEmail, appName);
+
+            String htmlContent = buildBookingRejectedEmail(dto);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            logger.info("✅ Booking rejected email sent successfully to: " + dto.getToEmail() + 
+                       " | Equipment: " + dto.getEquipmentName() + 
+                       " | Time: " + LocalDateTime.now());
+        } catch (Exception e) {
+            logger.severe("❌ Failed to send booking rejected email to: " + dto.getToEmail() + 
+                         ". Error: " + e.getMessage());
+            throw new RuntimeException("Failed to send booking rejected email.", e);
+        }
+    }
+
+    /**
+     * Send Maintenance Reminder Email
+     * Alerts technicians about upcoming/scheduled maintenance
+     */
+    @Async
+    public void sendMaintenanceReminderEmail(MaintenanceReminderEmailDTO dto) {
+        logger.info("🔧 [MAINTENANCE REMINDER EMAIL] Sending to: " + dto.getToEmail());
+        try {
+            validateEmailDTO(dto.getToEmail(), "Maintenance Reminder", "maintenance reminder");
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(dto.getToEmail());
+            helper.setSubject("🔧 Maintenance Reminder - " + dto.getEquipmentName());
+            helper.setFrom(senderEmail, appName);
+
+            String htmlContent = buildMaintenanceReminderEmail(dto);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            logger.info("✅ Maintenance reminder email sent successfully to: " + dto.getToEmail() + 
+                       " | Equipment: " + dto.getEquipmentName() + 
+                       " | Maintenance Date: " + dto.getMaintenanceDate() + 
+                       " | Time: " + LocalDateTime.now());
+        } catch (Exception e) {
+            logger.severe("❌ Failed to send maintenance reminder email to: " + dto.getToEmail() + 
+                         ". Error: " + e.getMessage());
+            throw new RuntimeException("Failed to send maintenance reminder email.", e);
+        }
+    }
+
+    /**
+     * Send Calibration Reminder Email
+     * Alerts about upcoming calibration requirements
+     */
+    @Async
+    public void sendCalibrationReminderEmail(CalibrationReminderEmailDTO dto) {
+        logger.info("⚙️ [CALIBRATION REMINDER EMAIL] Sending to: " + dto.getToEmail());
+        try {
+            validateEmailDTO(dto.getToEmail(), "Calibration Reminder", "calibration reminder");
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(dto.getToEmail());
+            helper.setSubject("⚙️ Calibration Due Soon - " + dto.getEquipmentName());
+            helper.setFrom(senderEmail, appName);
+
+            String htmlContent = buildCalibrationReminderEmail(dto);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            logger.info("✅ Calibration reminder email sent successfully to: " + dto.getToEmail() + 
+                       " | Equipment: " + dto.getEquipmentName() + 
+                       " | Days Remaining: " + dto.getDaysRemaining() + 
+                       " | Time: " + LocalDateTime.now());
+        } catch (Exception e) {
+            logger.severe("❌ Failed to send calibration reminder email to: " + dto.getToEmail() + 
+                         ". Error: " + e.getMessage());
+            throw new RuntimeException("Failed to send calibration reminder email.", e);
+        }
+    }
+
+    /**
+     * Send Waitlist Promotion Email
+     * Notifies user when they've been automatically promoted from waitlist to confirmed booking
+     */
+    @Async
+    public void sendWaitlistPromotionEmail(WaitlistPromotionEmailDTO dto) {
+        logger.info("🎉 [WAITLIST PROMOTION EMAIL] Sending to: " + dto.getToEmail());
+        try {
+            validateEmailDTO(dto.getToEmail(), "Waitlist Promotion", "waitlist promotion");
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(dto.getToEmail());
+            helper.setSubject("🎉 Booking Confirmed - " + dto.getEquipmentName());
+            helper.setFrom(senderEmail, appName);
+
+            String htmlContent = buildWaitlistPromotionEmail(dto);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            logger.info("✅ Waitlist promotion email sent successfully to: " + dto.getToEmail() + 
+                       " | Equipment: " + dto.getEquipmentName() + 
+                       " | Booking Status: " + dto.getNewBookingStatus() + 
+                       " | Time: " + LocalDateTime.now());
+        } catch (Exception e) {
+            logger.severe("❌ Failed to send waitlist promotion email to: " + dto.getToEmail() + 
+                         ". Error: " + e.getMessage());
+            throw new RuntimeException("Failed to send waitlist promotion email.", e);
+        }
+    }
+
+    /**
+     * Send Custom Email
+     * Flexible method for sending custom emails with validation
+     */
+    @Async
+    public void sendCustomEmail(CustomEmailDTO dto) {
+        logger.info("📨 [CUSTOM EMAIL] Sending to: " + dto.getToEmail());
+        try {
+            validateEmailDTO(dto.getToEmail(), dto.getSubject(), dto.getMessage());
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(dto.getToEmail());
+            helper.setSubject(dto.getSubject());
+            helper.setFrom(senderEmail, appName);
+
+            if (dto.isHtml()) {
+                helper.setText(dto.getMessage(), true);
+            } else {
+                helper.setText(dto.getMessage(), false);
+            }
+
+            mailSender.send(message);
+            logger.info("✅ Custom email sent successfully to: " + dto.getToEmail() + 
+                       " | Subject: " + dto.getSubject() + 
+                       " | Time: " + LocalDateTime.now());
+        } catch (Exception e) {
+            logger.severe("❌ Failed to send custom email to: " + dto.getToEmail() + 
+                         ". Error: " + e.getMessage());
+            throw new RuntimeException("Failed to send custom email.", e);
+        }
+    }
+
+    /**
+     * Validate email DTO before sending
+     * Ensures all required fields are present and valid
+     */
+    private void validateEmailDTO(String toEmail, String subject, String message) {
+        if (toEmail == null || toEmail.trim().isEmpty()) {
+            throw new IllegalArgumentException("Recipient email address cannot be empty");
+        }
+        if (!toEmail.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new IllegalArgumentException("Invalid email address format: " + toEmail);
+        }
+        if (subject == null || subject.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email subject cannot be empty");
+        }
+        if (message == null || message.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email message cannot be empty");
+        }
+    }
+
+    // ========================================
+    // HTML EMAIL TEMPLATE BUILDERS
+    // ========================================
+
+    /**
+     * Build HTML email for Booking Approved notification
+     */
+    private String buildBookingApprovedEmail(BookingApprovedEmailDTO dto) {
+        return "<html><body style='background: #0f1419; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px;'>" +
+               "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>" +
+               "<div style='text-align: center; margin-bottom: 30px;'>" +
+               "<h1 style='color: #10b981; margin: 0; font-size: 32px;'>✅ Booking Approved!</h1>" +
+               "</div>" +
+               "<p style='font-size: 18px; line-height: 1.6; margin-bottom: 20px;'>Hi " + escapeHtml(dto.getUserName()) + "!</p>" +
+               "<p style='font-size: 16px; line-height: 1.6; margin-bottom: 30px;'>Great news! Your booking request has been <strong style='color: #10b981;'>APPROVED</strong>.</p>" +
+               
+               "<div style='background: #064e3b; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; margin: 25px 0;'>" +
+               "<h3 style='color: #6ee7b7; margin-top: 0; font-size: 20px;'>📋 Booking Details</h3>" +
+               "<table style='width: 100%; color: #d1fae5; font-size: 15px;'>" +
+               "<tr><td style='padding: 8px 0;'><strong>Equipment:</strong></td><td>" + escapeHtml(dto.getEquipmentName()) + "</td></tr>" +
+               (dto.getEquipmentId() != null ? "<tr><td style='padding: 8px 0;'><strong>Equipment ID:</strong></td><td>#" + dto.getEquipmentId() + "</td></tr>" : "") +
+               (dto.getBookingDate() != null ? "<tr><td style='padding: 8px 0;'><strong>Date:</strong></td><td>" + dto.getBookingDate() + "</td></tr>" : "") +
+               (dto.getBookingTime() != null ? "<tr><td style='padding: 8px 0;'><strong>Time:</strong></td><td>" + dto.getBookingTime() + "</td></tr>" : "") +
+               (dto.getLabName() != null ? "<tr><td style='padding: 8px 0;'><strong>Lab:</strong></td><td>" + escapeHtml(dto.getLabName()) + "</td></tr>" : "") +
+               (dto.getDepartment() != null ? "<tr><td style='padding: 8px 0;'><strong>Department:</strong></td><td>" + escapeHtml(dto.getDepartment()) + "</td></tr>" : "") +
+               "<tr><td style='padding: 8px 0;'><strong>Status:</strong></td><td><span style='background: #10b981; color: white; padding: 4px 12px; border-radius: 4px; font-weight: bold;'>" + escapeHtml(dto.getBookingStatus()) + "</span></td></tr>" +
+               (dto.getPurpose() != null ? "<tr><td style='padding: 8px 0;'><strong>Purpose:</strong></td><td>" + escapeHtml(dto.getPurpose()) + "</td></tr>" : "") +
+               "</table></div>" +
+               
+               "<div style='background: #1e40af; color: #93c5fd; padding: 15px; border-radius: 8px; margin: 20px 0;'>" +
+               "<p style='margin: 0; font-size: 14px;'><strong>📌 Important:</strong> Please arrive on time and ensure you check out the equipment properly after use.</p>" +
+               "</div>" +
+               
+               "<div style='text-align: center; margin: 30px 0;'>" +
+               "<a href='" + baseUrl + "/bookings' style='display: inline-block; background: linear-gradient(135deg, #059669, #10b981); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;'>" +
+               "View My Bookings</a></div>" +
+               
+               "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
+               "<div style='text-align: center;'>" +
+               "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
+               "© 2026 " + appName +
+               "</p></div></div></body></html>";
+    }
+
+    /**
+     * Build HTML email for Booking Rejected notification
+     */
+    private String buildBookingRejectedEmail(BookingRejectedEmailDTO dto) {
+        return "<html><body style='background: #0f1419; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px;'>" +
+               "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>" +
+               "<div style='text-align: center; margin-bottom: 30px;'>" +
+               "<h1 style='color: #ef4444; margin: 0; font-size: 32px;'>❌ Booking Rejected</h1>" +
+               "</div>" +
+               "<p style='font-size: 18px; line-height: 1.6; margin-bottom: 20px;'>Hi " + escapeHtml(dto.getUserName()) + ",</p>" +
+               "<p style='font-size: 16px; line-height: 1.6; margin-bottom: 30px;'>We regret to inform you that your booking request has been <strong style='color: #ef4444;'>REJECTED</strong>.</p>" +
+               
+               "<div style='background: #7f1d1d; border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin: 25px 0;'>" +
+               "<h3 style='color: #fca5a5; margin-top: 0; font-size: 20px;'>📋 Booking Details</h3>" +
+               "<table style='width: 100%; color: #fecaca; font-size: 15px;'>" +
+               "<tr><td style='padding: 8px 0;'><strong>Equipment:</strong></td><td>" + escapeHtml(dto.getEquipmentName()) + "</td></tr>" +
+               (dto.getBookingDate() != null ? "<tr><td style='padding: 8px 0;'><strong>Date:</strong></td><td>" + dto.getBookingDate() + "</td></tr>" : "") +
+               (dto.getBookingTime() != null ? "<tr><td style='padding: 8px 0;'><strong>Time:</strong></td><td>" + dto.getBookingTime() + "</td></tr>" : "") +
+               "</table></div>" +
+               
+               "<div style='background: #991b1b; border: 2px solid #ef4444; padding: 20px; border-radius: 8px; margin: 25px 0;'>" +
+               "<h3 style='color: #fca5a5; margin-top: 0; font-size: 18px;'>📝 Rejection Reason</h3>" +
+               "<p style='color: #fecaca; margin: 0; font-size: 15px; line-height: 1.6;'>" + escapeHtml(dto.getRejectionReason()) + "</p>" +
+               "</div>" +
+               
+               "<div style='background: #1e40af; color: #93c5fd; padding: 15px; border-radius: 8px; margin: 20px 0;'>" +
+               "<p style='margin: 0; font-size: 14px;'><strong>💡 Next Steps:</strong> You can try booking a different time slot or contact us for assistance.</p>" +
+               "</div>" +
+               
+               (dto.getContactEmail() != null || dto.getContactPhone() != null ? 
+               "<div style='background: #374151; padding: 15px; border-radius: 8px; margin: 20px 0;'>" +
+               "<h4 style='color: #9ca3af; margin-top: 0; font-size: 16px;'>📞 Contact Information</h4>" +
+               (dto.getContactEmail() != null ? "<p style='color: #d1d5db; margin: 5px 0;'>Email: <a href='mailto:" + dto.getContactEmail() + "' style='color: #60a5fa;'>" + dto.getContactEmail() + "</a></p>" : "") +
+               (dto.getContactPhone() != null ? "<p style='color: #d1d5db; margin: 5px 0;'>Phone: " + escapeHtml(dto.getContactPhone()) + "</p>" : "") +
+               "</div>" : "") +
+               
+               "<div style='text-align: center; margin: 30px 0;'>" +
+               "<a href='" + baseUrl + "/equipment' style='display: inline-block; background: linear-gradient(135deg, #dc2626, #ef4444); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;'>" +
+               "Browse Equipment</a></div>" +
+               
+               "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
+               "<div style='text-align: center;'>" +
+               "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
+               "© 2026 " + appName +
+               "</p></div></div></body></html>";
+    }
+
+    /**
+     * Build HTML email for Maintenance Reminder notification
+     */
+    private String buildMaintenanceReminderEmail(MaintenanceReminderEmailDTO dto) {
+        String maintenanceDateStr = dto.getMaintenanceDate().format(DATETIME_FORMATTER);
+        
+        return "<html><body style='background: #0f1419; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px;'>" +
+               "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>" +
+               "<div style='text-align: center; margin-bottom: 30px;'>" +
+               "<h1 style='color: #f59e0b; margin: 0; font-size: 32px;'>🔧 Maintenance Reminder</h1>" +
+               "</div>" +
+               "<p style='font-size: 18px; line-height: 1.6; margin-bottom: 20px;'>Hi " + escapeHtml(dto.getAssignedTechnician()) + ",</p>" +
+               "<p style='font-size: 16px; line-height: 1.6; margin-bottom: 30px;'>This is a reminder about the scheduled maintenance for the following equipment:</p>" +
+               
+               "<div style='background: #78350f; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 25px 0;'>" +
+               "<h3 style='color: #fbbf24; margin-top: 0; font-size: 20px;'>🔧 Maintenance Details</h3>" +
+               "<table style='width: 100%; color: #fde68a; font-size: 15px;'>" +
+               "<tr><td style='padding: 8px 0;'><strong>Equipment:</strong></td><td>" + escapeHtml(dto.getEquipmentName()) + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Equipment ID:</strong></td><td>#" + dto.getEquipmentId() + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Scheduled Date:</strong></td><td>" + maintenanceDateStr + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Assigned To:</strong></td><td>" + escapeHtml(dto.getAssignedTechnician()) + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Current Status:</strong></td><td><span style='background: #f59e0b; color: #78350f; padding: 4px 12px; border-radius: 4px; font-weight: bold;'>" + escapeHtml(dto.getEquipmentStatus()) + "</span></td></tr>" +
+               (dto.getMaintenanceType() != null ? "<tr><td style='padding: 8px 0;'><strong>Type:</strong></td><td>" + escapeHtml(dto.getMaintenanceType()) + "</td></tr>" : "") +
+               "</table></div>" +
+               
+               (dto.getNotes() != null ? 
+               "<div style='background: #374151; padding: 15px; border-radius: 8px; margin: 20px 0;'>" +
+               "<h4 style='color: #9ca3af; margin-top: 0; font-size: 16px;'>📝 Additional Notes</h4>" +
+               "<p style='color: #d1d5db; margin: 0; line-height: 1.6;'>" + escapeHtml(dto.getNotes()) + "</p>" +
+               "</div>" : "") +
+               
+               "<div style='background: #991b1b; color: #fca5a5; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;'>" +
+               "<p style='margin: 0; font-size: 14px;'><strong>⚠️ Important:</strong> Please complete the maintenance on schedule to avoid equipment downtime.</p>" +
+               "</div>" +
+               
+               "<div style='text-align: center; margin: 30px 0;'>" +
+               "<a href='" + baseUrl + "/equipment/" + dto.getEquipmentId() + "' style='display: inline-block; background: linear-gradient(135deg, #d97706, #f59e0b); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;'>" +
+               "View Equipment Details</a></div>" +
+               
+               "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
+               "<div style='text-align: center;'>" +
+               "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
+               "© 2026 " + appName +
+               "</p></div></div></body></html>";
+    }
+
+    /**
+     * Build HTML email for Calibration Reminder notification
+     */
+    private String buildCalibrationReminderEmail(CalibrationReminderEmailDTO dto) {
+        String dueDateStr = dto.getCalibrationDueDate().format(DATE_FORMATTER);
+        String urgencyColor = dto.getDaysRemaining() <= 7 ? "#ef4444" : (dto.getDaysRemaining() <= 14 ? "#f59e0b" : "#3b82f6");
+        
+        return "<html><body style='background: #0f1419; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px;'>" +
+               "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>" +
+               "<div style='text-align: center; margin-bottom: 30px;'>" +
+               "<h1 style='color: " + urgencyColor + "; margin: 0; font-size: 32px;'>⚙️ Calibration Due Soon</h1>" +
+               "</div>" +
+               "<p style='font-size: 18px; line-height: 1.6; margin-bottom: 20px;'>Calibration Alert!</p>" +
+               "<p style='font-size: 16px; line-height: 1.6; margin-bottom: 30px;'>The following equipment requires calibration soon:</p>" +
+               
+               "<div style='background: #1e3a8a; border-left: 4px solid " + urgencyColor + "; padding: 20px; border-radius: 8px; margin: 25px 0;'>" +
+               "<h3 style='color: #93c5fd; margin-top: 0; font-size: 20px;'>⚙️ Calibration Details</h3>" +
+               "<table style='width: 100%; color: #bfdbfe; font-size: 15px;'>" +
+               "<tr><td style='padding: 8px 0;'><strong>Equipment:</strong></td><td>" + escapeHtml(dto.getEquipmentName()) + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Equipment ID:</strong></td><td>#" + dto.getEquipmentId() + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Due Date:</strong></td><td>" + dueDateStr + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Days Remaining:</strong></td><td><span style='background: " + urgencyColor + "; color: white; padding: 4px 12px; border-radius: 4px; font-weight: bold;'>" + dto.getDaysRemaining() + " days</span></td></tr>" +
+               (dto.getCalibrationFrequency() != null ? "<tr><td style='padding: 8px 0;'><strong>Frequency:</strong></td><td>" + escapeHtml(dto.getCalibrationFrequency()) + "</td></tr>" : "") +
+               "</table></div>" +
+               
+               (dto.getReminderMessage() != null ? 
+               "<div style='background: #374151; padding: 15px; border-radius: 8px; margin: 20px 0;'>" +
+               "<p style='color: #d1d5db; margin: 0; line-height: 1.6;'>" + escapeHtml(dto.getReminderMessage()) + "</p>" +
+               "</div>" : "") +
+               
+               "<div style='background: " + (dto.getDaysRemaining() <= 7 ? "#991b1b" : "#92400e") + "; color: " + (dto.getDaysRemaining() <= 7 ? "#fca5a5" : "#fbbf24") + "; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;'>" +
+               "<p style='margin: 0; font-size: 14px;'><strong>" + (dto.getDaysRemaining() <= 7 ? "🚨 URGENT" : "⚠️ ATTENTION") + ":</strong> Equipment cannot be used after the calibration due date!</p>" +
+               "</div>" +
+               
+               "<div style='text-align: center; margin: 30px 0;'>" +
+               "<a href='" + baseUrl + "/equipment/" + dto.getEquipmentId() + "' style='display: inline-block; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;'>" +
+               "Schedule Calibration</a></div>" +
+               
+               "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
+               "<div style='text-align: center;'>" +
+               "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
+               "© 2026 " + appName +
+               "</p></div></div></body></html>";
+    }
+
+    /**
+     * Build HTML email for Waitlist Promotion notification
+     */
+    private String buildWaitlistPromotionEmail(WaitlistPromotionEmailDTO dto) {
+        return "<html><body style='background: #0f1419; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px;'>" +
+               "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>" +
+               "<div style='text-align: center; margin-bottom: 30px;'>" +
+               "<h1 style='color: #a855f7; margin: 0; font-size: 32px;'>🎉 Booking Confirmed!</h1>" +
+               "<p style='color: #c084fc; font-size: 16px; margin-top: 10px;'>You've been promoted from the waitlist</p>" +
+               "</div>" +
+               "<p style='font-size: 18px; line-height: 1.6; margin-bottom: 20px;'>Hi " + escapeHtml(dto.getUserName()) + "!</p>" +
+               "<p style='font-size: 16px; line-height: 1.6; margin-bottom: 30px;'>Great news! A slot has become available and your booking has been <strong style='color: #a855f7;'>AUTOMATICALLY CONFIRMED</strong>.</p>" +
+               
+               "<div style='background: #581c87; border-left: 4px solid #a855f7; padding: 20px; border-radius: 8px; margin: 25px 0;'>" +
+               "<h3 style='color: #e9d5ff; margin-top: 0; font-size: 20px;'>📋 Confirmed Booking Details</h3>" +
+               "<table style='width: 100%; color: #f3e8ff; font-size: 15px;'>" +
+               "<tr><td style='padding: 8px 0;'><strong>Equipment:</strong></td><td>" + escapeHtml(dto.getEquipmentName()) + "</td></tr>" +
+               (dto.getBookingDate() != null ? "<tr><td style='padding: 8px 0;'><strong>Date:</strong></td><td>" + dto.getBookingDate() + "</td></tr>" : "") +
+               (dto.getBookingTime() != null ? "<tr><td style='padding: 8px 0;'><strong>Time:</strong></td><td>" + dto.getBookingTime() + "</td></tr>" : "") +
+               "<tr><td style='padding: 8px 0;'><strong>Status:</strong></td><td><span style='background: #10b981; color: white; padding: 4px 12px; border-radius: 4px; font-weight: bold;'>" + escapeHtml(dto.getNewBookingStatus()) + "</span></td></tr>" +
+               "</table></div>" +
+               
+               (dto.getConfirmationMessage() != null ? 
+               "<div style='background: #064e3b; border: 2px solid #10b981; color: #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0;'>" +
+               "<p style='margin: 0; font-size: 15px; line-height: 1.6;'>" + escapeHtml(dto.getConfirmationMessage()) + "</p>" +
+               "</div>" : "") +
+               
+               "<div style='background: #1e40af; color: #93c5fd; padding: 15px; border-radius: 8px; margin: 20px 0;'>" +
+               "<p style='margin: 0; font-size: 14px;'><strong>📌 Action Required:</strong> Please arrive on time. If you cannot make it, please cancel your booking so others can use the equipment.</p>" +
+               "</div>" +
+               
+               "<div style='text-align: center; margin: 30px 0;'>" +
+               "<a href='" + baseUrl + "/bookings' style='display: inline-block; background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;'>" +
+               "View Booking Details</a></div>" +
+               
+               "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
+               "<div style='text-align: center;'>" +
+               "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
+               "© 2026 " + appName +
+               "</p></div></div></body></html>";
+    }
 }
+
+

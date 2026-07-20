@@ -63,11 +63,19 @@ public class OtpService {
      * Create OTP for signup with pending user data
      */
     @Transactional
-    public Otp createSignupOtp(String email, String userName, String userRole, String passwordHash) {
+    public Otp createSignupOtp(String email,
+                               String userName,
+                               String universityId,
+                               String userRole,
+                               String passwordHash) {
+
         Otp otp = createOtp(email, OtpType.SIGNUP_VERIFICATION);
+
         otp.setPendingUserName(userName);
+        otp.setPendingUniversityId(universityId);
         otp.setPendingUserRole(userRole);
         otp.setPendingPasswordHash(passwordHash);
+
         return otpRepository.save(otp);
     }
 
@@ -96,6 +104,27 @@ public class OtpService {
 
         otp.setUsed(true);
         return otpRepository.save(otp);
+    }
+
+    @Transactional
+    public void checkOtp(String email, String enteredOtp, OtpType type) {
+        Optional<Otp> latestOtpOpt = getLatestValidOtp(email, type);
+
+        if (latestOtpOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No active OTP found. Please request a new one.");
+        }
+
+        Otp otp = latestOtpOpt.get();
+
+        if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OTP has expired.");
+        }
+
+        if (!otp.getOtpCode().equals(enteredOtp)) {
+            otp.setAttemptCount(otp.getAttemptCount() + 1);
+            otpRepository.save(otp);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP.");
+        }
     }
 
     /**

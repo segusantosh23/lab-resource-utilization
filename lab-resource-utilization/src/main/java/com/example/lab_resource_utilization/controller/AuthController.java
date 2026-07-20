@@ -88,8 +88,13 @@ public class AuthController {
      */
     @PostMapping("/submit-account-details")
     public ResponseEntity<Map<String, String>> submitAccountDetails(@Valid @RequestBody SignupRequest request) {
-        authService.submitAccountDetails(request.getEmail(), request.getName(), request.getPassword(), request.getRole());
-        
+        authService.submitAccountDetails(
+                request.getEmail(),
+                request.getName(),
+                request.getUniversityId(),
+                request.getPassword(),
+                request.getRole()
+        );
         Map<String, String> response = new HashMap<>();
         response.put("message", "Account details saved. Please verify OTP to complete registration.");
         
@@ -214,6 +219,19 @@ public ResponseEntity<?> verifySignupOtp(@Valid @RequestBody VerifyOtpRequest re
         
         Map<String, Object> response = new HashMap<>();
         response.put("message", message);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * FORGOT PASSWORD FLOW - Verify OTP before allowing password reset
+     * POST /auth/forgot-password/verify
+     * Body: { "email": "john@example.com", "otp": "123456" }
+     */
+    @PostMapping("/forgot-password/verify")
+    public ResponseEntity<Map<String, String>> verifyForgotPasswordOtp(@Valid @RequestBody VerifyOtpOnlyRequest request) {
+        authService.checkPasswordResetOtp(request.getEmail(), request.getOtp());
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "OTP verified successfully");
         return ResponseEntity.ok(response);
     }
 

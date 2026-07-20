@@ -52,8 +52,8 @@ const WaitlistManager = () => {
   useEffect(() => {
     api.get('/equipment')
       .then(r => {
-        // Only show non-available equipment in the join-waitlist dropdown
-        setEquipmentList(r.data.filter(e => e.status !== 'AVAILABLE'));
+        // Only show BOOKED equipment, or equipment where all quantity is actively consumed
+        setEquipmentList(r.data.filter(e => e.status !== 'AVAILABLE' || e.availableQuantity === 0));
       })
       .catch(() => {});
   }, []);
@@ -136,7 +136,7 @@ const WaitlistManager = () => {
           <form onSubmit={handleJoin} className="flex flex-col md:flex-row gap-4 items-end">
             <div className="flex-1">
               <label className="block text-sm text-gray-400 mb-1">
-                Select Equipment (currently unavailable)
+                Select Equipment
               </label>
               <select
                 required
@@ -148,6 +148,7 @@ const WaitlistManager = () => {
                 {equipmentList.map(eq => (
                   <option key={eq.id} value={eq.id}>
                     {eq.name} — {eq.status.replace(/_/g, ' ')}
+                    {eq.quantity != null ? ` (Total: ${eq.quantity})` : ''}
                   </option>
                 ))}
               </select>

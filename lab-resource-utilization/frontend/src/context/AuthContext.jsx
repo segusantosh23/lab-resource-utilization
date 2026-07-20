@@ -21,9 +21,9 @@ export const AuthProvider = ({ children }) => {
   /**
    * Login — calls the backend, stores JWT + user, returns result.
    */
-  const login = async (email, password) => {
+  const login = async (loginId, password) => {
     try {
-      const data = await authService.login(email, password);
+      const data = await authService.login(loginId, password);
       const { token: jwtToken, email: userEmail, name, role, message } = data;
 
       if (jwtToken) {
@@ -45,9 +45,21 @@ export const AuthProvider = ({ children }) => {
   /**
    * Register — calls the backend, returns result.
    */
-  const register = async (name, email, password, role) => {
+  const register = async (
+      name,
+      universityId,
+      email,
+      password,
+      role
+  ) => {
     try {
-      const data = await authService.register(name, email, password, role);
+      const data = await authService.register(
+          name,
+          universityId,
+          email,
+          password,
+          role
+      );
       if (data === 'User registered successfully') {
         return { success: true };
       } else {

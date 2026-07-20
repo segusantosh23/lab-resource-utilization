@@ -1,12 +1,15 @@
 package com.example.lab_resource_utilization.service;
 
 import com.example.lab_resource_utilization.dto.NotificationResponse;
+import com.example.lab_resource_utilization.dto.BookingApprovedEmailDTO;
+import com.example.lab_resource_utilization.dto.BookingRejectedEmailDTO;
 import com.example.lab_resource_utilization.entity.Notification;
 import com.example.lab_resource_utilization.entity.User;
 import com.example.lab_resource_utilization.repository.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.lab_resource_utilization.entity.Booking;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -14,6 +17,9 @@ public class NotificationService {
 
     @Autowired
     private NotificationRepository notificationRepository;
+    
+    @Autowired
+    private EmailService emailService;
 
     /*
      * Create a new notification
@@ -50,6 +56,9 @@ public class NotificationService {
                         booking.getEquipment().getName() +
                         " has been approved.";
                 type = "SUCCESS";
+                
+                // 📧 Send approval email
+                sendBookingApprovedEmail(booking);
                 break;
 
             case REJECTED:
@@ -58,6 +67,9 @@ public class NotificationService {
                         booking.getEquipment().getName() +
                         " has been rejected.";
                 type = "ERROR";
+                
+                // 📧 Send rejection email
+                sendBookingRejectedEmail(booking);
                 break;
 
             case CANCELLED:
@@ -66,6 +78,9 @@ public class NotificationService {
                         booking.getEquipment().getName() +
                         " has been cancelled.";
                 type = "WARNING";
+                
+                // 📧 Send cancellation email
+                sendBookingCancelledEmail(booking);
                 break;
 
             case IN_USE:
@@ -98,6 +113,87 @@ public class NotificationService {
                 message,
                 type
         );
+    }
+    
+    /**
+     * Send booking approved email notification
+     */
+    private void sendBookingApprovedEmail(Booking booking) {
+        try {
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+            
+            String fromDateTime = booking.getStartTime().format(dateTimeFormatter);
+            String toDateTime = booking.getEndTime().format(dateTimeFormatter);
+            
+            BookingApprovedEmailDTO emailDTO = BookingApprovedEmailDTO.builder()
+                .toEmail(booking.getUser().getEmail())
+                .userName(booking.getUser().getName())
+                .equipmentName(booking.getEquipment().getName())
+                .equipmentId(booking.getEquipment().getId().toString())
+                .bookingDate(null)  // Not needed anymore
+                .bookingTime("from " + fromDateTime + " to " + toDateTime)
+                .labName(booking.getEquipment().getInstitution())
+                .department(booking.getEquipment().getDepartment())
+                .bookingStatus("CONFIRMED")
+                .build();
+                
+            emailService.sendBookingApprovedEmail(emailDTO);
+        } catch (Exception e) {
+            System.err.println("❌ Failed to send booking approved email: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Send booking rejected email notification
+     */
+    private void sendBookingRejectedEmail(Booking booking) {
+        try {
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+            
+            String fromDateTime = booking.getStartTime().format(dateTimeFormatter);
+            String toDateTime = booking.getEndTime().format(dateTimeFormatter);
+            
+            BookingRejectedEmailDTO emailDTO = BookingRejectedEmailDTO.builder()
+                .toEmail(booking.getUser().getEmail())
+                .userName(booking.getUser().getName())
+                .equipmentName(booking.getEquipment().getName())
+                .bookingDate(null)  // Not needed anymore
+                .bookingTime("from " + fromDateTime + " to " + toDateTime)
+                .rejectionReason("Your booking request has been reviewed and rejected by the lab manager.")
+                .contactEmail("support@labresource.com")
+                .build();
+                
+            emailService.sendBookingRejectedEmail(emailDTO);
+        } catch (Exception e) {
+            System.err.println("❌ Failed to send booking rejected email: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Send booking cancelled email notification
+     */
+    private void sendBookingCancelledEmail(Booking booking) {
+        try {
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+            
+            String fromDateTime = booking.getStartTime().format(dateTimeFormatter);
+            String toDateTime = booking.getEndTime().format(dateTimeFormatter);
+            
+            // Reuse BookingRejectedEmailDTO structure but with cancellation message
+            BookingRejectedEmailDTO emailDTO = BookingRejectedEmailDTO.builder()
+                .toEmail(booking.getUser().getEmail())
+                .userName(booking.getUser().getName())
+                .equipmentName(booking.getEquipment().getName())
+                .bookingDate(null)  // Not needed anymore
+                .bookingTime("from " + fromDateTime + " to " + toDateTime)
+                .rejectionReason("Your booking has been cancelled by the lab manager.")
+                .contactEmail(null)  // Don't show contact information
+                .build();
+                
+            emailService.sendBookingRejectedEmail(emailDTO);
+        } catch (Exception e) {
+            System.err.println("❌ Failed to send booking cancelled email: " + e.getMessage());
+        }
     }
 
     /*

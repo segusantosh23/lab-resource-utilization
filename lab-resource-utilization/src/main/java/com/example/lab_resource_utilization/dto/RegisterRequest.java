@@ -3,6 +3,7 @@ package com.example.lab_resource_utilization.dto;
 public class RegisterRequest {
 
     private String name;
+    private String universityId;
     private String email;
     private String password;
     private String role;
@@ -16,6 +17,14 @@ public class RegisterRequest {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getUniversityId() {
+        return universityId;
+    }
+
+    public void setUniversityId(String universityId) {
+        this.universityId = universityId;
     }
 
     public String getEmail() {

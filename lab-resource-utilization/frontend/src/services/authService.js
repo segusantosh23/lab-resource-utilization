@@ -9,8 +9,12 @@ const authService = {
    * @param {{ email: string, password: string }} credentials
    * @returns {Promise<{ token, email, name, role, message }>}
    */
-  login: async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
+  login: async (login, password) => {
+    const response = await api.post('/auth/login', {
+      login,
+      password
+    });
+
     return response.data;
   },
 
@@ -19,8 +23,22 @@ const authService = {
    * @param {{ name: string, email: string, password: string, role: string }} data
    * @returns {Promise<string>} — success / error message from backend
    */
-  register: async (name, email, password, role) => {
-    const response = await api.post('/auth/register', { name, email, password, role });
+  register: async (
+      name,
+      universityId,
+      email,
+      password,
+      role
+  ) => {
+
+    const response = await api.post('/auth/register', {
+      name,
+      universityId,
+      email,
+      password,
+      role
+    });
+
     return response.data;
   },
 

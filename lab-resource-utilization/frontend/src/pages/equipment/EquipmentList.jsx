@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
+
+const UNAVAILABLE_STATUSES = ['BOOKED', 'UNDER_MAINTENANCE', 'OUT_OF_SERVICE', 'RETIRED'];
 const EquipmentList = () => {
 
   const { user } = useContext(AuthContext);
@@ -18,6 +20,11 @@ const EquipmentList = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+
+  // Waitlist state
+  const [joiningId, setJoiningId]         = useState(null);   // equipment id currently joining
+  const [myWaitlistIds, setMyWaitlistIds] = useState(new Set()); // equipment ids already on waitlist
+  const [waitlistToast, setWaitlistToast] = useState('');      // toast message
 
   const navigate = useNavigate();
 
@@ -43,6 +50,41 @@ const EquipmentList = () => {
   useEffect(() => {
     fetchEquipment();
   }, []);
+
+  // Load researcher's existing waitlist entries to know which equipment is already joined
+  useEffect(() => {
+    if (user?.role === 'RESEARCHER') {
+      api.get('/waitlist/my')
+        .then(res => {
+          setMyWaitlistIds(new Set(res.data.map(e => String(e.equipmentId))));
+        })
+        .catch(() => {});
+    }
+  }, [user]);
+
+  const showToast = useCallback((msg) => {
+    setWaitlistToast(msg);
+    setTimeout(() => setWaitlistToast(''), 4000);
+  }, []);
+
+  const handleJoinWaitlist = async (item) => {
+    setJoiningId(item.id);
+    try {
+      await api.post('/waitlist', { equipmentId: item.id });
+      setMyWaitlistIds(prev => new Set([...prev, String(item.id)]));
+      showToast(`✓ Joined waitlist for "${item.name}". You'll be notified when it's available.`);
+    } catch (err) {
+      const msg = err.response?.data?.message || '';
+      if (msg.toLowerCase().includes('already')) {
+        setMyWaitlistIds(prev => new Set([...prev, String(item.id)]));
+        showToast(`You are already on the waitlist for "${item.name}".`);
+      } else {
+        showToast(`Failed to join waitlist: ${msg || 'please try again.'}`);
+      }
+    } finally {
+      setJoiningId(null);
+    }
+  };
 
   // Handlers
   const handleInputChange = (e) => {
@@ -219,7 +261,7 @@ const EquipmentList = () => {
                     <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Category</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Department / Inst.</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Manufacturer</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Qty</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Avail / Total</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Status</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase text-right">Actions</th>
                   </tr>
@@ -235,7 +277,16 @@ const EquipmentList = () => {
                         {item.department || '-'} <span className="text-gray-600">/</span> {item.institution || '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-400">{item.manufacturer || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-400">{item.quantity}</td>
+                      <td className="px-6 py-4 text-sm text-gray-400">
+                        {item.availableQuantity != null
+                          ? <span>
+                              <span className={item.availableQuantity === 0 ? 'text-red-400 font-medium' : 'text-emerald-400 font-medium'}>
+                                {item.availableQuantity}
+                              </span>
+                              <span className="text-gray-600"> / {item.quantity}</span>
+                            </span>
+                          : item.quantity}
+                      </td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-1 text-xs font-medium rounded-full border 
                           ${item.status === 'AVAILABLE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
@@ -245,38 +296,62 @@ const EquipmentList = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
 
-                          {user.role === "LAB_TECHNICIAN" ? (
-
+                          {/* RESEARCHER — Join Waitlist for unavailable equipment */}
+                          {user.role === 'RESEARCHER' && UNAVAILABLE_STATUSES.includes(item.status) && (
+                            myWaitlistIds.has(String(item.id)) ? (
+                              <span className="text-xs px-3 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
+                                ✓ On Waitlist
+                              </span>
+                            ) : (
                               <button
-                                  onClick={() => openEditModal(item)}
-                                  className="text-amber-400 hover:text-amber-300 text-sm"
+                                id={`join-waitlist-${item.id}`}
+                                onClick={() => handleJoinWaitlist(item)}
+                                disabled={joiningId === item.id}
+                                className="text-amber-400 hover:text-amber-300 text-xs px-3 py-1.5 rounded bg-amber-500/5 border border-amber-500/20 hover:bg-amber-500/10 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-1"
                               >
-                                Update Status
+                                {joiningId === item.id ? (
+                                  <>
+                                    <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                                    Joining…
+                                  </>
+                                ) : (
+                                  <>+ Waitlist</>
+                                )}
                               </button>
-
-                          ) : (
-
-                              <>
-                                <button
-                                    onClick={() => openEditModal(item)}
-                                    className="text-purple-400 hover:text-purple-300 mx-2 text-sm"
-                                >
-                                  Edit
-                                </button>
-
-                                <button
-                                    onClick={() => openDeleteModal(item)}
-                                    className="text-red-400 hover:text-red-300 text-sm"
-                                >
-                                  Delete
-                                </button>
-                              </>
-
+                            )
                           )}
 
-                        </td>
+                          {/* LAB_TECHNICIAN — Status update only */}
+                          {user.role === 'LAB_TECHNICIAN' && (
+                            <button
+                              onClick={() => openEditModal(item)}
+                              className="text-amber-400 hover:text-amber-300 text-sm"
+                            >
+                              Update Status
+                            </button>
+                          )}
+
+                          {/* Admin/Manager roles — Edit + Delete */}
+                          {user.role !== 'LAB_TECHNICIAN' && user.role !== 'RESEARCHER' && (
+                            <>
+                              <button
+                                onClick={() => openEditModal(item)}
+                                className="text-purple-400 hover:text-purple-300 text-sm"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => openDeleteModal(item)}
+                                className="text-red-400 hover:text-red-300 text-sm"
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -286,6 +361,17 @@ const EquipmentList = () => {
           )}
         </div>
       </div>
+
+      {/* Waitlist Toast Notification */}
+      {waitlistToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl bg-[#1e1f2b] border border-white/[0.1] text-sm text-white shadow-2xl flex items-center gap-3 max-w-md w-full mx-4 animate-fade-in">
+          <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="flex-1">{waitlistToast}</span>
+          <button onClick={() => setWaitlistToast('')} className="text-gray-500 hover:text-white transition">✕</button>
+        </div>
+      )}
 
       {/* --- MODALS --- */}
       {/* Add / Edit Form Modal */}

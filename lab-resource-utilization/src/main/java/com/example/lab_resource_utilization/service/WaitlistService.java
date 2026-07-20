@@ -9,6 +9,10 @@ import com.example.lab_resource_utilization.entity.WaitlistStatus;
 import com.example.lab_resource_utilization.repository.EquipmentRepository;
 import com.example.lab_resource_utilization.repository.UserRepository;
 import com.example.lab_resource_utilization.repository.WaitlistRepository;
+import com.example.lab_resource_utilization.repository.BookingRepository;
+import com.example.lab_resource_utilization.entity.Booking;
+import com.example.lab_resource_utilization.entity.BookingStatus;
+import com.example.lab_resource_utilization.entity.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,10 +29,19 @@ public class WaitlistService {
     private WaitlistRepository waitlistRepository;
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private EquipmentRepository equipmentRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     /** Get current user's waitlist entries */
     public List<WaitlistResponse> getMyWaitlist(String email) {
@@ -58,20 +71,32 @@ public class WaitlistService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipment not found"));
 
         // Check if already on waitlist
-        waitlistRepository.findByUserEmailAndEquipmentId(email, request.getEquipmentId())
-                .ifPresent(w -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT,
-                            "You are already on the waitlist for this equipment");
-                });
+        Waitlist existing = waitlistRepository.findByUserEmailAndEquipmentId(email, request.getEquipmentId()).orElse(null);
+
+        if (existing != null) {
+            if (existing.getStatus() == WaitlistStatus.WAITING) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "You are already on the waitlist for this equipment");
+            }
+            // If NOTIFIED, they can join again. We will recycle the entry.
+        }
 
         // Calculate next position
         int nextPosition = waitlistRepository.countWaitingByEquipmentId(request.getEquipmentId()) + 1;
 
-        Waitlist entry = new Waitlist();
+        Waitlist entry = existing != null ? existing : new Waitlist();
         entry.setUser(user);
         entry.setEquipment(equipment);
         entry.setPosition(nextPosition);
         entry.setStatus(WaitlistStatus.WAITING);
+        entry.setStartTime(request.getStartTime());
+        entry.setEndTime(request.getEndTime());
+        entry.setQuantity(request.getQuantity());
+        entry.setPurpose(request.getPurpose());
+        if (existing != null) {
+            entry.setJoinedAt(java.time.LocalDateTime.now());
+            entry.setNotifiedAt(null);
+        }
 
         return WaitlistResponse.from(waitlistRepository.save(entry));
     }
@@ -104,14 +129,75 @@ public class WaitlistService {
         }
     }
 
-    /** Notify the first person in the queue when equipment becomes available */
+    /** Notify the first person in the queue when equipment becomes available and auto-book */
     @Transactional
     public void notifyNext(Long equipmentId) {
         List<Waitlist> queue = waitlistRepository.findWaitingByEquipmentIdOrdered(equipmentId);
         if (!queue.isEmpty()) {
             Waitlist first = queue.get(0);
             first.setStatus(WaitlistStatus.NOTIFIED);
+            first.setNotifiedAt(java.time.LocalDateTime.now());
             waitlistRepository.save(first);
+
+            // Auto-create booking request
+            Booking booking = new Booking();
+            booking.setUser(first.getUser());
+            booking.setEquipment(first.getEquipment());
+            booking.setStartTime(first.getStartTime());
+            booking.setEndTime(first.getEndTime());
+            booking.setQuantity(first.getQuantity());
+            booking.setPurpose(first.getPurpose());
+            booking.setStatus(BookingStatus.PENDING_APPROVAL);
+            bookingRepository.save(booking);
+            
+            // Send waitlist promotion email using proper DTO
+            sendWaitlistPromotionEmail(first);
+
+            // Add in-app dashboard notification to user
+            notificationService.createNotification(
+                first.getUser(),
+                "Waitlist Converted to Booking",
+                "Your waitlist request for '" + first.getEquipment().getName() + "' has been automatically converted into a pending booking request.",
+                "INFO"
+            );
+
+            // Notify lab managers about the new pending booking
+            List<User> managers = userRepository.findByRole(Role.LAB_MANAGER);
+            for (User manager : managers) {
+                notificationService.createNotification(
+                    manager, 
+                    "New Auto-Booking from Waitlist", 
+                    first.getUser().getName() + " was automatically booked for " + first.getEquipment().getName() + " from the waitlist.", 
+                    "INFO"
+                );
+            }
+        }
+    }
+    
+    /**
+     * Send waitlist promotion email notification
+     */
+    private void sendWaitlistPromotionEmail(Waitlist waitlist) {
+        try {
+            java.time.format.DateTimeFormatter dateTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+            
+            String fromDateTime = waitlist.getStartTime().format(dateTimeFormatter);
+            String toDateTime = waitlist.getEndTime().format(dateTimeFormatter);
+            
+            com.example.lab_resource_utilization.dto.WaitlistPromotionEmailDTO emailDTO = 
+                com.example.lab_resource_utilization.dto.WaitlistPromotionEmailDTO.builder()
+                .toEmail(waitlist.getUser().getEmail())
+                .userName(waitlist.getUser().getName())
+                .equipmentName(waitlist.getEquipment().getName())
+                .bookingDate(null)  // Not needed anymore
+                .bookingTime("from " + fromDateTime + " to " + toDateTime)
+                .newBookingStatus("PENDING_APPROVAL")
+                .confirmationMessage("Your waitlist request has been automatically converted to a booking. Please wait for manager approval.")
+                .build();
+                
+            emailService.sendWaitlistPromotionEmail(emailDTO);
+        } catch (Exception e) {
+            System.err.println("❌ Failed to send waitlist promotion email: " + e.getMessage());
         }
     }
 }
