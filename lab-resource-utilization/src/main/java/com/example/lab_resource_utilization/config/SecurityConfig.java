@@ -29,8 +29,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/equipment/**", "/equipment").permitAll()
-                        .requestMatchers("/api/email/**").permitAll()  // Allow email endpoints for testing
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/maintenance/**").permitAll() // ✅ ADD THIS LINE
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated()
                 )

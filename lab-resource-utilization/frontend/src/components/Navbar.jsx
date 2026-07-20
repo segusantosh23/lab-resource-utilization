@@ -13,42 +13,48 @@ const ROLE_MENUS = {
     { label: 'Equipment', path: '/researcher/equipment' },
     { label: 'Bookings', path: '/bookings' },
   ],
+
   LAB_TECHNICIAN: [
-  { label: 'Dashboard', path: '/dashboard/lab-technician' },
-  { label: 'Equipment', path: '/equipment' },
-  { label: 'Calibration', path: '/calibrations' },
-  { label: 'Maintenance', path: '/maintenance' },
-],
+    { label: 'Dashboard', path: '/dashboard/lab-technician' },
+    { label: 'Equipment', path: '/equipment' },
+    { label: 'Calibration', path: '/calibrations' },
+    { label: 'Maintenance', path: '/maintenance' },
+  ],
+
   LAB_MANAGER: [
-  { label: 'Dashboard', path: '/dashboard/lab-manager' },
-  { label: 'Equipment Management', path: '/equipment' },
-  { label: 'Calibration', path: '/calibrations' },
-  { label: 'Bookings', path: '/bookings' },
-  { label: 'Utilization', path: '/analytics/utilization' },
-  { label: 'Reports', path: '/reports' },
-],
+    { label: 'Dashboard', path: '/dashboard/lab-manager' },
+    { label: 'Equipment Management', path: '/equipment' },
+    { label: 'Calibration', path: '/calibrations' },
+    { label: 'Maintenance', path: '/maintenance' },
+    { label: 'Bookings', path: '/bookings' },
+    { label: 'Utilization', path: '/analytics/utilization' },
+    { label: 'Reports', path: '/reports' },
+  ],
+
   DEPARTMENT_HEAD: [
-  { label: 'Dashboard', path: '/dashboard/department-head' },
-  { label: 'Bookings', path: '/bookings' },
-  { label: 'Utilization', path: '/analytics/utilization' },
-  { label: 'Reports', path: '/reports' },
-],
+    { label: 'Dashboard', path: '/dashboard/department-head' },
+    { label: 'Bookings', path: '/bookings' },
+    { label: 'Utilization', path: '/analytics/utilization' },
+    { label: 'Reports', path: '/reports' },
+  ],
+
   INSTITUTION_ADMIN: [
-  { label: 'Dashboard', path: '/dashboard/institution-admin' },
-  { label: 'Institution Management', path: '/institution' },
-  { label: 'Users', path: '/users' },
-  { label: 'Utilization', path: '/analytics/utilization' },
-  { label: 'Reports', path: '/reports' },
-],
- SYSTEM_ADMIN: [
-  { label: 'Dashboard', path: '/dashboard/system-admin' },
-  { label: 'All Equipment', path: '/equipment' },
-  { label: 'Bookings', path: '/bookings' },
-  { label: 'Utilization', path: '/analytics/utilization' },
-  { label: 'Maintenance', path: '/maintenance' },
-  { label: 'Users', path: '/users' },
-  { label: 'System Settings', path: '/settings' },
-]
+    { label: 'Dashboard', path: '/dashboard/institution-admin' },
+    { label: 'Institution Management', path: '/institution' },
+    { label: 'Users', path: '/users' },
+    { label: 'Utilization', path: '/analytics/utilization' },
+    { label: 'Reports', path: '/reports' },
+  ],
+
+  SYSTEM_ADMIN: [
+    { label: 'Dashboard', path: '/dashboard/system-admin' },
+    { label: 'All Equipment', path: '/equipment' },
+    { label: 'Bookings', path: '/bookings' },
+    { label: 'Utilization', path: '/analytics/utilization' },
+    { label: 'Maintenance', path: '/maintenance' },
+    { label: 'Users', path: '/users' },
+    { label: 'System Settings', path: '/settings' },
+  ]
 };
 
 const Navbar = () => {

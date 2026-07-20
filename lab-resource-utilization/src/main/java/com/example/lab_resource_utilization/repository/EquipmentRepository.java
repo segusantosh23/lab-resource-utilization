@@ -5,6 +5,7 @@ import com.example.lab_resource_utilization.entity.EquipmentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface EquipmentRepository extends JpaRepository<Equipment, Long> {
 
@@ -15,4 +16,6 @@ public interface EquipmentRepository extends JpaRepository<Equipment, Long> {
     List<Equipment> findByInstitution(String institution);
 
     List<Equipment> findByNameContainingIgnoreCase(String name);
+
+    Optional<Equipment> findByNameIgnoreCase(String name);
 }
