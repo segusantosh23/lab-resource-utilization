@@ -76,11 +76,11 @@
 
         <!-- LOMBOK -->
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.38</version>
+    <scope>provided</scope>
+</dependency>
         <!-- JWT (FIXED FOR SPRING BOOT 3) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -127,14 +127,25 @@
             </plugin>
 
             <!-- JAVA COMPILER -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>21</source>
-                    <target>21</target>
-                </configuration>
-            </plugin>
+            <!-- JAVA COMPILER WITH LOMBOK PROCESSOR -->
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.13.0</version>
+    <configuration>
+        <source>21</source>
+        <target>21</target>
+
+        <annotationProcessorPaths>
+    <path>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.38</version>
+    </path>
+</annotationProcessorPaths>
+
+    </configuration>
+</plugin>
 
         </plugins>
     </build>
