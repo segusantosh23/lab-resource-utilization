@@ -23,6 +23,7 @@ const ROLE_MENUS = {
     { label: 'Equipment Management', path: '/equipment' },
     { label: 'Bookings', path: '/bookings' },
     { label: 'Utilization', path: '/analytics/utilization' },
+    { label: 'Maintenance', path: '/maintenance' },
     { label: 'Reports', path: '/reports' },
   ],
   DEPARTMENT_HEAD: [

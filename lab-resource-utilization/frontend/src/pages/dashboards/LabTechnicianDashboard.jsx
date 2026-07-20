@@ -22,8 +22,17 @@ const LabTechnicianDashboard = () => {
         const equipmentData = await getAllEquipment();
         
         setTotalEquipment(equipmentData.length);
-        const maintenance = equipmentData.filter(eq => eq.status === 'UNDER_MAINTENANCE').length;
-        setMaintenanceCount(maintenance);
+        const maintenanceData = await fetch(
+          `http://localhost:8081/api/maintenance/technician/${user.name}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        )
+        .then(res => res.json());
+
+        setMaintenanceCount(maintenanceData.length);
 
       } catch (error) {
         console.error("Failed to fetch technician dashboard data:", error);

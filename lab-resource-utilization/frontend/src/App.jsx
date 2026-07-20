@@ -18,7 +18,9 @@ import ResearcherEquipment from './pages/researcher/ResearcherEquipment';
 import CompletedBookings from './pages/researcher/CompletedBookings';
 import UsageSummary from './pages/researcher/UsageSummary';
 import EquipmentAvailability from './pages/researcher/EquipmentAvailability';
-
+import MaintenanceList from './pages/maintenance/MaintenanceList';
+import MaintenanceRequestForm from './pages/maintenance/MaintenanceRequestForm';
+import WorkOrderDetails from './pages/maintenance/WorkOrderDetails';
 // Role Dashboards
 import {
   ResearcherDashboard,
@@ -108,7 +110,33 @@ function App() {
         <Route path="/bookings/calendar" element={<ProtectedRoute><AvailabilityCalendar /></ProtectedRoute>} />
         <Route path="/bookings/history" element={<ProtectedRoute><BookingHistory /></ProtectedRoute>} />
         <Route path="/bookings/waitlist" element={<ProtectedRoute><WaitlistManager /></ProtectedRoute>} />
+        {/* ── Maintenance Module ── */}
+        <Route 
+          path="/maintenance" 
+          element={
+            <ProtectedRoute allowedRoles={['LAB_TECHNICIAN','LAB_MANAGER','SYSTEM_ADMIN']}>
+              <MaintenanceList />
+            </ProtectedRoute>
+          } 
+        />
 
+        <Route 
+          path="/maintenance/request" 
+          element={
+            <ProtectedRoute allowedRoles={['LAB_TECHNICIAN','LAB_MANAGER','SYSTEM_ADMIN']}>
+              <MaintenanceRequestForm />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/maintenance/:id" 
+          element={
+            <ProtectedRoute allowedRoles={['LAB_TECHNICIAN','LAB_MANAGER','SYSTEM_ADMIN']}>
+              <WorkOrderDetails />
+            </ProtectedRoute>
+          } 
+        />
         {/* ── Analytics ── */}
         <Route path="/analytics/utilization" element={<ProtectedRoute allowedRoles={['LAB_MANAGER','DEPARTMENT_HEAD','INSTITUTION_ADMIN','SYSTEM_ADMIN']}><UtilizationDashboard /></ProtectedRoute>} />
 
