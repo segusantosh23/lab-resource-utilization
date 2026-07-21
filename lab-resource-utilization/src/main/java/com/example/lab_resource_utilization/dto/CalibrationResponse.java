@@ -13,6 +13,10 @@ public class CalibrationResponse {
 
     private String equipmentName;
 
+    private Integer availableQuantity;
+
+    private Integer quantity;
+
     private LocalDate calibrationDate;
 
     private LocalDate nextDueDate;
@@ -56,6 +60,22 @@ public class CalibrationResponse {
 
     public void setEquipmentName(String equipmentName) {
         this.equipmentName = equipmentName;
+    }
+
+    public Integer getAvailableQuantity() {
+        return availableQuantity;
+    }
+
+    public void setAvailableQuantity(Integer availableQuantity) {
+        this.availableQuantity = availableQuantity;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 
     public LocalDate getCalibrationDate() {

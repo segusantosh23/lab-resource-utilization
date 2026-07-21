@@ -31,6 +31,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/maintenance/**").permitAll() // ✅ ADD THIS LINE
+                        .requestMatchers("/api/calibrations/**").permitAll()
+                        .requestMatchers("/api/equipment/**").authenticated()
+                        .requestMatchers("/equipment/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated()
                 )

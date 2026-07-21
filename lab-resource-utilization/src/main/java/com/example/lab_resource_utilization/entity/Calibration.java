@@ -20,7 +20,7 @@ public class Calibration {
     @Column(nullable = false)
     private LocalDate calibrationDate;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDate nextDueDate;
 
     @Column(nullable = false, unique = true)

@@ -5,11 +5,17 @@ import com.example.lab_resource_utilization.dto.CalibrationResponse;
 import com.example.lab_resource_utilization.entity.Calibration;
 import com.example.lab_resource_utilization.entity.CalibrationResult;
 import com.example.lab_resource_utilization.entity.Equipment;
+import com.example.lab_resource_utilization.entity.EquipmentStatus;
+import com.example.lab_resource_utilization.entity.MaintenanceRequest;
 import com.example.lab_resource_utilization.exception.ResourceNotFoundException;
 import com.example.lab_resource_utilization.repository.CalibrationRepository;
 import com.example.lab_resource_utilization.repository.EquipmentRepository;
+import com.example.lab_resource_utilization.repository.MaintenanceRepository;
+import com.example.lab_resource_utilization.repository.BookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -25,6 +31,12 @@ public class CalibrationServiceImpl implements CalibrationService {
 
     @Autowired
     private EquipmentRepository equipmentRepository;
+
+    @Autowired
+    private MaintenanceRepository maintenanceRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     // Convert Entity -> DTO
     private CalibrationResponse mapToResponse(Calibration calibration) {
@@ -48,15 +60,27 @@ public class CalibrationServiceImpl implements CalibrationService {
         response.setCreatedAt(calibration.getCreatedAt());
         response.setUpdatedAt(calibration.getUpdatedAt());
 
+        Equipment equipment = calibration.getEquipment();
+        response.setQuantity(equipment.getQuantity());
+
+        Integer activeQty = bookingRepository.sumFutureActiveQuantity(equipment.getId(), LocalDateTime.now());
+        if (activeQty == null) activeQty = 0;
+
+        Integer maintenanceQty = maintenanceRepository.sumActiveMaintenanceQuantity(equipment.getName());
+        if (maintenanceQty == null) maintenanceQty = 0;
+
+        int available = Math.max(0, equipment.getQuantity() - activeQty - maintenanceQty);
+        response.setAvailableQuantity(available);
+
         // Calculate Status
         LocalDate today = LocalDate.now();
         LocalDate dueDate = calibration.getNextDueDate();
 
-        if (calibration.getResult() == CalibrationResult.FAIL) {
+        if (available == 0) {
             response.setStatus("Failed");
-        } else if (dueDate.isBefore(today)) {
+        } else if (dueDate != null && dueDate.isBefore(today)) {
             response.setStatus("Expired");
-        } else if (!dueDate.isAfter(today.plusDays(30))) {
+        } else if (dueDate != null && !dueDate.isAfter(today.plusDays(30))) {
             response.setStatus("Due Soon");
         } else {
             response.setStatus("Active");
@@ -91,6 +115,10 @@ public class CalibrationServiceImpl implements CalibrationService {
         calibration.setRemarks(request.getRemarks());
 
         Calibration saved = calibrationRepository.save(calibration);
+
+        if (saved.getResult() == CalibrationResult.FAIL) {
+            processCalibrationResultChange(saved, equipment, true);
+        }
 
         return mapToResponse(saved);
     }
@@ -130,6 +158,9 @@ public class CalibrationServiceImpl implements CalibrationService {
                         new ResourceNotFoundException(
                                 "Equipment not found with id: " + request.getEquipmentId()));
 
+        boolean wasFail = calibration.getResult() == CalibrationResult.FAIL;
+        boolean isFail = request.getResult() == CalibrationResult.FAIL;
+
         calibration.setEquipment(equipment);
         calibration.setCalibrationDate(request.getCalibrationDate());
         calibration.setNextDueDate(request.getNextDueDate());
@@ -147,6 +178,12 @@ public class CalibrationServiceImpl implements CalibrationService {
         calibration.setRemarks(request.getRemarks());
 
         Calibration updated = calibrationRepository.save(calibration);
+
+        if (!wasFail && isFail) {
+            processCalibrationResultChange(updated, equipment, true);
+        } else if (wasFail && !isFail) {
+            processCalibrationResultChange(updated, equipment, false);
+        }
 
         return mapToResponse(updated);
     }
@@ -266,5 +303,40 @@ public class CalibrationServiceImpl implements CalibrationService {
         );
 
         return summary;
+    }
+
+    private void processCalibrationResultChange(Calibration calibration, Equipment equipment, boolean failed) {
+        String certNum = calibration.getCertificateNumber();
+        if (certNum != null && certNum.startsWith("CERT-REQ-")) {
+            try {
+                String[] parts = certNum.split("-");
+                if (parts.length >= 3) {
+                    Long maintenanceRequestId = Long.parseLong(parts[2]);
+                    MaintenanceRequest request = maintenanceRepository.findById(maintenanceRequestId).orElse(null);
+                    
+                    if (request != null && request.getQuantity() != null) {
+                        int quantityChange = request.getQuantity();
+                        int currentQuantity = equipment.getQuantity() != null ? equipment.getQuantity() : 0;
+                        
+                        if (failed) {
+                            int newQuantity = Math.max(0, currentQuantity - quantityChange);
+                            equipment.setQuantity(newQuantity);
+                            if (newQuantity == 0) {
+                                equipment.setStatus(EquipmentStatus.RETIRED);
+                            }
+                        } else {
+                            int newQuantity = currentQuantity + quantityChange;
+                            equipment.setQuantity(newQuantity);
+                            if (equipment.getStatus() == EquipmentStatus.RETIRED && newQuantity > 0) {
+                                equipment.setStatus(EquipmentStatus.AVAILABLE);
+                            }
+                        }
+                        equipmentRepository.save(equipment);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error processing calibration quantity: " + e.getMessage());
+            }
+        }
     }
 }

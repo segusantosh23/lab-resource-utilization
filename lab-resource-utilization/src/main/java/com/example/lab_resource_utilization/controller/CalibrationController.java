@@ -24,7 +24,6 @@ public class CalibrationController {
 
 
     // Add Calibration
-    @PreAuthorize("hasAnyRole('LAB_MANAGER','LAB_TECHNICIAN')")
     @PostMapping
     public CalibrationResponse addCalibration(
             @Valid @RequestBody CalibrationRequest request) {
@@ -34,7 +33,6 @@ public class CalibrationController {
 
 
     // Get All Calibrations
-    @PreAuthorize("hasAnyRole('LAB_MANAGER','LAB_TECHNICIAN')")
     @GetMapping
     public List<CalibrationResponse> getAllCalibrations() {
 
@@ -43,7 +41,6 @@ public class CalibrationController {
 
 
     // Get Calibration By ID
-    @PreAuthorize("hasAnyRole('LAB_MANAGER','LAB_TECHNICIAN')")
     @GetMapping("/{id}")
     public CalibrationResponse getCalibrationById(
             @PathVariable Long id) {
@@ -53,7 +50,6 @@ public class CalibrationController {
 
 
     // Update Calibration
-    @PreAuthorize("hasAnyRole('LAB_MANAGER','LAB_TECHNICIAN')")
     @PutMapping("/{id}")
     public CalibrationResponse updateCalibration(
             @PathVariable Long id,
@@ -74,7 +70,6 @@ public class CalibrationController {
 
 
     // Get Calibration History of Equipment
-    @PreAuthorize("hasAnyRole('LAB_MANAGER','LAB_TECHNICIAN')")
     @GetMapping("/equipment/{equipmentId}")
     public List<CalibrationResponse> getCalibrationHistory(
             @PathVariable Long equipmentId) {
@@ -84,7 +79,6 @@ public class CalibrationController {
 
 
     // Get Due Soon Calibrations
-    @PreAuthorize("hasAnyRole('LAB_MANAGER','LAB_TECHNICIAN')")
     @GetMapping("/due-soon")
     public List<CalibrationResponse> getDueSoonCalibrations(
             @RequestParam(defaultValue = "30") int days) {
@@ -94,7 +88,6 @@ public class CalibrationController {
 
 
     // Get Expired Calibrations
-    @PreAuthorize("hasAnyRole('LAB_MANAGER','LAB_TECHNICIAN')")
     @GetMapping("/expired")
     public List<CalibrationResponse> getExpiredCalibrations() {
 
@@ -103,7 +96,6 @@ public class CalibrationController {
 
 
     // Get Active Calibrations
-    @PreAuthorize("hasAnyRole('LAB_MANAGER','LAB_TECHNICIAN')")
     @GetMapping("/active")
     public List<CalibrationResponse> getActiveCalibrations() {
 
@@ -112,7 +104,6 @@ public class CalibrationController {
 
 
     // Get Failed Calibrations
-    @PreAuthorize("hasAnyRole('LAB_MANAGER','LAB_TECHNICIAN')")
     @GetMapping("/failed")
     public List<CalibrationResponse> getFailedCalibrations() {
 
@@ -120,8 +111,7 @@ public class CalibrationController {
     }
 
 
-    // Dashboard Summary
-    @PreAuthorize("hasAnyRole('LAB_MANAGER','LAB_TECHNICIAN')")
+    // Get Calibration Summary
     @GetMapping("/summary")
     public Map<String, Long> getCalibrationSummary() {
 

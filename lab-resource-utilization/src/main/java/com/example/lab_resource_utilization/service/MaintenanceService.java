@@ -47,13 +47,16 @@ public class MaintenanceService {
         req.setPriority(dto.getPriority());
         req.setStatus("Pending");
         req.setTechnician(dto.getTechnician());
+        req.setQuantity(dto.getQuantity() != null ? dto.getQuantity() : 1);
 
         Equipment equipment = equipmentRepository
         .findByNameIgnoreCase(dto.getEquipment())
         .orElseThrow(() -> new RuntimeException("Equipment not found"));
 
-        equipment.setStatus(EquipmentStatus.OUT_OF_SERVICE);
-        equipmentRepository.save(equipment);
+        if (req.getQuantity() != null && req.getQuantity() >= equipment.getQuantity()) {
+            equipment.setStatus(EquipmentStatus.OUT_OF_SERVICE);
+            equipmentRepository.save(equipment);
+        }
 
         return repo.save(req);
     }
@@ -67,25 +70,18 @@ public class MaintenanceService {
         .orElseThrow(() -> new RuntimeException("Equipment not found"));
 
     if ("Completed".equalsIgnoreCase(status)) {
-
         equipment.setStatus(EquipmentStatus.AVAILABLE);
-
         equipmentRepository.save(equipment);
-
-        repo.deleteById(id);
-
-        return null;
-    }
-
-    if ("In Progress".equalsIgnoreCase(status)) {
-
-        equipment.setStatus(EquipmentStatus.UNDER_MAINTENANCE);
-
-        equipmentRepository.save(equipment);
+    } else if ("In Progress".equalsIgnoreCase(status)) {
+        // Only mark the entire equipment as UNDER_MAINTENANCE in DB if we are maintaining all of it.
+        // If it's a partial maintenance, keep it AVAILABLE so others can book the remainder.
+        if (req.getQuantity() != null && req.getQuantity() >= equipment.getQuantity()) {
+            equipment.setStatus(EquipmentStatus.UNDER_MAINTENANCE);
+            equipmentRepository.save(equipment);
+        }
     }
 
     req.setStatus(status);
-
     return repo.save(req);
 }
     // NEW METHOD

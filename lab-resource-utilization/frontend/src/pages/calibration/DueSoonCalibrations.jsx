@@ -121,7 +121,12 @@ const DueSoonCalibrations = () => {
 
                                     <td className="p-4">{item.calibrationDate}</td>
 
-                                    <td className="p-4">{item.nextDueDate}</td>
+                                    <td className="p-4">
+                                        {item.nextDueDate}
+                                        <span className="ml-2 text-yellow-500 text-xs font-semibold">
+                                            ({Math.ceil((new Date(item.nextDueDate) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24))} days left)
+                                        </span>
+                                    </td>
 
                                     <td className="p-4">{item.technicianName}</td>
 

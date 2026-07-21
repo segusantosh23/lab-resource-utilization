@@ -1,11 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useContext } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import calibrationService from "../../services/calibrationService";
 import { getAllEquipment } from "../../services/equipmentService";
 import { toast } from "react-toastify";
+import { AuthContext } from "../../context/AuthContext";
 
 const AddCalibration = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefilledName = location.state?.prefilledEquipment;
+
+  const { user } = useContext(AuthContext);
+  const prefilledCert = location.state?.prefilledCertificateNumber || "";
+  const prefilledTech = location.state?.prefilledTechnician || user?.name || "";
 
   const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,9 +21,9 @@ const AddCalibration = () => {
     equipmentId: "",
     calibrationDate: "",
     nextDueDate: "",
-    certificateNumber: "",
-    technicianName: "",
-    result: "PASS",
+    certificateNumber: prefilledCert,
+    technicianName: prefilledTech,
+    result: "",
     remarks: "",
   });
 
@@ -28,6 +35,12 @@ const AddCalibration = () => {
     try {
       const data = await getAllEquipment();
       setEquipment(data);
+      if (prefilledName) {
+        const found = data.find(eq => eq.name === prefilledName);
+        if (found) {
+          setFormData(prev => ({ ...prev, equipmentId: found.id }));
+        }
+      }
     } catch (err) {
       console.error(err);
       alert("Unable to load equipment.");
@@ -47,10 +60,29 @@ const AddCalibration = () => {
     e.preventDefault();
 
     try {
-      await calibrationService.addCalibration(formData);
+      const payload = { ...formData };
+      if (payload.result === "FAIL") {
+        payload.nextDueDate = null;
+      }
+      
+      await calibrationService.addCalibration(payload);
       toast.success("Calibration added successfully!");
 
-navigate("/calibrations");
+      const maintenanceReqId = location.state?.maintenanceRequestId;
+      if (maintenanceReqId) {
+        await fetch(
+          `http://localhost:8081/api/maintenance/${maintenanceReqId}/status`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: "Completed" }),
+          }
+        );
+      }
+
+      navigate("/calibrations");
     } catch (err) {
       console.error(err);
       toast.error("Failed to add calibration.");
@@ -98,6 +130,22 @@ navigate("/calibrations");
           </div>
 
           <div>
+            <label className="block mb-2">Result</label>
+
+            <select
+              name="result"
+              value={formData.result}
+              onChange={handleChange}
+              required
+              className="w-full bg-[#222533] border border-gray-700 rounded-lg p-3"
+            >
+              <option value="">Select Result</option>
+              <option value="PASS">PASS</option>
+              <option value="FAIL">FAIL</option>
+            </select>
+          </div>
+
+          <div>
             <label className="block mb-2">Calibration Date</label>
 
             <input
@@ -116,10 +164,13 @@ navigate("/calibrations");
             <input
               type="date"
               name="nextDueDate"
-              value={formData.nextDueDate}
+              value={formData.result === "FAIL" ? "" : formData.nextDueDate}
               onChange={handleChange}
-              required
-              className="w-full bg-[#222533] border border-gray-700 rounded-lg p-3"
+              disabled={formData.result === "FAIL"}
+              required={formData.result !== "FAIL"}
+              className={`w-full bg-[#222533] border border-gray-700 rounded-lg p-3 ${
+                formData.result === "FAIL" ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             />
           </div>
 
@@ -144,24 +195,12 @@ navigate("/calibrations");
               name="technicianName"
               value={formData.technicianName}
               onChange={handleChange}
+              readOnly
               required
-              className="w-full bg-[#222533] border border-gray-700 rounded-lg p-3"
+              className="w-full bg-[#222533] border border-gray-700 rounded-lg p-3 text-gray-400 cursor-not-allowed"
             />
           </div>
 
-          <div>
-            <label className="block mb-2">Result</label>
-
-            <select
-              name="result"
-              value={formData.result}
-              onChange={handleChange}
-              className="w-full bg-[#222533] border border-gray-700 rounded-lg p-3"
-            >
-              <option value="PASS">PASS</option>
-              <option value="FAIL">FAIL</option>
-            </select>
-          </div>
 
           <div>
             <label className="block mb-2">Remarks</label>

@@ -58,30 +58,7 @@ const CalibrationList = () => {
       setLoading(false);
     }
   };
-    // Open Delete Confirmation Modal
-  const handleDeleteClick = (id) => {
-    setSelectedCalibrationId(id);
-    setShowModal(true);
-  };
 
-  // Delete Calibration
-  const confirmDelete = async () => {
-    try {
-      await calibrationService.deleteCalibration(
-        selectedCalibrationId
-      );
-
-      toast.success("Calibration deleted successfully!");
-
-      loadCalibrations();
-    } catch (error) {
-      console.error(error);
-      toast.error("Unable to delete calibration.");
-    } finally {
-      setShowModal(false);
-      setSelectedCalibrationId(null);
-    }
-  };
 
   // Search & Filter
   const filteredCalibrations = useMemo(() => {
@@ -106,6 +83,21 @@ const CalibrationList = () => {
       return matchesSearch && matchesStatus;
     });
   }, [calibrations, search, statusFilter]);
+
+  const groupedCalibrations = useMemo(() => {
+    // Group by equipment to only show the latest calibration for each equipment in the main table
+    const sorted = [...filteredCalibrations].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    const map = new Map();
+    for (const cal of sorted) {
+      if (!map.has(cal.equipmentId)) {
+        map.set(cal.equipmentId, cal);
+      }
+    }
+    return Array.from(map.values());
+  }, [filteredCalibrations]);
 
   // Loading Screen
   if (loading) {
@@ -181,13 +173,14 @@ const CalibrationList = () => {
               <th className="p-4 text-left">Certificate</th>
               <th className="p-4 text-left">Technician</th>
               <th className="p-4 text-left">Result</th>
+              <th className="p-4 text-left">Avail / Total</th>
               <th className="p-4 text-left">Status</th>
               <th className="p-4 text-center">Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredCalibrations.length === 0 ? (
+            {groupedCalibrations.length === 0 ? (
               <tr>
                 <td
                   colSpan="8"
@@ -197,7 +190,7 @@ const CalibrationList = () => {
                 </td>
               </tr>
             ) : (
-              filteredCalibrations.map((calibration) => (
+              groupedCalibrations.map((calibration) => (
                 <tr
                   key={calibration.id}
                   className="border-t border-white/10 hover:bg-[#202330]"
@@ -233,7 +226,22 @@ const CalibrationList = () => {
                       {calibration.result}
                     </span>
                   </td>
-                                    {/* Status */}
+
+                  {/* Avail / Total */}
+                  <td className="p-4 text-sm">
+                    {calibration.availableQuantity != null && calibration.quantity != null ? (
+                      <span>
+                        <span className={calibration.availableQuantity === 0 ? "text-red-400 font-medium" : "text-emerald-400 font-medium"}>
+                          {calibration.availableQuantity}
+                        </span>
+                        <span className="text-gray-500"> / {calibration.quantity}</span>
+                      </span>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+
+                  {/* Status */}
                   <td className="p-4">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -247,34 +255,18 @@ const CalibrationList = () => {
                       }`}
                     >
                       {calibration.status}
+                      {calibration.status === "Due Soon" && ` (${Math.ceil((new Date(calibration.nextDueDate) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24))}d)`}
                     </span>
                   </td>
-
                   {/* Actions */}
                   <td className="p-4">
                     <div className="flex justify-center gap-2">
-                      <Link
-                        to={`/calibrations/edit/${calibration.id}`}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-2 rounded-md text-sm"
-                      >
-                        Edit
-                      </Link>
-
                       <Link
                         to={`/calibrations/history/${calibration.equipmentId}`}
                         className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-sm"
                       >
                         History
                       </Link>
-
-                      <button
-                        onClick={() =>
-                          handleDeleteClick(calibration.id)
-                        }
-                        className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-md text-sm"
-                      >
-                        Delete
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -283,17 +275,6 @@ const CalibrationList = () => {
           </tbody>
         </table>
       </div>
-            {/* Delete Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showModal}
-        title="Delete Calibration"
-        message="Are you sure you want to delete this calibration record? This action cannot be undone."
-        onConfirm={confirmDelete}
-        onCancel={() => {
-          setShowModal(false);
-          setSelectedCalibrationId(null);
-        }}
-      />
     </div>
   );
 };

@@ -6,6 +6,7 @@ public class MaintenanceRequestDTO {
     private String description;
     private String priority;
     private String technician;
+    private Integer quantity;
 
     // Getters & Setters
 
@@ -39,5 +40,13 @@ public class MaintenanceRequestDTO {
 
     public void setTechnician(String technician) {
         this.technician = technician;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 }

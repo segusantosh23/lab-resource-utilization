@@ -14,7 +14,6 @@ public class CalibrationRequest {
     @NotNull(message = "Calibration date is required")
     private LocalDate calibrationDate;
 
-    @NotNull(message = "Next due date is required")
     private LocalDate nextDueDate;
 
     @NotBlank(message = "Certificate number is required")
