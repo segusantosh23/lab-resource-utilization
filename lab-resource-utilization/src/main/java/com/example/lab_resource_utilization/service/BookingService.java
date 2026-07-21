@@ -93,15 +93,29 @@ public class BookingService {
         Booking savedBooking = bookingRepository.save(booking);
 
         if (savedBooking.getStatus() == BookingStatus.PENDING_APPROVAL) {
-            List<User> managers = userRepository.findByRole(Role.LAB_MANAGER);
-            for (User manager : managers) {
-                notificationService.createNotification(
-                    manager, 
-                    "New Booking Request", 
-                    user.getName() + " requested to book " + equipment.getName() + ".", 
-                    "INFO"
-                );
-            }
+            List<User> managers =
+        userRepository.findByRole(Role.LAB_MANAGER);
+
+List<User> departmentHeads =
+        userRepository.findByRole(Role.DEPARTMENT_HEAD);
+
+
+managers.addAll(departmentHeads);
+
+for(User manager : managers){
+
+    if(manager.getDepartment()
+            .equals(equipment.getDepartment())) {
+
+        notificationService.createNotification(
+            manager,
+            "New Booking Request",
+            user.getName()+" requested to book "
+                    + equipment.getName(),
+            "INFO"
+        );
+    }
+}
         }
 
         return mapToResponse(savedBooking);
@@ -156,12 +170,41 @@ public class BookingService {
         return mapToResponse(savedBooking);
     }
 
-    public List<BookingResponse> getAllBookings() {
-        return bookingRepository.findAllByOrderByCreatedAtDesc()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public List<BookingResponse> getAllBookings(String email) {
+
+    User manager = userRepository.findByEmail(email)
+            .orElseThrow();
+
+    List<Booking> bookings;
+
+
+    if(manager.getRole() == Role.LAB_MANAGER) {
+
+    bookings = bookingRepository
+            .findByEquipmentDepartmentAndEquipmentInstitution(
+                    manager.getDepartment(),
+                    manager.getInstitution()
+            );
+
+} 
+else if(manager.getRole() == Role.DEPARTMENT_HEAD) {
+
+    bookings = bookingRepository
+            .findByEquipmentDepartmentAndEquipmentInstitution(
+                    manager.getDepartment(),
+                    manager.getInstitution()
+            );
+
+}
+    else {
+        bookings = bookingRepository.findAll();
     }
+
+
+    return bookings.stream()
+            .map(this::mapToResponse)
+            .toList();
+}
 
     public BookingResponse getBookingById(Long id) {
         Booking booking = bookingRepository.findById(id)

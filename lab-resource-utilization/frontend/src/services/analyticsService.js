@@ -1,7 +1,9 @@
 import api from './api';
 
-export const getUtilizationAnalytics = async () => {
-    const response = await api.get('/api/analytics/utilization');
+export const getUtilizationAnalytics = async (email) => {
+    const response = await api.get(
+        `/api/analytics/utilization?email=${email}`
+    );
     return response.data;
 };
 

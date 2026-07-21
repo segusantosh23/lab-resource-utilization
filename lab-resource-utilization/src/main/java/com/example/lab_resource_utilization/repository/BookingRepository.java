@@ -1,5 +1,5 @@
 package com.example.lab_resource_utilization.repository;
-
+import java.util.List;
 import com.example.lab_resource_utilization.entity.Booking;
 import com.example.lab_resource_utilization.entity.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,7 +13,12 @@ import java.util.Optional;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByUserId(Long userId);
+List<Booking> findByEquipmentDepartmentAndEquipmentInstitution(
+        String department,
+        String institution
+);
 
+List<Booking> findByEquipmentInstitution(String institution);
     List<Booking> findByUserEmailOrderByCreatedAtDesc(String email);
 
     List<Booking> findAllByOrderByCreatedAtDesc();

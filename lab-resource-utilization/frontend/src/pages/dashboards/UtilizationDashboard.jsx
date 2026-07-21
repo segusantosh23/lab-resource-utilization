@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { getUtilizationAnalytics, getRealTimeTracking, getEquipmentUtilizationRates, getDepartmentUtilizationRates, getInstitutionUtilizationRates, getIdleEquipment, getUtilizationHeatmap, getUsagePatterns } from '../../services/analyticsService';
 
 /* ── mini stat card ────────────────────────────────────────────── */
@@ -50,6 +51,7 @@ const Bar = ({ label, value, max, color }) => {
 
 const UtilizationDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [data,    setData]    = useState(null);
   const [realTimeData, setRealTimeData] = useState([]);
   const [ratesData, setRatesData] = useState([]);
@@ -67,7 +69,7 @@ const UtilizationDashboard = () => {
       setError('');
       try {
         const [res, rtd, rates, drates, irates, idle, hm, up] = await Promise.all([
-          getUtilizationAnalytics(),
+          getUtilizationAnalytics(user.email),
           getRealTimeTracking(),
           getEquipmentUtilizationRates(),
           getDepartmentUtilizationRates(),

@@ -15,4 +15,8 @@ public interface EquipmentRepository extends JpaRepository<Equipment, Long> {
     List<Equipment> findByInstitution(String institution);
 
     List<Equipment> findByNameContainingIgnoreCase(String name);
+    List<Equipment> findByDepartmentAndInstitution(
+        String department,
+        String institution
+);
 }

@@ -21,9 +21,11 @@ public class AnalyticsController {
     private AnalyticsService analyticsService;
 
     @GetMapping("/utilization")
-    public UtilizationResponse getUtilizationAnalytics() {
-        return analyticsService.getUtilizationAnalytics();
-    }
+public UtilizationResponse getUtilizationAnalytics(
+        @RequestParam String email) {
+
+    return analyticsService.getUtilizationAnalytics(email);
+}
 
     @GetMapping("/real-time-tracking")
     public List<RealTimeUsageDTO> getRealTimeTracking() {

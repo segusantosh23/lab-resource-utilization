@@ -17,6 +17,9 @@ import com.example.lab_resource_utilization.dto.IdleEquipmentDTO;
 import com.example.lab_resource_utilization.dto.UsagePatternDTO;
 import com.example.lab_resource_utilization.entity.Booking;
 import com.example.lab_resource_utilization.entity.Equipment;
+import com.example.lab_resource_utilization.repository.UserRepository;
+import com.example.lab_resource_utilization.entity.User;
+import com.example.lab_resource_utilization.entity.Role;
 import java.time.LocalDateTime;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -28,7 +31,8 @@ import java.util.HashMap;
 
 @Service
 public class AnalyticsService {
-
+    @Autowired
+    private UserRepository userRepository;
     @Autowired
     private EquipmentRepository equipmentRepository;
 
@@ -38,85 +42,231 @@ public class AnalyticsService {
     @Autowired
     private WaitlistRepository waitlistRepository;
 
-    public UtilizationResponse getUtilizationAnalytics() {
+    public UtilizationResponse getUtilizationAnalytics(String email) {
 
-        UtilizationResponse r = new UtilizationResponse();
+    UtilizationResponse r = new UtilizationResponse();
 
-        // ── Equipment counts ───────────────────────────────────
-        long totalEquipment = equipmentRepository.count();
-        r.setTotalEquipment(totalEquipment);
-        r.setAvailableEquipment(equipmentRepository.findByStatus(EquipmentStatus.AVAILABLE).size());
-        r.setBookedEquipment(equipmentRepository.findByStatus(EquipmentStatus.BOOKED).size());
-        r.setUnderMaintenanceEquipment(equipmentRepository.findByStatus(EquipmentStatus.UNDER_MAINTENANCE).size());
-        r.setOutOfServiceEquipment(equipmentRepository.findByStatus(EquipmentStatus.OUT_OF_SERVICE).size());
-        r.setRetiredEquipment(equipmentRepository.findByStatus(EquipmentStatus.RETIRED).size());
+    // Get logged-in user
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // ── Booking counts ─────────────────────────────────────
-        long totalBookings    = bookingRepository.count();
-        long pending          = bookingRepository.countByStatus(BookingStatus.PENDING_APPROVAL);
-        long confirmed        = bookingRepository.countByStatus(BookingStatus.CONFIRMED);
-        long inUse            = bookingRepository.countByStatus(BookingStatus.IN_USE);
-        long completed        = bookingRepository.countByStatus(BookingStatus.COMPLETED);
-        long cancelled        = bookingRepository.countByStatus(BookingStatus.CANCELLED);
-        long rejected         = bookingRepository.countByStatus(BookingStatus.REJECTED);
+    Role role = user.getRole();
+    String department = user.getDepartment();
+    
+    String institution = user.getInstitution();
 
-        r.setTotalBookings(totalBookings);
-        r.setPendingBookings(pending);
-        r.setConfirmedBookings(confirmed);
-        r.setInUseBookings(inUse);
-        r.setCompletedBookings(completed);
-        r.setCancelledBookings(cancelled);
-        r.setRejectedBookings(rejected);
 
-        // ── Utilization % = equipment with active bookings / total ──
-        long utilizedEquipment = bookingRepository.countDistinctEquipmentByStatuses(
-                Arrays.asList(BookingStatus.CONFIRMED, BookingStatus.IN_USE));
-        double utilizationPct = totalEquipment > 0
-                ? ((double) utilizedEquipment / totalEquipment) * 100.0 : 0;
-        r.setUtilizationPercentage(Math.round(utilizationPct * 10.0) / 10.0);
+    // ================= EQUIPMENT FILTER =================
 
-        // ── Historical Benchmark (Days 31-60) ──
-        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-        LocalDateTime sixtyDaysAgo = LocalDateTime.now().minusDays(60);
-        
-        List<Booking> historicalBookings = bookingRepository.findAll().stream()
-                .filter(b -> b.getStartTime() != null && b.getEndTime() != null)
-                .filter(b -> (b.getStartTime().isAfter(sixtyDaysAgo) && b.getStartTime().isBefore(thirtyDaysAgo)) || 
-                             (b.getEndTime().isAfter(sixtyDaysAgo) && b.getEndTime().isBefore(thirtyDaysAgo)) ||
-                             (b.getStartTime().isBefore(sixtyDaysAgo) && b.getEndTime().isAfter(thirtyDaysAgo)))
-                .filter(b -> b.getStatus() == BookingStatus.COMPLETED || b.getStatus() == BookingStatus.CONFIRMED || b.getStatus() == BookingStatus.IN_USE)
-                .toList();
-        
-        long historicalUtilizedCount = historicalBookings.stream()
-                .map(b -> b.getEquipment().getId())
-                .distinct()
-                .count();
-                
-        double historicalPct = totalEquipment > 0
-                ? ((double) historicalUtilizedCount / totalEquipment) * 100.0 : 0;
-        r.setHistoricalUtilizationPercentage(Math.round(historicalPct * 10.0) / 10.0);
+    List<Equipment> filteredEquipment;
 
-        // ── Completion rate = completed / (completed + cancelled + rejected) ──
-        long closedBookings = completed + cancelled + rejected;
-        double completionRate = closedBookings > 0
-                ? ((double) completed / closedBookings) * 100.0 : 0;
-        r.setCompletionRate(Math.round(completionRate * 10.0) / 10.0);
+    if (role == Role.LAB_MANAGER ||
+    role == Role.DEPARTMENT_HEAD) {
 
-        // ── Approval rate = confirmed / (confirmed + rejected) ──
-        long decidedBookings = confirmed + rejected;
-        double approvalRate = decidedBookings > 0
-                ? ((double) confirmed / decidedBookings) * 100.0 : 0;
-        r.setApprovalRate(Math.round(approvalRate * 10.0) / 10.0);
+    filteredEquipment =
+            equipmentRepository.findByDepartmentAndInstitution(
+                    department,
+                    institution
+            );
 
-        // ── Waitlist count ─────────────────────────────────────
-        long waitlistCount = waitlistRepository.findAll().stream()
-                .filter(w -> w.getStatus() == WaitlistStatus.WAITING)
-                .count();
-        r.setWaitlistCount(waitlistCount);
+}
+    else if (role == Role.INSTITUTION_ADMIN) {
 
-        return r;
+        filteredEquipment =
+                equipmentRepository.findByInstitution(institution);
+
+    } 
+    else {
+
+        filteredEquipment =
+                equipmentRepository.findAll();
+
     }
+  // ================= BOOKING FILTER =================
 
+List<Booking> filteredBookings;
+
+if (role == Role.RESEARCHER) {
+
+    filteredBookings =
+        bookingRepository.findByUserId(user.getId());
+
+}
+else if (role == Role.LAB_MANAGER ||
+         role == Role.DEPARTMENT_HEAD) {
+
+    filteredBookings =
+            bookingRepository.findByEquipmentDepartmentAndEquipmentInstitution(
+                    department,
+                    institution
+            );
+}
+else if (role == Role.INSTITUTION_ADMIN) {
+
+    filteredBookings =
+        bookingRepository.findByEquipmentInstitution(institution);
+
+}
+else {
+
+    filteredBookings =
+        bookingRepository.findAll();
+
+}
+
+    // ================= EQUIPMENT COUNTS =================
+
+    long totalEquipment = filteredEquipment.size();
+
+    long availableEquipment = filteredEquipment.stream()
+            .filter(e -> e.getStatus() == EquipmentStatus.AVAILABLE)
+            .count();
+
+    long bookedEquipment = filteredEquipment.stream()
+            .filter(e -> e.getStatus() == EquipmentStatus.BOOKED)
+            .count();
+
+    long underMaintenance = filteredEquipment.stream()
+            .filter(e -> e.getStatus() == EquipmentStatus.UNDER_MAINTENANCE)
+            .count();
+
+    long outOfService = filteredEquipment.stream()
+            .filter(e -> e.getStatus() == EquipmentStatus.OUT_OF_SERVICE)
+            .count();
+
+    long retired = filteredEquipment.stream()
+            .filter(e -> e.getStatus() == EquipmentStatus.RETIRED)
+            .count();
+
+
+    r.setTotalEquipment(totalEquipment);
+    r.setAvailableEquipment(availableEquipment);
+    r.setBookedEquipment(bookedEquipment);
+    r.setUnderMaintenanceEquipment(underMaintenance);
+    r.setOutOfServiceEquipment(outOfService);
+    r.setRetiredEquipment(retired);
+
+
+
+    // ================= BOOKING COUNTS =================
+
+    long totalBookings = filteredBookings.size();
+
+    long pending = filteredBookings.stream()
+        .filter(b -> b.getStatus() == BookingStatus.PENDING_APPROVAL)
+        .count();
+
+long confirmed = filteredBookings.stream()
+        .filter(b -> b.getStatus() == BookingStatus.CONFIRMED)
+        .count();
+
+long inUse = filteredBookings.stream()
+        .filter(b -> b.getStatus() == BookingStatus.IN_USE)
+        .count();
+
+long completed = filteredBookings.stream()
+        .filter(b -> b.getStatus() == BookingStatus.COMPLETED)
+        .count();
+
+long cancelled = filteredBookings.stream()
+        .filter(b -> b.getStatus() == BookingStatus.CANCELLED)
+        .count();
+
+long rejected = filteredBookings.stream()
+        .filter(b -> b.getStatus() == BookingStatus.REJECTED)
+        .count();
+
+
+    r.setTotalBookings(totalBookings);
+    r.setPendingBookings(pending);
+    r.setConfirmedBookings(confirmed);
+    r.setInUseBookings(inUse);
+    r.setCompletedBookings(completed);
+    r.setCancelledBookings(cancelled);
+    r.setRejectedBookings(rejected);
+
+
+
+    // ================= UTILIZATION =================
+
+    long utilizedEquipment =
+            bookingRepository.countDistinctEquipmentByStatuses(
+                    Arrays.asList(
+                            BookingStatus.CONFIRMED,
+                            BookingStatus.IN_USE
+                    )
+            );
+
+
+    double utilizationPercentage =
+            totalEquipment > 0
+                    ?
+                    ((double) utilizedEquipment / totalEquipment) * 100
+                    :
+                    0;
+
+
+    r.setUtilizationPercentage(
+            Math.round(utilizationPercentage * 10.0) / 10.0
+    );
+
+
+
+    // ================= COMPLETION RATE =================
+
+    long closedBookings =
+            completed + cancelled + rejected;
+
+
+    double completionRate =
+            closedBookings > 0
+                    ?
+                    ((double) completed / closedBookings) * 100
+                    :
+                    0;
+
+
+    r.setCompletionRate(
+            Math.round(completionRate * 10.0) / 10.0
+    );
+
+
+
+    // ================= APPROVAL RATE =================
+
+    long decidedBookings =
+            confirmed + rejected;
+
+
+    double approvalRate =
+            decidedBookings > 0
+                    ?
+                    ((double) confirmed / decidedBookings) * 100
+                    :
+                    0;
+
+
+    r.setApprovalRate(
+            Math.round(approvalRate * 10.0) / 10.0
+    );
+
+
+
+    // ================= WAITLIST =================
+
+    long waitlistCount =
+            waitlistRepository.findAll()
+                    .stream()
+                    .filter(w ->
+                            w.getStatus() == WaitlistStatus.WAITING)
+                    .count();
+
+
+    r.setWaitlistCount(waitlistCount);
+
+
+    return r;
+}
     public List<RealTimeUsageDTO> getRealTimeTracking() {
         List<RealTimeUsageDTO> trackingList = new ArrayList<>();
         List<Booking> activeBookings = bookingRepository.findByStatus(BookingStatus.IN_USE);

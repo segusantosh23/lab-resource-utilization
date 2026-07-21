@@ -6,7 +6,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import com.example.lab_resource_utilization.repository.UserRepository;
+import com.example.lab_resource_utilization.entity.User;
+import com.example.lab_resource_utilization.entity.Role;
 import com.example.lab_resource_utilization.dto.EquipmentRequest;
 import com.example.lab_resource_utilization.dto.EquipmentResponse;
 import com.example.lab_resource_utilization.entity.Equipment;
@@ -20,7 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class EquipmentService {
-
+    @Autowired
+    private UserRepository userRepository;
     @Autowired
     private EquipmentRepository repository;
 
@@ -32,7 +35,7 @@ public class EquipmentService {
         EquipmentResponse response = new EquipmentResponse();
         response.setId(equipment.getId());
         response.setName(equipment.getName());
-        // response.setCategory(equipment.getCategory()); // Removed - category not in entity
+        response.setCategory(equipment.getCategory()); // Removed - category not in entity
         response.setDescription(equipment.getDescription());
         response.setManufacturer(equipment.getManufacturer());
         response.setModelNumber(equipment.getModelNumber());
@@ -55,7 +58,7 @@ public class EquipmentService {
     // Map Request DTO -> Entity (for create and update)
     private void mapToEntity(EquipmentRequest request, Equipment equipment) {
         equipment.setName(request.getName());
-        // equipment.setCategory(request.getCategory()); // Removed - category not in entity
+        equipment.setCategory(request.getCategory()); // Removed - category not in entity
         equipment.setDescription(request.getDescription());
         equipment.setManufacturer(request.getManufacturer());
         equipment.setModelNumber(request.getModelNumber());
@@ -80,13 +83,39 @@ public class EquipmentService {
     }
 
     // Get All Equipment
-    public List<EquipmentResponse> getAllEquipment() {
-        return repository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public List<EquipmentResponse> getAllEquipment(String email) {
+
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    List<Equipment> equipments;
+
+
+    if(user.getRole() == Role.LAB_MANAGER ||
+   user.getRole() == Role.DEPARTMENT_HEAD) {
+
+    equipments = repository.findByDepartmentAndInstitution(
+            user.getDepartment(),
+            user.getInstitution()
+    );
+
+}
+    else if(user.getRole() == Role.INSTITUTION_ADMIN) {
+
+        equipments = repository.findByInstitution(user.getInstitution());
+
+    } 
+    else {
+
+        equipments = repository.findAll();
+
     }
 
+
+    return equipments.stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+}
     // Get Equipment By Id
     public EquipmentResponse getEquipmentById(Long id) {
         Equipment equipment = repository.findById(id)

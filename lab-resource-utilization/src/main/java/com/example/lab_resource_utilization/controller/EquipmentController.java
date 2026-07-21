@@ -12,7 +12,7 @@ import com.example.lab_resource_utilization.dto.EquipmentRequest;
 import com.example.lab_resource_utilization.dto.EquipmentResponse;
 import com.example.lab_resource_utilization.entity.EquipmentStatus;
 import com.example.lab_resource_utilization.service.EquipmentService;
-
+import java.security.Principal;
 import jakarta.validation.Valid;
 
 @RestController
@@ -32,11 +32,12 @@ public class EquipmentController {
 
     // Get All Equipment — 200 OK
     @GetMapping
-    public ResponseEntity<List<EquipmentResponse>> getAll() {
-        List<EquipmentResponse> equipment = service.getAllEquipment();
-        return ResponseEntity.ok(equipment);
-    }
+public ResponseEntity<List<EquipmentResponse>> getAll(Principal principal){
 
+    return ResponseEntity.ok(
+        service.getAllEquipment(principal.getName())
+    );
+}
     // Get Equipment By ID — 200 OK
     @GetMapping("/{id}")
     public ResponseEntity<EquipmentResponse> getById(@PathVariable Long id) {
