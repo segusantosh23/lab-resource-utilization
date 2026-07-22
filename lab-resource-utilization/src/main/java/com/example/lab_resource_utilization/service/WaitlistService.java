@@ -185,15 +185,14 @@ public class WaitlistService {
             String toDateTime = waitlist.getEndTime().format(dateTimeFormatter);
             
             com.example.lab_resource_utilization.dto.WaitlistPromotionEmailDTO emailDTO = 
-                com.example.lab_resource_utilization.dto.WaitlistPromotionEmailDTO.builder()
-                .toEmail(waitlist.getUser().getEmail())
-                .userName(waitlist.getUser().getName())
-                .equipmentName(waitlist.getEquipment().getName())
-                .bookingDate(null)  // Not needed anymore
-                .bookingTime("from " + fromDateTime + " to " + toDateTime)
-                .newBookingStatus("PENDING_APPROVAL")
-                .confirmationMessage("Your waitlist request has been automatically converted to a booking. Please wait for manager approval.")
-                .build();
+                new com.example.lab_resource_utilization.dto.WaitlistPromotionEmailDTO();
+            emailDTO.setToEmail(waitlist.getUser().getEmail());
+            emailDTO.setUserName(waitlist.getUser().getName());
+            emailDTO.setEquipmentName(waitlist.getEquipment().getName());
+            emailDTO.setBookingDate(null);
+            emailDTO.setBookingTime("from " + fromDateTime + " to " + toDateTime);
+            emailDTO.setNewBookingStatus("PENDING_APPROVAL");
+            emailDTO.setConfirmationMessage("Your waitlist request has been automatically converted to a booking. Please wait for manager approval.");;
                 
             emailService.sendWaitlistPromotionEmail(emailDTO);
         } catch (Exception e) {

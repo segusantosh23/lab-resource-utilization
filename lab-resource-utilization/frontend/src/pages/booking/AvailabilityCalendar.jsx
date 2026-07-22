@@ -561,14 +561,14 @@ const AvailabilityCalendar = () => {
                 <select required name="equipmentId" value={formData.equipmentId} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
                   <option value="">Select equipment…</option>
                   {equipmentList.map(eq => (
-                    <option key={eq.id} value={eq.id}>{eq.name} — {eq.status.replace(/_/g, ' ')} (Qty: {eq.quantity})</option>
+                    <option key={eq.id} value={eq.id}>{eq.name} — {eq.status.replace(/_/g, ' ')} (Qty: {eq.availableQuantity ?? eq.quantity})</option>
                   ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Quantity *</label>
-                <input required type="number" min="1" disabled={!formData.equipmentId} max={equipmentList.find(e => e.id == formData.equipmentId)?.quantity || 1} name="quantity" value={formData.equipmentId ? formData.quantity : ''} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" />
+                <input required type="number" min="1" disabled={!formData.equipmentId} max={equipmentList.find(e => e.id == formData.equipmentId)?.availableQuantity ?? 1} name="quantity" value={formData.equipmentId ? formData.quantity : ''} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './components/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -18,10 +18,18 @@ import ResearcherEquipment from './pages/researcher/ResearcherEquipment';
 import CompletedBookings from './pages/researcher/CompletedBookings';
 import UsageSummary from './pages/researcher/UsageSummary';
 import EquipmentAvailability from './pages/researcher/EquipmentAvailability';
+// Calibration
+import CalibrationList from './pages/calibration/CalibrationList';
+import AddCalibration from './pages/calibration/AddCalibration';
+import EditCalibration from './pages/calibration/EditCalibration';
+import CalibrationHistory from './pages/calibration/CalibrationHistory';
+import DueSoonCalibrations from './pages/calibration/DueSoonCalibrations';
+import ExpiredCalibrations from './pages/calibration/ExpiredCalibrations';
+
+// Maintenance
 import MaintenanceList from './pages/maintenance/MaintenanceList';
 import MaintenanceRequestForm from './pages/maintenance/MaintenanceRequestForm';
 import WorkOrderDetails from './pages/maintenance/WorkOrderDetails';
-// Role Dashboards
 import {
   ResearcherDashboard,
   LabTechnicianDashboard,
@@ -76,7 +84,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 function App() {
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -104,6 +112,98 @@ function App() {
         {/* ── Equipment ── */}
         <Route path="/equipment" element={<ProtectedRoute><EquipmentList /></ProtectedRoute>} />
         <Route path="/equipment/:id" element={<ProtectedRoute><EquipmentDetails /></ProtectedRoute>} />
+
+        {/* ── Calibration Module ── */}
+
+<Route
+    path="/calibrations"
+    element={
+        <ProtectedRoute
+            allowedRoles={[
+                'LAB_TECHNICIAN',
+                'LAB_MANAGER',
+                
+            ]}
+        >
+            <CalibrationList />
+        </ProtectedRoute>
+    }
+/>
+
+<Route
+    path="/calibrations/add"
+    element={
+        <ProtectedRoute
+            allowedRoles={[
+                'LAB_TECHNICIAN',
+                'LAB_MANAGER',
+                
+            ]}
+        >
+            <AddCalibration />
+        </ProtectedRoute>
+    }
+/>
+
+<Route
+    path="/calibrations/edit/:id"
+    element={
+        <ProtectedRoute
+            allowedRoles={[
+                'LAB_TECHNICIAN',
+                'LAB_MANAGER',
+                
+            ]}
+        >
+            <EditCalibration />
+        </ProtectedRoute>
+    }
+/>
+
+<Route
+    path="/calibrations/history/:equipmentId"
+    element={
+        <ProtectedRoute
+            allowedRoles={[
+                'LAB_TECHNICIAN',
+                'LAB_MANAGER',
+                
+            ]}
+        >
+            <CalibrationHistory />
+        </ProtectedRoute>
+    }
+/>
+
+<Route
+    path="/calibrations/due-soon"
+    element={
+        <ProtectedRoute
+            allowedRoles={[
+                'LAB_TECHNICIAN',
+                'LAB_MANAGER',
+                
+            ]}
+        >
+            <DueSoonCalibrations />
+        </ProtectedRoute>
+    }
+/>
+
+<Route
+    path="/calibrations/expired"
+    element={
+        <ProtectedRoute
+            allowedRoles={[
+                'LAB_TECHNICIAN',
+                'LAB_MANAGER',
+                
+            ]}
+        >
+            <ExpiredCalibrations />
+        </ProtectedRoute>
+    }
+/>
 
         {/* ── Booking & Scheduling Module ── */}
         <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
@@ -152,8 +252,8 @@ function App() {
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+            </Routes>
+    </>
   );
 }
 

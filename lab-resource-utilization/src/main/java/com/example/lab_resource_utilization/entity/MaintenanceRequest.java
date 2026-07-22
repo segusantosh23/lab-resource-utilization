@@ -15,6 +15,7 @@ public class MaintenanceRequest {
     private String priority;
     private String status;
     private String technician;
+    private Integer quantity;
 
     // Getters & Setters
     public Long getId() { return id; }
@@ -33,4 +34,7 @@ public class MaintenanceRequest {
 
     public String getTechnician() { return technician; }
     public void setTechnician(String technician) { this.technician = technician; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
 }
