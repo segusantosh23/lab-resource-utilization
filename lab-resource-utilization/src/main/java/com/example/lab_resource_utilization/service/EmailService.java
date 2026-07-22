@@ -700,6 +700,97 @@ public class EmailService {
                "© 2026 " + appName +
                "</p></div></div></body></html>";
     }
+
+    /**
+     * Send Calibration Success/Completion Notification Email
+     * Notifies LAB_MANAGER when technician completes calibration (PASS or FAIL)
+     */
+    @Async
+    public void sendCalibrationSuccessEmail(CalibrationSuccessEmailDTO dto) {
+        logger.info("✅ [CALIBRATION SUCCESS EMAIL] Sending to: " + dto.getRecipientEmail());
+        try {
+            validateEmailDTO(dto.getRecipientEmail(), "Calibration Complete", "calibration completion notification");
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(dto.getRecipientEmail());
+            String resultIcon = "PASS".equals(dto.getResult()) ? "✅" : "❌";
+            helper.setSubject(resultIcon + " Calibration Complete - " + dto.getEquipmentName());
+            helper.setFrom(senderEmail, appName);
+
+            String htmlContent = buildCalibrationSuccessEmail(dto);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            logger.info("✅ Calibration success email sent successfully to: " + dto.getRecipientEmail() + 
+                       " | Equipment: " + dto.getEquipmentName() + 
+                       " | Result: " + dto.getResult() + 
+                       " | Time: " + LocalDateTime.now());
+        } catch (Exception e) {
+            logger.severe("❌ Failed to send calibration success email to: " + dto.getRecipientEmail() + 
+                         ". Error: " + e.getMessage());
+            throw new RuntimeException("Failed to send calibration success email.", e);
+        }
+    }
+
+    /**
+     * Build HTML email for Calibration Success notification
+     */
+    private String buildCalibrationSuccessEmail(CalibrationSuccessEmailDTO dto) {
+        boolean isPassed = "PASS".equalsIgnoreCase(dto.getResult());
+        String statusColor = isPassed ? "#10b981" : "#ef4444";
+        String statusBgColor = isPassed ? "#064e3b" : "#7f1d1d";
+        String statusTextColor = isPassed ? "#d1fae5" : "#fecaca";
+        String statusIcon = isPassed ? "✅" : "❌";
+        
+        String calibrationDateStr = dto.getCalibrationDate() != null ? 
+            dto.getCalibrationDate().format(DATE_FORMATTER) : "N/A";
+        String nextDueDateStr = dto.getNextDueDate() != null ? 
+            dto.getNextDueDate().format(DATE_FORMATTER) : "N/A";
+        
+        return "<html><body style='background: #0f1419; color: white; font-family: Arial, sans-serif; margin: 0; padding: 20px;'>" +
+               "<div style='max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>" +
+               "<div style='text-align: center; margin-bottom: 30px;'>" +
+               "<h1 style='color: " + statusColor + "; margin: 0; font-size: 32px;'>" + statusIcon + " Calibration Complete</h1>" +
+               "</div>" +
+               "<p style='font-size: 18px; line-height: 1.6; margin-bottom: 20px;'>Dear Lab Manager,</p>" +
+               "<p style='font-size: 16px; line-height: 1.6; margin-bottom: 30px;'>Calibration has been completed for the following equipment:</p>" +
+               
+               "<div style='background: " + statusBgColor + "; border-left: 4px solid " + statusColor + "; padding: 20px; border-radius: 8px; margin: 25px 0;'>" +
+               "<h3 style='color: " + statusTextColor + "; margin-top: 0; font-size: 20px;'>⚙️ Calibration Details</h3>" +
+               "<table style='width: 100%; color: " + statusTextColor + "; font-size: 15px;'>" +
+               "<tr><td style='padding: 8px 0;'><strong>Equipment:</strong></td><td>" + escapeHtml(dto.getEquipmentName()) + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Equipment ID:</strong></td><td>#" + dto.getEquipmentId() + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Certificate #:</strong></td><td>" + escapeHtml(dto.getCertificateNumber()) + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Calibration Date:</strong></td><td>" + calibrationDateStr + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Next Due Date:</strong></td><td>" + nextDueDateStr + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Technician:</strong></td><td>" + escapeHtml(dto.getTechnicianName()) + "</td></tr>" +
+               "<tr><td style='padding: 8px 0;'><strong>Result:</strong></td><td><span style='background: " + statusColor + "; color: white; padding: 4px 12px; border-radius: 4px; font-weight: bold;'>" + escapeHtml(dto.getResult()) + "</span></td></tr>" +
+               "</table></div>" +
+               
+               (dto.getRemarks() != null && !dto.getRemarks().isEmpty() ? 
+               "<div style='background: #374151; padding: 15px; border-radius: 8px; margin: 20px 0;'>" +
+               "<h4 style='color: #9ca3af; margin-top: 0; font-size: 16px;'>📝 Technician Remarks</h4>" +
+               "<p style='color: #d1d5db; margin: 0; line-height: 1.6;'>" + escapeHtml(dto.getRemarks()) + "</p>" +
+               "</div>" : "") +
+               
+               (isPassed ? 
+               "<div style='background: #064e3b; border: 2px solid #10b981; color: #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;'>" +
+               "<p style='margin: 0; font-size: 14px;'><strong>✅ SUCCESS:</strong> Equipment has been calibrated successfully and is ready for use!</p>" +
+               "</div>" :
+               "<div style='background: #991b1b; border: 2px solid #ef4444; color: #fecaca; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;'>" +
+               "<p style='margin: 0; font-size: 14px;'><strong>⚠️ FAILED:</strong> Calibration failed. Equipment may require servicing or replacement.</p>" +
+               "</div>") +
+               
+               "<div style='text-align: center; margin: 30px 0;'>" +
+               "<a href='" + baseUrl + "/calibrations' style='display: inline-block; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;'>" +
+               "View Calibration Records</a></div>" +
+               
+               "<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;'>" +
+               "<div style='text-align: center;'>" +
+               "<p style='font-size: 12px; color: #64748b; margin: 0;'>" +
+               "© 2026 " + appName +
+               "</p></div></div></body></html>";
+    }
 }
-
-
