@@ -69,15 +69,15 @@ const UtilizationDashboard = () => {
       setError('');
       try {
         const [res, rtd, rates, drates, irates, idle, hm, up] = await Promise.all([
-          getUtilizationAnalytics(user.email),
-          getRealTimeTracking(),
-          getEquipmentUtilizationRates(),
-          getDepartmentUtilizationRates(),
-          getInstitutionUtilizationRates(),
-          getIdleEquipment(),
-          getUtilizationHeatmap(),
-          getUsagePatterns()
-        ]);
+    getUtilizationAnalytics(user.email),
+    getRealTimeTracking(user.email),
+    getEquipmentUtilizationRates(user.email),
+    getDepartmentUtilizationRates(user.email),
+    getInstitutionUtilizationRates(user.email),
+    getIdleEquipment(user.email),
+    getUtilizationHeatmap(user.email),
+    getUsagePatterns(user.email)
+]);
         setData(res);
         setRealTimeData(rtd);
         setRatesData(rates);

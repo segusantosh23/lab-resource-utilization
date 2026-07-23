@@ -27,38 +27,50 @@ public UtilizationResponse getUtilizationAnalytics(
     return analyticsService.getUtilizationAnalytics(email);
 }
 
-    @GetMapping("/real-time-tracking")
-    public List<RealTimeUsageDTO> getRealTimeTracking() {
-        return analyticsService.getRealTimeTracking();
-    }
+   @GetMapping("/real-time-tracking")
+public List<RealTimeUsageDTO> getRealTimeTracking(
+        @RequestParam String email) {
 
+    return analyticsService.getRealTimeTracking(email);
+}
     @GetMapping("/equipment-rates")
-    public List<EquipmentUtilizationDTO> getEquipmentUtilizationRates() {
-        return analyticsService.getEquipmentUtilizationRates();
-    }
+public List<EquipmentUtilizationDTO> getEquipmentUtilizationRates(
+        @RequestParam String email) {
+
+    return analyticsService.getEquipmentUtilizationRates(email);
+}
 
     @GetMapping("/department-rates")
-    public List<GroupUtilizationDTO> getDepartmentUtilizationRates() {
-        return analyticsService.getDepartmentUtilizationRates();
-    }
+public List<GroupUtilizationDTO> getDepartmentUtilizationRates(
+        @RequestParam String email) {
+
+    return analyticsService.getDepartmentUtilizationRates(email);
+}
 
     @GetMapping("/institution-rates")
-    public List<GroupUtilizationDTO> getInstitutionUtilizationRates() {
-        return analyticsService.getInstitutionUtilizationRates();
-    }
+public List<GroupUtilizationDTO> getInstitutionUtilizationRates(
+        @RequestParam String email) {
+
+    return analyticsService.getInstitutionUtilizationRates(email);
+}
 
     @GetMapping("/idle-equipment")
-    public List<IdleEquipmentDTO> getIdleEquipment() {
-        return analyticsService.getIdleEquipment();
-    }
+public List<IdleEquipmentDTO> getIdleEquipment(
+        @RequestParam String email) {
+
+    return analyticsService.getIdleEquipment(email);
+}
 
     @GetMapping("/heatmap")
-    public Map<String, Map<Integer, Integer>> getUtilizationHeatmap() {
-        return analyticsService.getUtilizationHeatmap();
-    }
+public Map<String, Map<Integer, Integer>> getUtilizationHeatmap(
+        @RequestParam String email) {
 
+    return analyticsService.getUtilizationHeatmap(email);
+}
     @GetMapping("/usage-patterns")
-    public UsagePatternDTO getUsagePatterns() {
-        return analyticsService.getUsagePatterns();
-    }
+public UsagePatternDTO getUsagePatterns(
+        @RequestParam String email) {
+
+    return analyticsService.getUsagePatterns(email);
+}
 }

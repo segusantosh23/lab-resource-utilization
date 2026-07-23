@@ -108,7 +108,8 @@ public class EquipmentService {
 
 
     if(user.getRole() == Role.LAB_MANAGER ||
-   user.getRole() == Role.DEPARTMENT_HEAD) {
+   user.getRole() == Role.DEPARTMENT_HEAD ||
+   user.getRole() == Role.LAB_TECHNICIAN) {
 
     equipments = repository.findByDepartmentAndInstitution(
             user.getDepartment(),

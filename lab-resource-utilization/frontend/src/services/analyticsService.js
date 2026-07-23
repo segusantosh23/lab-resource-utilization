@@ -7,37 +7,58 @@ export const getUtilizationAnalytics = async (email) => {
     return response.data;
 };
 
-export const getRealTimeTracking = async () => {
-    const response = await api.get('/api/analytics/real-time-tracking');
+
+export const getRealTimeTracking = async (email) => {
+    const response = await api.get(
+        `/api/analytics/real-time-tracking?email=${email}`
+    );
     return response.data;
 };
 
-export const getEquipmentUtilizationRates = async () => {
-    const response = await api.get('/api/analytics/equipment-rates');
+
+export const getEquipmentUtilizationRates = async (email) => {
+    const response = await api.get(
+        `/api/analytics/equipment-rates?email=${email}`
+    );
     return response.data;
 };
 
-export const getDepartmentUtilizationRates = async () => {
-    const response = await api.get('/api/analytics/department-rates');
+
+export const getDepartmentUtilizationRates = async (email) => {
+    const response = await api.get(
+        `/api/analytics/department-rates?email=${email}`
+    );
     return response.data;
 };
 
-export const getInstitutionUtilizationRates = async () => {
-    const response = await api.get('/api/analytics/institution-rates');
+
+export const getInstitutionUtilizationRates = async (email) => {
+    const response = await api.get(
+        `/api/analytics/institution-rates?email=${email}`
+    );
     return response.data;
 };
 
-export const getIdleEquipment = async () => {
-    const response = await api.get('/api/analytics/idle-equipment');
+
+export const getIdleEquipment = async (email) => {
+    const response = await api.get(
+        `/api/analytics/idle-equipment?email=${email}`
+    );
     return response.data;
 };
 
-export const getUtilizationHeatmap = async () => {
-    const response = await api.get('/api/analytics/heatmap');
+
+export const getUtilizationHeatmap = async (email) => {
+    const response = await api.get(
+        `/api/analytics/heatmap?email=${email}`
+    );
     return response.data;
 };
 
-export const getUsagePatterns = async () => {
-    const response = await api.get('/api/analytics/usage-patterns');
+
+export const getUsagePatterns = async (email) => {
+    const response = await api.get(
+        `/api/analytics/usage-patterns?email=${email}`
+    );
     return response.data;
 };

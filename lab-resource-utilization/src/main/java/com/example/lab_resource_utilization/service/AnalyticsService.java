@@ -267,9 +267,48 @@ long rejected = filteredBookings.stream()
 
     return r;
 }
-    public List<RealTimeUsageDTO> getRealTimeTracking() {
+    public List<RealTimeUsageDTO> getRealTimeTracking(String email) {
         List<RealTimeUsageDTO> trackingList = new ArrayList<>();
-        List<Booking> activeBookings = bookingRepository.findByStatus(BookingStatus.IN_USE);
+       User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new RuntimeException("User not found"));
+
+Role role = user.getRole();
+
+List<Booking> activeBookings;
+
+
+if (role == Role.LAB_MANAGER ||
+    role == Role.DEPARTMENT_HEAD) {
+
+    activeBookings =
+        bookingRepository.findByEquipmentDepartmentAndEquipmentInstitution(
+            user.getDepartment(),
+            user.getInstitution()
+        );
+
+}
+else if (role == Role.INSTITUTION_ADMIN) {
+
+    activeBookings =
+        bookingRepository.findByEquipmentInstitution(
+            user.getInstitution()
+        );
+
+}
+else {
+
+    activeBookings =
+        bookingRepository.findByEquipmentDepartmentAndEquipmentInstitution(
+            user.getDepartment(),
+            user.getInstitution()
+        );
+
+}
+
+
+activeBookings = activeBookings.stream()
+        .filter(b -> b.getStatus() == BookingStatus.IN_USE)
+        .toList();
         for (Booking b : activeBookings) {
             String userName = b.getUser() != null ? b.getUser().getName() : "Unknown";
             trackingList.add(new RealTimeUsageDTO(
@@ -285,17 +324,58 @@ long rejected = filteredBookings.stream()
         return trackingList;
     }
 
-    public List<EquipmentUtilizationDTO> getEquipmentUtilizationRates() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime thirtyDaysAgo = now.minusDays(30);
-        List<Booking> recentBookings = bookingRepository.findAll().stream()
-                .filter(b -> b.getStartTime() != null && b.getEndTime() != null)
-                .filter(b -> b.getStartTime().isAfter(thirtyDaysAgo) || b.getEndTime().isAfter(thirtyDaysAgo))
-                .filter(b -> b.getStatus() == BookingStatus.COMPLETED || b.getStatus() == BookingStatus.CONFIRMED || b.getStatus() == BookingStatus.IN_USE)
-                .toList();
+    public List<EquipmentUtilizationDTO> getEquipmentUtilizationRates(String email) {
+       User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Equipment> allEquipment = equipmentRepository.findAll();
-        
+Role role = user.getRole();
+
+List<Equipment> allEquipment;
+
+if (role == Role.LAB_MANAGER ||
+    role == Role.DEPARTMENT_HEAD) {
+
+    allEquipment =
+        equipmentRepository.findByDepartmentAndInstitution(
+            user.getDepartment(),
+            user.getInstitution()
+        );
+
+}
+else if (role == Role.INSTITUTION_ADMIN) {
+
+    allEquipment =
+        equipmentRepository.findByInstitution(
+            user.getInstitution()
+        );
+
+}
+else {
+
+    allEquipment =
+        equipmentRepository.findByDepartmentAndInstitution(
+            user.getDepartment(),
+            user.getInstitution()
+        );
+
+}
+        List<Long> equipmentIds = allEquipment.stream()
+        .map(Equipment::getId)
+        .toList();
+
+
+LocalDateTime now = LocalDateTime.now();
+LocalDateTime thirtyDaysAgo = now.minusDays(30);
+
+
+List<Booking> recentBookings = bookingRepository.findAll().stream()
+        .filter(b -> equipmentIds.contains(b.getEquipment().getId()))
+        .filter(b -> b.getStartTime() != null && b.getEndTime() != null)
+        .filter(b -> b.getStartTime().isAfter(thirtyDaysAgo)
+                || b.getEndTime().isAfter(thirtyDaysAgo))
+        .filter(b -> b.getStatus() == BookingStatus.COMPLETED
+                || b.getStatus() == BookingStatus.CONFIRMED)
+        .toList();
         // 30 days * 8 hours/day = 240 hours
         double availableHours = 30 * 8.0;
 
@@ -314,24 +394,81 @@ long rejected = filteredBookings.stream()
         return result;
     }
 
-    public List<GroupUtilizationDTO> getDepartmentUtilizationRates() {
-        return getGroupUtilizationRates(true);
-    }
+    public List<GroupUtilizationDTO> getDepartmentUtilizationRates(String email) {
+    return getGroupUtilizationRates(true, email);
+}
 
-    public List<GroupUtilizationDTO> getInstitutionUtilizationRates() {
-        return getGroupUtilizationRates(false);
-    }
+    public List<GroupUtilizationDTO> getInstitutionUtilizationRates(String email) {
+    return getGroupUtilizationRates(false, email);
+}
 
-    private List<GroupUtilizationDTO> getGroupUtilizationRates(boolean byDepartment) {
+    private List<GroupUtilizationDTO> getGroupUtilizationRates(
+        boolean byDepartment,
+        String email) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime thirtyDaysAgo = now.minusDays(30);
-        List<Booking> recentBookings = bookingRepository.findAll().stream()
-                .filter(b -> b.getStartTime() != null && b.getEndTime() != null)
-                .filter(b -> b.getStartTime().isAfter(thirtyDaysAgo) || b.getEndTime().isAfter(thirtyDaysAgo))
-                .filter(b -> b.getStatus() == BookingStatus.COMPLETED || b.getStatus() == BookingStatus.CONFIRMED || b.getStatus() == BookingStatus.IN_USE)
-                .toList();
+        User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Equipment> allEquipment = equipmentRepository.findAll();
+Role role = user.getRole();
+
+List<Booking> recentBookings;
+
+if (role == Role.LAB_MANAGER ||
+    role == Role.DEPARTMENT_HEAD) {
+
+    recentBookings = bookingRepository.findAll().stream()
+            .filter(b -> b.getEquipment() != null)
+            .filter(b -> b.getEquipment().getDepartment()
+                    .equals(user.getDepartment()))
+            .filter(b -> b.getEquipment().getInstitution()
+                    .equals(user.getInstitution()))
+            .filter(b -> b.getStartTime() != null && b.getEndTime() != null)
+            .filter(b -> b.getStartTime().isAfter(thirtyDaysAgo)
+                    || b.getEndTime().isAfter(thirtyDaysAgo))
+            .filter(b -> b.getStatus() == BookingStatus.COMPLETED
+                    || b.getStatus() == BookingStatus.CONFIRMED)
+            .toList();
+
+} else {
+
+    recentBookings = bookingRepository.findAll().stream()
+            .filter(b -> b.getStartTime() != null && b.getEndTime() != null)
+            .filter(b -> b.getStartTime().isAfter(thirtyDaysAgo)
+                    || b.getEndTime().isAfter(thirtyDaysAgo))
+            .filter(b -> b.getStatus() == BookingStatus.COMPLETED
+                    || b.getStatus() == BookingStatus.CONFIRMED)
+            .toList();
+}
+
+       
+
+List<Equipment> allEquipment;
+
+if(role == Role.LAB_MANAGER ||
+   role == Role.DEPARTMENT_HEAD){
+
+    allEquipment =
+        equipmentRepository.findByDepartmentAndInstitution(
+            user.getDepartment(),
+            user.getInstitution()
+        );
+
+}
+else if(role == Role.INSTITUTION_ADMIN){
+
+    allEquipment =
+        equipmentRepository.findByInstitution(
+            user.getInstitution()
+        );
+
+}
+else{
+
+    allEquipment =
+        equipmentRepository.findAll();
+
+}
         double availableHoursPerEq = 30 * 8.0;
 
         Map<String, Double> groupTotalBookedHours = new HashMap<>();
@@ -364,13 +501,48 @@ long rejected = filteredBookings.stream()
         return result;
     }
 
-    public List<IdleEquipmentDTO> getIdleEquipment() {
+    public List<IdleEquipmentDTO> getIdleEquipment(String email){
         // Equipment is idle if it is AVAILABLE and hasn't had a booking in the last 14 days
-        List<Equipment> allEquipment = equipmentRepository.findByStatus(EquipmentStatus.AVAILABLE);
+        User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new RuntimeException("User not found"));
+
+Role role = user.getRole();
+List<Equipment> allEquipment;
+if(role == Role.LAB_MANAGER ||
+   role == Role.DEPARTMENT_HEAD){
+
+    allEquipment =
+        equipmentRepository.findByDepartmentAndInstitution(
+            user.getDepartment(),
+            user.getInstitution()
+        );
+
+}
+else if(role == Role.INSTITUTION_ADMIN){
+
+    allEquipment =
+        equipmentRepository.findByInstitution(
+            user.getInstitution()
+        );
+
+}
+else{
+    allEquipment = new ArrayList<>();
+}
+allEquipment = allEquipment.stream()
+        .filter(e -> e.getStatus()==EquipmentStatus.AVAILABLE)
+        .toList();
         List<IdleEquipmentDTO> idleList = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
 
-        List<Booking> allBookings = bookingRepository.findAll();
+        List<Long> equipmentIds = allEquipment.stream()
+        .map(Equipment::getId)
+        .toList();
+
+List<Booking> allBookings = bookingRepository.findAll()
+        .stream()
+        .filter(b -> equipmentIds.contains(b.getEquipment().getId()))
+        .toList();
 
         for (Equipment eq : allEquipment) {
             LocalDateTime lastUsed = null;
@@ -400,13 +572,48 @@ long rejected = filteredBookings.stream()
         return idleList;
     }
 
-    public Map<String, Map<Integer, Integer>> getUtilizationHeatmap() {
+    public Map<String, Map<Integer,Integer>> getUtilizationHeatmap(String email){
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-        List<Booking> recentBookings = bookingRepository.findAll().stream()
-                .filter(b -> b.getStartTime() != null && b.getEndTime() != null)
-                .filter(b -> b.getStartTime().isAfter(thirtyDaysAgo) || b.getEndTime().isAfter(thirtyDaysAgo))
-                .filter(b -> b.getStatus() == BookingStatus.COMPLETED || b.getStatus() == BookingStatus.CONFIRMED || b.getStatus() == BookingStatus.IN_USE)
-                .toList();
+       User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new RuntimeException("User not found"));
+
+Role role = user.getRole();
+
+List<Booking> recentBookings;
+if(role == Role.LAB_MANAGER ||
+   role == Role.DEPARTMENT_HEAD){
+
+    recentBookings =
+        bookingRepository.findByEquipmentDepartmentAndEquipmentInstitution(
+            user.getDepartment(),
+            user.getInstitution()
+        );
+
+}
+else if(role == Role.INSTITUTION_ADMIN){
+
+    recentBookings =
+        bookingRepository.findByEquipmentInstitution(
+            user.getInstitution()
+        );
+
+}
+else{
+
+    recentBookings =
+        bookingRepository.findByEquipmentDepartmentAndEquipmentInstitution(
+            user.getDepartment(),
+            user.getInstitution()
+        );
+}
+recentBookings = recentBookings.stream()
+        .filter(b -> b.getStartTime() != null && b.getEndTime() != null)
+        .filter(b -> b.getStartTime().isAfter(thirtyDaysAgo)
+                || b.getEndTime().isAfter(thirtyDaysAgo))
+        .filter(b -> b.getStatus() == BookingStatus.COMPLETED
+                || b.getStatus() == BookingStatus.CONFIRMED
+                || b.getStatus() == BookingStatus.IN_USE)
+        .toList();
 
         Map<String, Map<Integer, Integer>> heatmap = new HashMap<>();
         List<String> days = Arrays.asList("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY");
@@ -467,13 +674,42 @@ long rejected = filteredBookings.stream()
         return totalHours;
     }
 
-    public UsagePatternDTO getUsagePatterns() {
+   public UsagePatternDTO getUsagePatterns(String email){
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-        List<Booking> recentBookings = bookingRepository.findAll().stream()
-                .filter(b -> b.getStartTime() != null && b.getEndTime() != null)
-                .filter(b -> b.getStartTime().isAfter(thirtyDaysAgo) || b.getEndTime().isAfter(thirtyDaysAgo))
-                .filter(b -> b.getStatus() == BookingStatus.COMPLETED || b.getStatus() == BookingStatus.CONFIRMED || b.getStatus() == BookingStatus.IN_USE)
-                .toList();
+        User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new RuntimeException("User not found"));
+
+Role role = user.getRole();
+
+List<Booking> recentBookings;
+
+
+if(role == Role.LAB_MANAGER ||
+   role == Role.DEPARTMENT_HEAD){
+
+    recentBookings =
+       bookingRepository
+       .findByEquipmentDepartmentAndEquipmentInstitution(
+          user.getDepartment(),
+          user.getInstitution()
+       );
+
+}
+else if(role == Role.INSTITUTION_ADMIN){
+
+    recentBookings =
+       bookingRepository
+       .findByEquipmentInstitution(
+          user.getInstitution()
+       );
+
+}
+else{
+
+    recentBookings =
+       bookingRepository.findAll();
+
+}
 
         long shared = 0;
         long exclusive = 0;
