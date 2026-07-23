@@ -30,6 +30,9 @@ public class EquipmentService {
     @Autowired
     private BookingRepository bookingRepository;
 
+    @Autowired
+    private com.example.lab_resource_utilization.repository.MaintenanceRepository maintenanceRepository;
+
     // Convert Entity -> Response DTO
     private EquipmentResponse mapToResponse(Equipment equipment) {
         EquipmentResponse response = new EquipmentResponse();
@@ -49,8 +52,21 @@ public class EquipmentService {
         // Calculate available quantity = total - currently active future bookings
         Integer activeQty = bookingRepository.sumFutureActiveQuantity(equipment.getId(), LocalDateTime.now());
         if (activeQty == null) activeQty = 0;
-        int available = Math.max(0, equipment.getQuantity() - activeQty);
+
+        // Subtract quantity currently under maintenance
+        Integer maintenanceQty = maintenanceRepository.sumActiveMaintenanceQuantity(equipment.getName());
+        if (maintenanceQty == null) maintenanceQty = 0;
+
+        int available = Math.max(0, equipment.getQuantity() - activeQty - maintenanceQty);
         response.setAvailableQuantity(available);
+
+        // Dynamically override status in response if all quantity is in maintenance
+        if (maintenanceQty >= equipment.getQuantity() && equipment.getQuantity() > 0) {
+            response.setStatus(EquipmentStatus.UNDER_MAINTENANCE);
+        } else if (response.getStatus() == EquipmentStatus.UNDER_MAINTENANCE && maintenanceQty < equipment.getQuantity()) {
+            // If DB says it's under maintenance but it's only partial, show it as AVAILABLE so others can book
+            response.setStatus(EquipmentStatus.AVAILABLE);
+        }
 
         return response;
     }

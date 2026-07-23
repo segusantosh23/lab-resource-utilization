@@ -125,17 +125,16 @@ public class NotificationService {
             String fromDateTime = booking.getStartTime().format(dateTimeFormatter);
             String toDateTime = booking.getEndTime().format(dateTimeFormatter);
             
-            BookingApprovedEmailDTO emailDTO = BookingApprovedEmailDTO.builder()
-                .toEmail(booking.getUser().getEmail())
-                .userName(booking.getUser().getName())
-                .equipmentName(booking.getEquipment().getName())
-                .equipmentId(booking.getEquipment().getId().toString())
-                .bookingDate(null)  // Not needed anymore
-                .bookingTime("from " + fromDateTime + " to " + toDateTime)
-                .labName(booking.getEquipment().getInstitution())
-                .department(booking.getEquipment().getDepartment())
-                .bookingStatus("CONFIRMED")
-                .build();
+            BookingApprovedEmailDTO emailDTO = new BookingApprovedEmailDTO();
+            emailDTO.setToEmail(booking.getUser().getEmail());
+            emailDTO.setUserName(booking.getUser().getName());
+            emailDTO.setEquipmentName(booking.getEquipment().getName());
+            emailDTO.setEquipmentId(booking.getEquipment().getId().toString());
+            emailDTO.setBookingDate(null);
+            emailDTO.setBookingTime("from " + fromDateTime + " to " + toDateTime);
+            emailDTO.setLabName(booking.getEquipment().getInstitution());
+            emailDTO.setDepartment(booking.getEquipment().getDepartment());
+            emailDTO.setBookingStatus("CONFIRMED");;
                 
             emailService.sendBookingApprovedEmail(emailDTO);
         } catch (Exception e) {
@@ -153,15 +152,14 @@ public class NotificationService {
             String fromDateTime = booking.getStartTime().format(dateTimeFormatter);
             String toDateTime = booking.getEndTime().format(dateTimeFormatter);
             
-            BookingRejectedEmailDTO emailDTO = BookingRejectedEmailDTO.builder()
-                .toEmail(booking.getUser().getEmail())
-                .userName(booking.getUser().getName())
-                .equipmentName(booking.getEquipment().getName())
-                .bookingDate(null)  // Not needed anymore
-                .bookingTime("from " + fromDateTime + " to " + toDateTime)
-                .rejectionReason("Your booking request has been reviewed and rejected by the lab manager.")
-                .contactEmail("support@labresource.com")
-                .build();
+            BookingRejectedEmailDTO emailDTO = new BookingRejectedEmailDTO();
+            emailDTO.setToEmail(booking.getUser().getEmail());
+            emailDTO.setUserName(booking.getUser().getName());
+            emailDTO.setEquipmentName(booking.getEquipment().getName());
+            emailDTO.setBookingDate(null);
+            emailDTO.setBookingTime("from " + fromDateTime + " to " + toDateTime);
+            emailDTO.setRejectionReason("Your booking request has been reviewed and rejected by the lab manager.");
+            emailDTO.setContactEmail("support@labresource.com");;
                 
             emailService.sendBookingRejectedEmail(emailDTO);
         } catch (Exception e) {
@@ -180,15 +178,14 @@ public class NotificationService {
             String toDateTime = booking.getEndTime().format(dateTimeFormatter);
             
             // Reuse BookingRejectedEmailDTO structure but with cancellation message
-            BookingRejectedEmailDTO emailDTO = BookingRejectedEmailDTO.builder()
-                .toEmail(booking.getUser().getEmail())
-                .userName(booking.getUser().getName())
-                .equipmentName(booking.getEquipment().getName())
-                .bookingDate(null)  // Not needed anymore
-                .bookingTime("from " + fromDateTime + " to " + toDateTime)
-                .rejectionReason("Your booking has been cancelled by the lab manager.")
-                .contactEmail(null)  // Don't show contact information
-                .build();
+            BookingRejectedEmailDTO emailDTO = new BookingRejectedEmailDTO();
+            emailDTO.setToEmail(booking.getUser().getEmail());
+            emailDTO.setUserName(booking.getUser().getName());
+            emailDTO.setEquipmentName(booking.getEquipment().getName());
+            emailDTO.setBookingDate(null);
+            emailDTO.setBookingTime("from " + fromDateTime + " to " + toDateTime);
+            emailDTO.setRejectionReason("Your booking has been cancelled by the lab manager.");
+            emailDTO.setContactEmail(null);;
                 
             emailService.sendBookingRejectedEmail(emailDTO);
         } catch (Exception e) {

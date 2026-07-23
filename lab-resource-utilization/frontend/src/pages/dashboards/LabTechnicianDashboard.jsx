@@ -8,6 +8,7 @@ const LabTechnicianDashboard = () => {
   const navigate = useNavigate();
   const [totalEquipment, setTotalEquipment] = useState(0);
   const [maintenanceCount, setMaintenanceCount] = useState(0);
+  const [calibrationCount, setCalibrationCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const handleLogout = () => {
@@ -22,8 +23,29 @@ const LabTechnicianDashboard = () => {
         const equipmentData = await getAllEquipment();
         
         setTotalEquipment(equipmentData.length);
-        const maintenance = equipmentData.filter(eq => eq.status === 'UNDER_MAINTENANCE').length;
-        setMaintenanceCount(maintenance);
+        const maintenanceData = await fetch(
+          `http://localhost:8081/api/maintenance/technician/${user.name}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        )
+        .then(res => res.json());
+
+        setMaintenanceCount(maintenanceData.length);
+
+        const calibrationSummary = await fetch(
+          `http://localhost:8081/api/calibrations/summary`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        ).then(res => res.json());
+
+        // Count items that need attention (Due Soon or Expired)
+        setCalibrationCount((calibrationSummary.dueSoon || 0) + (calibrationSummary.expired || 0));
 
       } catch (error) {
         console.error("Failed to fetch technician dashboard data:", error);
@@ -56,7 +78,8 @@ const LabTechnicianDashboard = () => {
       desc: "Track upcoming equipment calibrations and certifications.", 
       icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z", 
       color: "text-rose-400", bg: "bg-rose-500/10",
-      isUnderDev: true
+      value: calibrationCount,
+      label: "Needs Calibration"
     }
   ];
 
@@ -71,7 +94,17 @@ const LabTechnicianDashboard = () => {
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {dashboardItems.map((item, idx) => (
-            <div key={idx} className="bg-[#12131a] border border-white/[0.05] rounded-2xl p-6 shadow-xl transition hover:-translate-y-1 hover:border-purple-500/30 flex flex-col h-full relative overflow-hidden group">
+            <div 
+              key={idx} 
+              onClick={() => {
+                if (!item.isUnderDev) {
+                  if (item.title === "Equipment Status") navigate("/equipment");
+                  else if (item.title === "Maintenance Tasks") navigate("/maintenance");
+                  else if (item.title === "Calibration Schedule") navigate("/calibrations");
+                }
+              }}
+              className={`bg-[#12131a] border border-white/[0.05] rounded-2xl p-6 shadow-xl transition hover:-translate-y-1 hover:border-purple-500/30 flex flex-col h-full relative overflow-hidden group ${!item.isUnderDev ? "cursor-pointer" : ""}`}
+            >
               {item.isUnderDev && (
                 <div className="absolute top-0 right-0 p-4">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-800 text-gray-300 border border-gray-700 uppercase tracking-wider">

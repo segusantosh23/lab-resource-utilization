@@ -48,6 +48,12 @@ body {
 .animate-delay-300 { animation-delay: 300ms; }
 .animate-delay-400 { animation-delay: 400ms; }
 
+/* ── No Scroll Page ── */
+.page-no-scroll {
+  height: calc(100vh - 74px);
+  overflow: hidden;
+}
+
 /* ── Form Element Fixes ── */
 /* Makes the default browser calendar icon visible on dark backgrounds */
 input[type="date"]::-webkit-calendar-picker-indicator,

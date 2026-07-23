@@ -32,6 +32,9 @@ public class BookingService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private com.example.lab_resource_utilization.repository.MaintenanceRepository maintenanceRepository;
+
     public BookingResponse mapToResponse(Booking booking) {
         BookingResponse response = new BookingResponse();
         response.setId(booking.getId());
@@ -67,8 +70,8 @@ public class BookingService {
         Equipment equipment = equipmentRepository.findById(request.getEquipmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with id: " + request.getEquipmentId()));
 
-        if (equipment.getStatus() != EquipmentStatus.AVAILABLE) {
-            throw new InvalidBookingException("Equipment is not available for booking. Current status: " + equipment.getStatus());
+        if (equipment.getStatus() == EquipmentStatus.OUT_OF_SERVICE) {
+            throw new InvalidBookingException("Equipment is completely out of service.");
         }
 
         if (request.getStartTime().isBefore(LocalDateTime.now())) {
@@ -146,8 +149,8 @@ for(User manager : managers){
         Equipment equipment = equipmentRepository.findById(request.getEquipmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with id: " + request.getEquipmentId()));
 
-        if (equipment.getStatus() != EquipmentStatus.AVAILABLE) {
-            throw new InvalidBookingException("Equipment is not available for booking. Current status: " + equipment.getStatus());
+        if (equipment.getStatus() == EquipmentStatus.OUT_OF_SERVICE) {
+            throw new InvalidBookingException("Equipment is completely out of service.");
         }
 
         if (request.getStartTime().isBefore(LocalDateTime.now())) {
@@ -270,8 +273,18 @@ else if(manager.getRole() == Role.DEPARTMENT_HEAD) {
             }
         }
 
-        if (maxUsage + requestedQuantity > totalEquipmentQuantity) {
-            throw new InvalidBookingException("Insufficient equipment quantity available for the selected time slot. Available: " + (totalEquipmentQuantity - maxUsage));
+        // Subtract quantity that is currently under maintenance
+        Equipment equipment = equipmentRepository.findById(equipmentId).orElse(null);
+        int maintenanceQty = 0;
+        if (equipment != null) {
+            Integer mQty = maintenanceRepository.sumActiveMaintenanceQuantity(equipment.getName());
+            if (mQty != null) maintenanceQty = mQty;
+        }
+
+        int availableQty = totalEquipmentQuantity - maintenanceQty;
+
+        if (maxUsage + requestedQuantity > availableQty) {
+            throw new InvalidBookingException("Insufficient equipment quantity available for the selected time slot. Available: " + (availableQty - maxUsage));
         }
     }
 }
