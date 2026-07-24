@@ -17,6 +17,8 @@ public class Equipment {
 
     @NotBlank(message = "Equipment name is required")
     private String name;
+    @Column(nullable = false)
+    private String category;
 
     @Column(length = 1000)
     private String description;
@@ -64,7 +66,13 @@ public class Equipment {
     public void setName(String name) {
         this.name = name;
     }
+      public String getCategory() {
+    return category;
+    }
 
+   public void setCategory(String category) {
+    this.category = category;
+       }
     public String getDescription() {
         return description;
     }

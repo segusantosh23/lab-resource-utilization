@@ -12,7 +12,7 @@ public class EquipmentRequest {
 
     @NotBlank(message = "Equipment name is required")
     private String name;
-
+    private String category;
     // Category field removed - not in database
     private String description;
 
@@ -47,7 +47,13 @@ public class EquipmentRequest {
     public void setName(String name) {
         this.name = name;
     }
+    public String getCategory() {
+    return category;
+}
 
+public void setCategory(String category) {
+    this.category = category;
+}
     public String getDescription() {
         return description;
     }

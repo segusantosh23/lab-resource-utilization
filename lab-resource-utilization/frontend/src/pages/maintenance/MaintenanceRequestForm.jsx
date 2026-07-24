@@ -60,8 +60,7 @@ const MaintenanceRequestForm = () => {
     if (!form.equipment)
       newErrors.equipment = "Equipment is required";
 
-    if (!form.description.trim())
-      newErrors.description = "Description is required";
+    
 
     setErrors(newErrors);
 
@@ -90,7 +89,7 @@ const MaintenanceRequestForm = () => {
   // Basic validation
   const isValid =
     form.equipment &&
-    form.description &&
+   
     form.technician &&
     form.quantity > 0 &&
     (selectedEquipment ? form.quantity <= selectedEquipment.quantity : true);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { getUtilizationAnalytics, getRealTimeTracking, getEquipmentUtilizationRates, getDepartmentUtilizationRates, getInstitutionUtilizationRates, getIdleEquipment, getUtilizationHeatmap, getUsagePatterns } from '../../services/analyticsService';
 
 /* ── mini stat card ────────────────────────────────────────────── */
@@ -50,6 +51,7 @@ const Bar = ({ label, value, max, color }) => {
 
 const UtilizationDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [data,    setData]    = useState(null);
   const [realTimeData, setRealTimeData] = useState([]);
   const [ratesData, setRatesData] = useState([]);
@@ -67,15 +69,15 @@ const UtilizationDashboard = () => {
       setError('');
       try {
         const [res, rtd, rates, drates, irates, idle, hm, up] = await Promise.all([
-          getUtilizationAnalytics(),
-          getRealTimeTracking(),
-          getEquipmentUtilizationRates(),
-          getDepartmentUtilizationRates(),
-          getInstitutionUtilizationRates(),
-          getIdleEquipment(),
-          getUtilizationHeatmap(),
-          getUsagePatterns()
-        ]);
+    getUtilizationAnalytics(user.email),
+    getRealTimeTracking(user.email),
+    getEquipmentUtilizationRates(user.email),
+    getDepartmentUtilizationRates(user.email),
+    getInstitutionUtilizationRates(user.email),
+    getIdleEquipment(user.email),
+    getUtilizationHeatmap(user.email),
+    getUsagePatterns(user.email)
+]);
         setData(res);
         setRealTimeData(rtd);
         setRatesData(rates);

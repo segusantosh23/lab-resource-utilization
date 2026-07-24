@@ -46,10 +46,12 @@ public class BookingController {
     // Get All Bookings — 200 OK (Only accessible by managers/admins)
     @GetMapping
     @PreAuthorize("hasAnyRole('LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN')")
-    public ResponseEntity<List<BookingResponse>> getAll() {
-        List<BookingResponse> bookings = bookingService.getAllBookings();
-        return ResponseEntity.ok(bookings);
-    }
+    public ResponseEntity<List<BookingResponse>> getAll(Principal principal) {
+    List<BookingResponse> bookings =
+            bookingService.getAllBookings(principal.getName());
+
+    return ResponseEntity.ok(bookings);
+}
 
     // Get Booking By ID — 200 OK
     @GetMapping("/{id}")

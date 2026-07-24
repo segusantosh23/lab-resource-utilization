@@ -2,16 +2,20 @@ package com.example.lab_resource_utilization.service;
 
 import com.example.lab_resource_utilization.dto.CalibrationRequest;
 import com.example.lab_resource_utilization.dto.CalibrationResponse;
+import com.example.lab_resource_utilization.dto.CalibrationSuccessEmailDTO;
 import com.example.lab_resource_utilization.entity.Calibration;
 import com.example.lab_resource_utilization.entity.CalibrationResult;
 import com.example.lab_resource_utilization.entity.Equipment;
 import com.example.lab_resource_utilization.entity.EquipmentStatus;
 import com.example.lab_resource_utilization.entity.MaintenanceRequest;
+import com.example.lab_resource_utilization.entity.Role;
+import com.example.lab_resource_utilization.entity.User;
 import com.example.lab_resource_utilization.exception.ResourceNotFoundException;
 import com.example.lab_resource_utilization.repository.CalibrationRepository;
 import com.example.lab_resource_utilization.repository.EquipmentRepository;
 import com.example.lab_resource_utilization.repository.MaintenanceRepository;
 import com.example.lab_resource_utilization.repository.BookingRepository;
+import com.example.lab_resource_utilization.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +41,12 @@ public class CalibrationServiceImpl implements CalibrationService {
 
     @Autowired
     private BookingRepository bookingRepository;
+    
+    @Autowired
+    private EmailService emailService;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     // Convert Entity -> DTO
     private CalibrationResponse mapToResponse(Calibration calibration) {
@@ -119,6 +129,9 @@ public class CalibrationServiceImpl implements CalibrationService {
         if (saved.getResult() == CalibrationResult.FAIL) {
             processCalibrationResultChange(saved, equipment, true);
         }
+
+        // 📧 Send calibration completion email to LAB_MANAGER
+        sendCalibrationCompletionEmail(saved, equipment);
 
         return mapToResponse(saved);
     }
@@ -337,6 +350,46 @@ public class CalibrationServiceImpl implements CalibrationService {
             } catch (Exception e) {
                 System.err.println("Error processing calibration quantity: " + e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Send calibration completion notification email to LAB_MANAGER
+     * Called automatically when technician completes calibration (PASS or FAIL)
+     */
+    private void sendCalibrationCompletionEmail(Calibration calibration, Equipment equipment) {
+        try {
+            // Find LAB_MANAGER
+            List<User> labManagers = userRepository.findByRole(Role.LAB_MANAGER);
+            
+            if (labManagers.isEmpty()) {
+                System.err.println("⚠️ No LAB_MANAGER found. Cannot send calibration completion email.");
+                return;
+            }
+            
+            User labManager = labManagers.get(0); // Send to first LAB_MANAGER
+            
+            // Create email DTO
+            CalibrationSuccessEmailDTO emailDTO = CalibrationSuccessEmailDTO.builder()
+                .recipientEmail(labManager.getEmail())
+                .equipmentName(equipment.getName())
+                .equipmentId(equipment.getId())
+                .certificateNumber(calibration.getCertificateNumber())
+                .calibrationDate(calibration.getCalibrationDate())
+                .nextDueDate(calibration.getNextDueDate())
+                .technicianName(calibration.getTechnicianName())
+                .result(calibration.getResult().toString())
+                .remarks(calibration.getRemarks())
+                .build();
+            
+            // Send email asynchronously
+            emailService.sendCalibrationSuccessEmail(emailDTO);
+            
+            System.out.println("✅ Calibration completion email sent to LAB_MANAGER: " + labManager.getEmail());
+            
+        } catch (Exception e) {
+            System.err.println("❌ Failed to send calibration completion email: " + e.getMessage());
+            // Don't throw - calibration is already saved
         }
     }
 }
