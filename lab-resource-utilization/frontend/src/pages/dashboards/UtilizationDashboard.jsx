@@ -109,7 +109,7 @@ const UtilizationDashboard = () => {
             <button
               onClick={() => { 
                 setLoading(true); 
-                Promise.all([getUtilizationAnalytics(), getRealTimeTracking(), getEquipmentUtilizationRates(), getDepartmentUtilizationRates(), getInstitutionUtilizationRates(), getIdleEquipment(), getUtilizationHeatmap(), getUsagePatterns()])
+                Promise.all([getUtilizationAnalytics(user.email), getRealTimeTracking(user.email), getEquipmentUtilizationRates(user.email), getDepartmentUtilizationRates(user.email), getInstitutionUtilizationRates(user.email), getIdleEquipment(user.email), getUtilizationHeatmap(user.email), getUsagePatterns(user.email)])
                   .then(([res, rtd, rates, drates, irates, idle, hm, up]) => { setData(res); setRealTimeData(rtd); setRatesData(rates); setDeptRates(drates); setInstRates(irates); setIdleEquip(idle); setHeatmap(hm); setUsagePatterns(up); })
                   .catch(() => setError('Refresh failed.'))
                   .finally(() => setLoading(false)); 

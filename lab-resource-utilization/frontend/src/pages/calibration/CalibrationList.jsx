@@ -19,75 +19,10 @@ const CalibrationList = () => {
   const [selectedCalibrationId, setSelectedCalibrationId] =
     useState(null);
 
-  // Dashboard Statistics
-  const totalCount = calibrations.length;
-
-  const activeCount = calibrations.filter(
-    (c) => c.status === "Active"
-  ).length;
-
-  const dueSoonCount = calibrations.filter(
-    (c) => c.status === "Due Soon"
-  ).length;
-
-  const expiredCount = calibrations.filter(
-    (c) => c.status === "Expired"
-  ).length;
-
-  const failedCount = calibrations.filter(
-    (c) => c.status === "Failed"
-  ).length;
-
-  useEffect(() => {
-    loadCalibrations();
-  }, []);
-
-  const loadCalibrations = async () => {
-    try {
-      const response =
-        await calibrationService.getAllCalibrations();
-
-      setCalibrations(response.data);
-    } catch (error) {
-      console.error(
-        "Error loading calibrations:",
-        error
-      );
-      toast.error("Failed to load calibrations.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  // Search & Filter
-  const filteredCalibrations = useMemo(() => {
-    return calibrations.filter((item) => {
-      const searchText = search.toLowerCase();
-
-      const matchesSearch =
-        item.equipmentName
-          ?.toLowerCase()
-          .includes(searchText) ||
-        item.technicianName
-          ?.toLowerCase()
-          .includes(searchText) ||
-        item.certificateNumber
-          ?.toLowerCase()
-          .includes(searchText);
-
-      const matchesStatus =
-        statusFilter === "ALL" ||
-        item.result === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [calibrations, search, statusFilter]);
-
-  const groupedCalibrations = useMemo(() => {
-    // Group by equipment to only show the latest calibration for each equipment in the main table
-    const sorted = [...filteredCalibrations].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  // Group by equipment to get the latest calibration status for each equipment
+  const latestCalibrations = useMemo(() => {
+    const sorted = [...calibrations].sort(
+      (a, b) => new Date(b.createdAt || b.calibrationDate) - new Date(a.createdAt || a.calibrationDate)
     );
 
     const map = new Map();
@@ -97,7 +32,48 @@ const CalibrationList = () => {
       }
     }
     return Array.from(map.values());
-  }, [filteredCalibrations]);
+  }, [calibrations]);
+
+  // Dashboard Statistics based on current latest equipment calibration status
+  const totalCount = latestCalibrations.length;
+  const activeCount = latestCalibrations.filter((c) => c.status === "Active").length;
+  const dueSoonCount = latestCalibrations.filter((c) => c.status === "Due Soon").length;
+  const expiredCount = latestCalibrations.filter((c) => c.status === "Expired").length;
+  const failedCount = latestCalibrations.filter((c) => c.status === "Failed").length;
+
+  // Search & Filter for table display
+  const groupedCalibrations = useMemo(() => {
+    return latestCalibrations.filter((item) => {
+      const searchText = search.toLowerCase();
+
+      const matchesSearch =
+        item.equipmentName?.toLowerCase().includes(searchText) ||
+        item.technicianName?.toLowerCase().includes(searchText) ||
+        item.certificateNumber?.toLowerCase().includes(searchText);
+
+      const matchesStatus =
+        statusFilter === "ALL" ||
+        item.result === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [latestCalibrations, search, statusFilter]);
+
+  useEffect(() => {
+    loadCalibrations();
+  }, []);
+
+  const loadCalibrations = async () => {
+    try {
+      const response = await calibrationService.getAllCalibrations();
+      setCalibrations(response.data);
+    } catch (error) {
+      console.error("Error loading calibrations:", error);
+      toast.error("Failed to load calibrations.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Loading Screen
   if (loading) {

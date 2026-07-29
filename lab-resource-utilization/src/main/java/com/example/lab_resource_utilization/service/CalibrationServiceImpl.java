@@ -82,11 +82,11 @@ public class CalibrationServiceImpl implements CalibrationService {
         int available = Math.max(0, equipment.getQuantity() - activeQty - maintenanceQty);
         response.setAvailableQuantity(available);
 
-        // Calculate Status
+        // Calculate Status based on calibration result and due date
         LocalDate today = LocalDate.now();
         LocalDate dueDate = calibration.getNextDueDate();
 
-        if (available == 0) {
+        if (calibration.getResult() == CalibrationResult.FAIL) {
             response.setStatus("Failed");
         } else if (dueDate != null && dueDate.isBefore(today)) {
             response.setStatus("Expired");
