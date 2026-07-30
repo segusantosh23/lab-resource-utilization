@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { getUtilizationAnalytics } from '../../services/analyticsService';
+import { getUtilizationAnalytics, getUsagePatterns } from '../../services/analyticsService';
 import { getAllEquipment } from '../../services/equipmentService';
 
 const SystemAdminDashboard = () => {
@@ -9,6 +9,7 @@ const SystemAdminDashboard = () => {
   const navigate = useNavigate();
   const [analytics, setAnalytics] = useState(null);
   const [totalEquipment, setTotalEquipment] = useState(0);
+  const [usagePatterns, setUsagePatterns] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const handleLogout = () => {
@@ -17,16 +18,19 @@ const SystemAdminDashboard = () => {
   };
 
   useEffect(() => {
+    if (!user?.email) return;
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [analyticsData, equipmentData] = await Promise.all([
-          getUtilizationAnalytics(),
-          getAllEquipment()
+        const [analyticsData, equipmentData, usageData] = await Promise.all([
+          getUtilizationAnalytics(user.email),
+          getAllEquipment(),
+          getUsagePatterns(user.email)
         ]);
 
         setAnalytics(analyticsData);
         setTotalEquipment(equipmentData.length);
+        setUsagePatterns(usageData);
       } catch (error) {
         console.error("Failed to fetch admin dashboard data:", error);
       } finally {
@@ -34,7 +38,7 @@ const SystemAdminDashboard = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [user?.email]);
 
   const dashboardItems = [
     { 
@@ -42,23 +46,18 @@ const SystemAdminDashboard = () => {
       desc: "Gain insights into resource usage across all departments.", 
       icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z", 
       color: "text-indigo-400", bg: "bg-indigo-500/10",
-      value: analytics ? `${analytics.utilizationPercentage}%` : null,
+      value: analytics ? `${analytics.utilizationPercentage}%` : '0%',
       label: "Global Utilization",
-      path: "/analytics"
+      path: "/analytics/utilization"
     },
     { 
       title: "Cross-department resource sharing overview", 
       desc: "Monitor and analyze equipment sharing between different departments.", 
       icon: "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1", 
       color: "text-cyan-400", bg: "bg-cyan-500/10",
-      isUnderDev: true
-    },
-    { 
-      title: "Procurement recommendations and cost analysis", 
-      desc: "Data-driven recommendations for new purchases and budget allocation.", 
-      icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z", 
-      color: "text-emerald-400", bg: "bg-emerald-500/10",
-      isUnderDev: true
+      value: usagePatterns ? usagePatterns.sharedBookingsCount : 0,
+      label: "Shared Bookings",
+      path: "/analytics/utilization"
     },
     { 
       title: "Equipment lifecycle and ROI metrics", 
@@ -68,13 +67,6 @@ const SystemAdminDashboard = () => {
       value: totalEquipment,
       label: "Tracked Assets",
       path: "/equipment"
-    },
-    { 
-      title: "System monitoring and user management", 
-      desc: "Oversee platform health and manage user roles globally.", 
-      icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z", 
-      color: "text-blue-400", bg: "bg-blue-500/10",
-      isUnderDev: true
     },
     { 
       title: "Reports management", 
@@ -94,7 +86,7 @@ const SystemAdminDashboard = () => {
           <h1 className="text-3xl font-bold tracking-tight">System Administrator Dashboard</h1>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {dashboardItems.map((item, idx) => (
             <div key={idx} 
                  onClick={() => { if(item.path) navigate(item.path); }}

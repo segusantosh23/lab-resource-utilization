@@ -52,6 +52,10 @@ import WaitlistManager from './pages/booking/WaitlistManager';
 // Analytics
 import UtilizationDashboard from './pages/dashboards/UtilizationDashboard';
 
+// Admin pages
+import Users from './pages/Users';
+import SystemSettings from './pages/SystemSettings';
+
 import Navbar from './components/Navbar';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -237,6 +241,10 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        {/* ── Admin & Users ── */}
+        <Route path="/users" element={<ProtectedRoute allowedRoles={['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'DEPARTMENT_HEAD', 'LAB_MANAGER']}><Users /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}><SystemSettings /></ProtectedRoute>} />
+
         {/* ── Analytics ── */}
         <Route path="/analytics/utilization" element={<ProtectedRoute allowedRoles={['LAB_MANAGER','DEPARTMENT_HEAD','INSTITUTION_ADMIN','SYSTEM_ADMIN']}><UtilizationDashboard /></ProtectedRoute>} />
 

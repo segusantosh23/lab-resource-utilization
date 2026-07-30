@@ -19,11 +19,12 @@ const DepartmentHeadDashboard = () => {
   };
 
   useEffect(() => {
+    if (!user?.email) return;
     const fetchData = async () => {
       try {
         setLoading(true);
         const [analyticsData, equipmentData, bookingsData] = await Promise.all([
-          getUtilizationAnalytics(),
+          getUtilizationAnalytics(user.email),
           getAllEquipment(),
           getAllBookings()
         ]);
@@ -33,7 +34,7 @@ const DepartmentHeadDashboard = () => {
         const maintenance = equipmentData.filter(eq => eq.status === 'UNDER_MAINTENANCE').length;
         setMaintenanceCount(maintenance);
         
-        const pending = bookingsData.filter(b => b.status === 'PENDING').length;
+        const pending = bookingsData.filter(b => b.status === 'PENDING_APPROVAL' || b.status === 'PENDING').length;
         setPendingBookingsCount(pending);
 
       } catch (error) {
@@ -43,7 +44,7 @@ const DepartmentHeadDashboard = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [user?.email]);
 
   const dashboardItems = [
     { 
@@ -74,13 +75,6 @@ const DepartmentHeadDashboard = () => {
       path: "/equipment"
     },
     { 
-      title: "High-demand equipment alerts", 
-      desc: "Get notified about heavily requested tools and potential bottlenecks.", 
-      icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z", 
-      color: "text-red-400", bg: "bg-red-500/10",
-      isUnderDev: true
-    },
-    { 
       title: "Sharing requests and approvals", 
       desc: "Manage inbound and outbound equipment sharing requests.", 
       icon: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4", 
@@ -100,7 +94,7 @@ const DepartmentHeadDashboard = () => {
           <h1 className="text-3xl font-bold tracking-tight">Department Head Dashboard</h1>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {dashboardItems.map((item, idx) => (
             <div key={idx} 
                  onClick={() => { if(item.path) navigate(item.path); }}

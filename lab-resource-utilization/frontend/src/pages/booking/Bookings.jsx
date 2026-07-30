@@ -33,8 +33,10 @@ const Bookings = () => {
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState('');
 
+  const isResearcher = user?.role === 'RESEARCHER';
+
   /* view tabs: 'my' | 'all' */
-  const [viewTab, setViewTab] = useState(initialTab);
+  const [viewTab, setViewTab] = useState(isResearcher ? 'my' : 'all');
 
   /* filters for the list */
   const [statusFilter, setStatusFilter] = useState(initialStatus);
@@ -69,7 +71,7 @@ const Bookings = () => {
   });
 
   const canViewAllBookings = user && [
-    'LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN',
+    'LAB_MANAGER', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN', 'LAB_TECHNICIAN'
   ].includes(user.role);
 
   const isManagerOrAdmin = user && [
@@ -81,7 +83,7 @@ const Bookings = () => {
     setLoading(true);
     setError('');
     try {
-      const endpoint = (viewTab === 'all' && canViewAllBookings) ? '/bookings' : '/bookings/my';
+      const endpoint = isResearcher ? '/bookings/my' : '/bookings';
       const res = await api.get(endpoint);
       const sorted = res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setBookings(sorted);
@@ -338,24 +340,15 @@ const Bookings = () => {
         {/* ── Tabs and Filters Row ── */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/[0.05] mb-6 pb-2 gap-4">
           
-          {/* Tabs for Admin/Manager vs regular users */}
+          {/* Tabs: 'My Bookings' strictly for Researchers, 'All Portal Bookings' for all other roles */}
           <div className="flex gap-4">
-            {canViewAllBookings ? (
-              [['my', 'My Bookings'], ['all', 'All Portal Bookings']].map(([tab, label]) => (
-                <button
-                  key={tab}
-                  onClick={() => { setViewTab(tab); setStatusFilter(''); setRoleFilter(''); }}
-                  className={`pb-2 px-1 text-sm font-semibold border-b-2 transition
-                    ${viewTab === tab
-                      ? 'border-purple-500 text-purple-400'
-                      : 'border-transparent text-gray-400 hover:text-white'}`}
-                >
-                  {label}
-                </button>
-              ))
-            ) : (
+            {isResearcher ? (
               <span className="pb-2 px-1 text-sm font-semibold border-b-2 border-purple-500 text-purple-400">
                 My Bookings
+              </span>
+            ) : (
+              <span className="pb-2 px-1 text-sm font-semibold border-b-2 border-purple-500 text-purple-400">
+                All Portal Bookings
               </span>
             )}
           </div>
