@@ -18,11 +18,20 @@ public class MaintenanceRequest {
     private Integer quantity;
 
     // Getters & Setters
-    public Long getId() { return id; }
+    // Getters & Setters
 
-    public String getEquipment() { return equipment; }
-    public void setEquipment(String equipment) { this.equipment = equipment; }
-
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public String getEquipment() {
+        return equipment;
+    }
+    public void setEquipment(String equipment) {
+        this.equipment = equipment;
+    }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 

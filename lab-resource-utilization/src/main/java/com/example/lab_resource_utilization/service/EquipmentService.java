@@ -150,10 +150,22 @@ public class EquipmentService {
 
     // Update Status
     public EquipmentResponse updateEquipmentStatus(Long id, EquipmentStatus status) {
+
         Equipment equipment = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Equipment not found"));
+
+        // ✅ FORCE update
         equipment.setStatus(status);
-        return mapToResponse(repository.save(equipment));
+
+        Equipment saved = repository.save(equipment);
+
+        // ✅ RETURN DIRECTLY (avoid wrong mapping issues)
+        EquipmentResponse response = new EquipmentResponse();
+        response.setId(saved.getId());
+        response.setStatus(saved.getStatus());
+        response.setQuantity(saved.getQuantity());
+
+        return response;
     }
 
     // Delete
@@ -162,7 +174,7 @@ public class EquipmentService {
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("Equipment not found with id: " + id);
         }
-        
+
         // Delete all bookings associated with this equipment first to prevent foreign key constraint violations
         List<Booking> associatedBookings = bookingRepository.findByEquipmentId(id);
         if (!associatedBookings.isEmpty()) {

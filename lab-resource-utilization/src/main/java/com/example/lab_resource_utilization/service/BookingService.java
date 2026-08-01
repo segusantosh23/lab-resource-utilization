@@ -70,8 +70,8 @@ public class BookingService {
         Equipment equipment = equipmentRepository.findById(request.getEquipmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with id: " + request.getEquipmentId()));
 
-        if (equipment.getStatus() == EquipmentStatus.OUT_OF_SERVICE) {
-            throw new InvalidBookingException("Equipment is completely out of service.");
+        if (equipment.getStatus() != EquipmentStatus.AVAILABLE) {
+            throw new InvalidBookingException("Equipment is not available for booking.");
         }
 
         if (request.getStartTime().isBefore(LocalDateTime.now())) {
@@ -148,9 +148,20 @@ for(User manager : managers){
 
         Equipment equipment = equipmentRepository.findById(request.getEquipmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with id: " + request.getEquipmentId()));
+        // ✅ ADD THIS BLOCK HERE (VERY IMPORTANT)
+        if (equipment.getStatus() != EquipmentStatus.AVAILABLE) {
+            throw new InvalidBookingException("Equipment is not available for booking.");
+        }
 
-        if (equipment.getStatus() == EquipmentStatus.OUT_OF_SERVICE) {
-            throw new InvalidBookingException("Equipment is completely out of service.");
+        if (request.getQuantity() > equipment.getQuantity()) {
+            throw new InvalidBookingException("Requested quantity exceeds available equipment");
+        }
+        if (request.getQuantity() <= 0) {
+            throw new InvalidBookingException("Invalid quantity requested");
+        }
+        if (equipment.getStatus() == EquipmentStatus.UNDER_MAINTENANCE ||
+                equipment.getStatus() == EquipmentStatus.OUT_OF_SERVICE) {
+            throw new InvalidBookingException("Equipment is not available for booking.");
         }
 
         if (request.getStartTime().isBefore(LocalDateTime.now())) {
