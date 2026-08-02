@@ -12,6 +12,7 @@ const ROLE_MENUS = {
     { label: 'Dashboard', path: '/dashboard/researcher' },
     { label: 'Equipment', path: '/researcher/equipment' },
     { label: 'Bookings', path: '/bookings' },
+    { label: 'Reports', path: '/reports' },
   ],
 
   LAB_TECHNICIAN: [

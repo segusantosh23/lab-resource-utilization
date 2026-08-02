@@ -8,7 +8,7 @@ import SignupNew from './pages/SignupNew';
 import ForgotPassword from './pages/ForgotPassword';
 import ProfilePage from "./pages/profile/ProfilePage";
 import { AuthContext } from './context/AuthContext';
-
+import ResearcherReports from "./pages/reports/ResearcherReports";
 // Researcher sub-pages (teammate's work)
 import NewBooking from './pages/researcher/NewBooking';
 import UpcomingBookings from './pages/researcher/UpcomingBookings';
@@ -18,6 +18,7 @@ import ResearcherEquipment from './pages/researcher/ResearcherEquipment';
 import CompletedBookings from './pages/researcher/CompletedBookings';
 import UsageSummary from './pages/researcher/UsageSummary';
 import EquipmentAvailability from './pages/researcher/EquipmentAvailability';
+
 // Calibration
 import CalibrationList from './pages/calibration/CalibrationList';
 import AddCalibration from './pages/calibration/AddCalibration';
@@ -113,6 +114,8 @@ function App() {
               </ProtectedRoute>
             }
         />
+
+
         {/* ── Equipment ── */}
         <Route path="/equipment" element={<ProtectedRoute><EquipmentList /></ProtectedRoute>} />
         <Route path="/equipment/:id" element={<ProtectedRoute><EquipmentDetails /></ProtectedRoute>} />
@@ -256,6 +259,16 @@ function App() {
         <Route path="/researcher/bookings/history" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><CompletedBookings /></ProtectedRoute>} />
         <Route path="/researcher/equipment-availability" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><EquipmentAvailability /></ProtectedRoute>} />
         <Route path="/researcher/UsageSummary" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><UsageSummary /></ProtectedRoute>} />
+
+
+          <Route
+              path="/reports"
+              element={
+                  <ProtectedRoute allowedRoles={['RESEARCHER']}>
+                      <ResearcherReports />
+                  </ProtectedRoute>
+              }
+          />
         <Route path="/researcher/equipment" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><ResearcherEquipment /></ProtectedRoute>} />
 
         {/* Fallback */}
