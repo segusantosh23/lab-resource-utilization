@@ -1,17 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
+import { getProfile } from "../../services/profileService";
+import { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 
+import {
+    generatePDFReport,
+    generateExcelReport
+} from "../../utils/reportGenerator";
 import { getMyBookings } from "../../services/bookingService";
 
 const ResearcherReports = () => {
-
+    const [profile, setProfile] = useState(null);
     const [bookings,setBookings]=useState([]);
     const [loading,setLoading]=useState(true);
 
     const [fromDate,setFromDate]=useState("");
     const [toDate,setToDate]=useState("");
+    const { user } = useContext(AuthContext);
 
     const [status,setStatus]=useState("ALL");
     const [equipment,setEquipment]=useState("ALL");
@@ -19,15 +24,25 @@ const ResearcherReports = () => {
 
 
 
-    useEffect(()=>{
+    useEffect(() => {
 
-        const load=async()=>{
+        const load = async () => {
 
             try{
 
-                const data=await getMyBookings();
+                // Load bookings
+                const bookingData = await getMyBookings();
+                setBookings(bookingData);
 
-                setBookings(data);
+                // Load logged-in user's complete profile
+                const profileData = await getProfile();
+                setProfile(profileData);
+
+            }
+
+            catch(error){
+
+                console.error(error);
 
             }
 
@@ -37,7 +52,7 @@ const ResearcherReports = () => {
 
             }
 
-        }
+        };
 
         load();
 
@@ -84,78 +99,150 @@ const ResearcherReports = () => {
     },[bookings,fromDate,toDate,status,equipment,search]);
 
 
+    const reportData = {
 
-    const generatePDF=()=>{
+        title: "Researcher Booking Report",
 
-        const doc=new jsPDF();
+        user: {
 
-        doc.setFontSize(20);
+            name: profile?.name,
 
-        doc.text("Researcher Booking Report",14,18);
+            email: profile?.email,
 
-        doc.setFontSize(10);
+            role: profile?.role,
 
-        doc.text(`Generated : ${new Date().toLocaleString()}`,14,26);
+            department: profile?.department,
 
-        autoTable(doc,{
+            institution: profile?.institution
 
-            startY:35,
+        },
 
-            head:[["Booking ID","Equipment","Purpose","Start","End","Status"]],
+        filters: {
 
-            body:filteredBookings.map(b=>
+            fromDate,
 
-                [
+            toDate,
 
-                    b.id,
+            status,
 
-                    b.equipmentName,
+            equipment,
 
-                    b.purpose,
+            search
 
-                    new Date(b.startTime).toLocaleString(),
+        },
 
-                    new Date(b.endTime).toLocaleString(),
+        summary: {
 
-                    b.status
+            "Total Bookings": filteredBookings.length,
 
-                ])
+            "Completed":
+            filteredBookings.filter(b => b.status === "COMPLETED").length,
 
-        });
+            "Cancelled":
+            filteredBookings.filter(b => b.status === "CANCELLED").length,
 
-        doc.save("Researcher_Report.pdf");
+            "Rejected":
+            filteredBookings.filter(b => b.status === "REJECTED").length,
+
+            "No Show":
+            filteredBookings.filter(b => b.status === "NO_SHOW").length
+
+        },
+
+        columns: [
+
+            "Booking ID",
+
+            "Equipment",
+
+            "Purpose",
+
+            "Start Time",
+
+            "End Time",
+
+            "Status"
+
+        ],
+
+        rows: filteredBookings.map(b => [
+
+            b.id,
+
+            b.equipmentName,
+
+            b.purpose || "-",
+
+            new Date(b.startTime).toLocaleString(),
+
+            new Date(b.endTime).toLocaleString(),
+
+            b.status
+
+        ])
+
+    };
+
+
+    // const reportData = {
+    //     title: "Researcher Booking Report",
+    //
+    //     user: {
+    //         name: user?.name,
+    //         email: user?.email,
+    //         role: "Researcher",
+    //         department: user?.department,
+    //         institution: user?.institution
+    //     },
+    //
+    //     filters: {
+    //         fromDate,
+    //         toDate,
+    //         status,
+    //         equipment,
+    //         search
+    //     },
+    //
+    //     summary: {
+    //         total: filteredBookings.length,
+    //         completed: filteredBookings.filter(b => b.status === "COMPLETED").length,
+    //         cancelled: filteredBookings.filter(b => b.status === "CANCELLED").length,
+    //         rejected: filteredBookings.filter(b => b.status === "REJECTED").length,
+    //         noShow: filteredBookings.filter(b => b.status === "NO_SHOW").length
+    //     },
+    //
+    //     columns: [
+    //         "Booking ID",
+    //         "Equipment",
+    //         "Purpose",
+    //         "Start Time",
+    //         "End Time",
+    //         "Status"
+    //     ],
+    //
+    //     rows: filteredBookings.map(b => [
+    //         b.id,
+    //         b.equipmentName,
+    //         b.purpose || "-",
+    //         new Date(b.startTime).toLocaleString(),
+    //         new Date(b.endTime).toLocaleString(),
+    //         b.status
+    //     ])
+    // };
+
+
+
+    const generatePDF = () => {
+
+        generatePDFReport(reportData);
 
     };
 
 
 
-    const generateExcel=()=>{
+    const generateExcel = () => {
 
-        const worksheet=XLSX.utils.json_to_sheet(
-
-            filteredBookings.map(b=>({
-
-                Booking_ID:b.id,
-
-                Equipment:b.equipmentName,
-
-                Purpose:b.purpose,
-
-                Start_Time:new Date(b.startTime).toLocaleString(),
-
-                End_Time:new Date(b.endTime).toLocaleString(),
-
-                Status:b.status
-
-            }))
-
-        );
-
-        const workbook=XLSX.utils.book_new();
-
-        XLSX.utils.book_append_sheet(workbook,worksheet,"Bookings");
-
-        XLSX.writeFile(workbook,"Researcher_Report.xlsx");
+        generateExcelReport(reportData);
 
     };
 
@@ -358,14 +445,14 @@ const ResearcherReports = () => {
                     <div className="flex justify-end gap-4 mt-6">
 
                         <button
-                            onClick={generatePDF}
+                            onClick={() => generatePDFReport(reportData)}
                             className="flex items-center gap-2 bg-red-600 hover:bg-red-500 px-6 py-3 rounded-lg font-semibold transition"
                         >
                             📄 Generate PDF
                         </button>
 
                         <button
-                            onClick={generateExcel}
+                            onClick={() => generateExcelReport(reportData)}
                             className="flex items-center gap-2 bg-green-600 hover:bg-green-500 px-6 py-3 rounded-lg font-semibold transition"
                         >
                             📊 Export Excel

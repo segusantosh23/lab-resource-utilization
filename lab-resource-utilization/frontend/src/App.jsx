@@ -9,6 +9,12 @@ import ForgotPassword from './pages/ForgotPassword';
 import ProfilePage from "./pages/profile/ProfilePage";
 import { AuthContext } from './context/AuthContext';
 import ResearcherReports from "./pages/reports/ResearcherReports";
+import MaintenanceReport from "./pages/reports/MaintenanceReport";
+import CalibrationReport from "./pages/reports/CalibrationReport";
+import ReportsHome from "./pages/reports/ReportsHome";
+
+
+
 // Researcher sub-pages (teammate's work)
 import NewBooking from './pages/researcher/NewBooking';
 import UpcomingBookings from './pages/researcher/UpcomingBookings';
@@ -218,6 +224,33 @@ function App() {
         <Route path="/bookings/history" element={<ProtectedRoute><BookingHistory /></ProtectedRoute>} />
         <Route path="/bookings/waitlist" element={<ProtectedRoute><WaitlistManager /></ProtectedRoute>} />
         {/* ── Maintenance Module ── */}
+          <Route
+              path="/reports"
+              element={
+                  <ProtectedRoute allowedRoles={["LAB_TECHNICIAN"]}>
+                      <ReportsHome />
+                  </ProtectedRoute>
+              }
+          />
+
+          <Route
+              path="/reports/maintenance"
+              element={
+                  <ProtectedRoute allowedRoles={["LAB_TECHNICIAN"]}>
+                      <MaintenanceReport />
+                  </ProtectedRoute>
+              }
+          />
+
+          <Route
+              path="/reports/calibration"
+              element={
+                  <ProtectedRoute allowedRoles={["LAB_TECHNICIAN"]}>
+                      <CalibrationReport />
+                  </ProtectedRoute>
+              }
+          />
+
         <Route 
           path="/maintenance" 
           element={
@@ -260,15 +293,17 @@ function App() {
         <Route path="/researcher/equipment-availability" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><EquipmentAvailability /></ProtectedRoute>} />
         <Route path="/researcher/UsageSummary" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><UsageSummary /></ProtectedRoute>} />
 
-
           <Route
-              path="/reports"
+              path="/researcher/reports"
               element={
                   <ProtectedRoute allowedRoles={['RESEARCHER']}>
                       <ResearcherReports />
                   </ProtectedRoute>
               }
           />
+
+
+
         <Route path="/researcher/equipment" element={<ProtectedRoute allowedRoles={['RESEARCHER']}><ResearcherEquipment /></ProtectedRoute>} />
 
         {/* Fallback */}

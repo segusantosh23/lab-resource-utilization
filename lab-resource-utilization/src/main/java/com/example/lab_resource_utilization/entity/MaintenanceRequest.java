@@ -1,10 +1,17 @@
 package com.example.lab_resource_utilization.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "maintenance_requests")
 public class MaintenanceRequest {
+
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime completedAt;
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,6 +26,26 @@ public class MaintenanceRequest {
 
     // Getters & Setters
     // Getters & Setters
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        createdAt = LocalDateTime.now();
+    }
 
     public Long getId() {
         return id;

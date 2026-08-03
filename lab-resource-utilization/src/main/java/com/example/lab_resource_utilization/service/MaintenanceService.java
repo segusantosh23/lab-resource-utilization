@@ -8,6 +8,7 @@ import com.example.lab_resource_utilization.repository.MaintenanceRepository;
 import com.example.lab_resource_utilization.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.example.lab_resource_utilization.entity.Equipment;
@@ -72,6 +73,7 @@ public class MaintenanceService {
     if ("Completed".equalsIgnoreCase(status)) {
         equipment.setStatus(EquipmentStatus.AVAILABLE);
         equipmentRepository.save(equipment);
+        req.setCompletedAt(LocalDateTime.now());
     } else if ("In Progress".equalsIgnoreCase(status)) {
         // Only mark the entire equipment as UNDER_MAINTENANCE in DB if we are maintaining all of it.
         // If it's a partial maintenance, keep it AVAILABLE so others can book the remainder.
@@ -81,7 +83,9 @@ public class MaintenanceService {
         }
     }
 
-    req.setStatus(status);
+       req.setStatus(status);
+
+
     return repo.save(req);
 }
     // NEW METHOD

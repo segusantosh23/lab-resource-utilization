@@ -12,7 +12,7 @@ const ROLE_MENUS = {
     { label: 'Dashboard', path: '/dashboard/researcher' },
     { label: 'Equipment', path: '/researcher/equipment' },
     { label: 'Bookings', path: '/bookings' },
-    { label: 'Reports', path: '/reports' },
+    { label: 'Reports', path: '/researcher/reports' },
   ],
 
   LAB_TECHNICIAN: [
@@ -20,6 +20,7 @@ const ROLE_MENUS = {
     { label: 'Equipment', path: '/equipment' },
     { label: 'Calibration', path: '/calibrations' },
     { label: 'Maintenance', path: '/maintenance' },
+    { label: 'Reports', path: '/reports' },   // <-- ADD THIS
   ],
 
   LAB_MANAGER: [
