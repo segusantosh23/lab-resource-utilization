@@ -251,8 +251,7 @@ const UtilizationDashboard = () => {
                         <tr>
                           <th className="px-4 py-3 font-semibold text-gray-400">Equipment</th>
                           <th className="px-4 py-3 font-semibold text-gray-400">Category</th>
-                          <th className="px-4 py-3 font-semibold text-gray-400">Days Idle</th>
-                          <th className="px-4 py-3 font-semibold text-gray-400 text-right">Action</th>
+                          <th className="px-4 py-3 font-semibold text-gray-400 text-right">Days Idle</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/[0.02]">
@@ -260,13 +259,10 @@ const UtilizationDashboard = () => {
                           <tr key={item.equipmentId} className="hover:bg-white/[0.01] transition-colors">
                             <td className="px-4 py-3 font-medium text-white">{item.equipmentName}</td>
                             <td className="px-4 py-3 text-xs">{item.category}</td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 text-right">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400">
                                 {item.daysIdle >= 999 ? 'Never Used' : `${item.daysIdle} days`}
                               </span>
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              <button className="text-xs font-medium text-indigo-400 hover:text-indigo-300">Review</button>
                             </td>
                           </tr>
                         ))}

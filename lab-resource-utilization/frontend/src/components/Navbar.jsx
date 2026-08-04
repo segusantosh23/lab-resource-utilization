@@ -42,7 +42,6 @@ const ROLE_MENUS = {
 
   INSTITUTION_ADMIN: [
     { label: 'Dashboard', path: '/dashboard/institution-admin' },
-    { label: 'Institution Management', path: '/institution' },
     { label: 'Users', path: '/users' },
     { label: 'Utilization', path: '/analytics/utilization' },
     { label: 'Reports', path: '/reports' },
@@ -50,12 +49,14 @@ const ROLE_MENUS = {
 
   SYSTEM_ADMIN: [
     { label: 'Dashboard', path: '/dashboard/system-admin' },
-    { label: 'All Equipment', path: '/equipment' },
+    { label: 'Equipment', path: '/equipment' },
+    { label: 'Calibration', path: '/calibrations' },
     { label: 'Bookings', path: '/bookings' },
     { label: 'Utilization', path: '/analytics/utilization' },
     { label: 'Maintenance', path: '/maintenance' },
     { label: 'Users', path: '/users' },
-    { label: 'System Settings', path: '/settings' },
+    { label: 'Reports', path: '/reports' },
+    { label: 'Settings', path: '/settings' },
   ]
 };
 
@@ -120,21 +121,21 @@ const Navbar = () => {
 
   useEffect(() => {
 
-    fetchNotifications();
+    if (user) {
 
-    const interval = setInterval(fetchNotifications, 30000);
+      fetchNotifications();
 
-    return () => clearInterval(interval);
+    }
 
-  }, []);
+  }, [user]);
 
   return (
     <nav className="bg-[#12131a] border-b border-white/[0.05] sticky top-0 z-50 shadow-md">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-[1400px] mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
         
         {/* Logo and Brand */}
-        <div className="flex items-center gap-3">
-          <Link to={authorizedLinks.length > 0 ? authorizedLinks[0].path : "/"} className="flex items-center gap-3 group">
+        <div className="flex items-center gap-3 shrink-0">
+          <Link to={authorizedLinks.length > 0 ? authorizedLinks[0].path : "/"} className="flex items-center gap-2 group">
             <div className="p-2 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 group-hover:shadow-lg group-hover:shadow-purple-500/30 transition">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
@@ -145,14 +146,14 @@ const Navbar = () => {
         </div>
 
         {/* Dynamic Role-Aware Navigation Links */}
-        <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide justify-center md:justify-start">
+        <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 [::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] justify-center md:justify-start">
           {authorizedLinks.map((link, index) => {
             const isActive = location.pathname.startsWith(link.path);
             return (
               <Link
                 key={index}
                 to={link.path}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                   isActive 
                     ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' 
                     : 'text-gray-400 hover:text-white hover:bg-white/[0.05]'

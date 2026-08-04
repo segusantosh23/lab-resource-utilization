@@ -10,6 +10,8 @@ public class MaintenanceRequest {
 
     private LocalDateTime createdAt;
 
+    private LocalDateTime startedAt;
+
     private LocalDateTime completedAt;
 
 
@@ -25,13 +27,20 @@ public class MaintenanceRequest {
     private Integer quantity;
 
     // Getters & Setters
-    // Getters & Setters
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getStartedAt() {
+        return startedAt;
+    }
+
+    public void setStartedAt(LocalDateTime startedAt) {
+        this.startedAt = startedAt;
     }
 
     public LocalDateTime getCompletedAt() {

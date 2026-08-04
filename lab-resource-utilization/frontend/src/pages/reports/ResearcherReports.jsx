@@ -101,7 +101,7 @@ const ResearcherReports = () => {
 
     const reportData = {
 
-        title: "Researcher Booking Report",
+        title: `${(profile?.role || user?.role || "RESEARCHER").replace(/_/g, " ")} Booking Report`,
 
         user: {
 

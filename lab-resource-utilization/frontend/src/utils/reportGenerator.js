@@ -105,51 +105,58 @@ export const generatePDFReport = (data) => {
                 DETAILS & SUMMARY CARDS
 ========================================================= */
 
+// ---------- Dynamic Card Dimensions ----------
+    const summaryEntries = Object.entries(data.summary || {});
+    const summaryCount = summaryEntries.length;
+    const itemSpacing = 6;
+    const cardHeight = Math.max(52, 14 + summaryCount * itemSpacing + 4);
+
 // ---------- Left Card ----------
 
     const leftX = 14;
     const topY = y;
 
     doc.setDrawColor(180);
-    doc.roundedRect(leftX, topY, 86, 50, 3, 3);
+    doc.roundedRect(leftX, topY, 86, cardHeight, 3, 3);
 
     doc.setFillColor(98, 52, 183);
     doc.roundedRect(leftX, topY, 86, 8, 3, 3, "F");
 
     doc.setTextColor(255,255,255);
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setFont("helvetica","bold");
-    doc.text("RESEARCHER DETAILS", leftX + 43, topY + 5.5, {align:"center"});
+    const roleHeader = data.user?.role
+        ? `${data.user.role.replace(/_/g, ' ')} DETAILS`
+        : "USER DETAILS";
+    doc.text(roleHeader.toUpperCase(), leftX + 43, topY + 5.5, {align:"center"});
 
     doc.setTextColor(0,0,0);
-    doc.setFontSize(10);
+    doc.setFontSize(9);
 
-    let ly = topY + 15;
+    let ly = topY + 14;
 
     const researcherInfo = [
 
-        ["Name", data.user.name],
+        ["Name", data.user?.name],
 
-        ["Role", data.user.role],
+        ["Role", data.user?.role ? data.user.role.replace(/_/g, ' ') : "-"],
 
-        ["Email", data.user.email],
+        ["Email", data.user?.email],
 
-        ["Department", data.user.department],
+        ["Department", data.user?.department],
 
-        ["Institution", data.user.institution]
+        ["Institution", data.user?.institution]
 
     ];
 
-    researcherInfo.forEach(item=>{
-
+    researcherInfo.forEach(item => {
         doc.setFont("helvetica","bold");
         doc.text(item[0], leftX+4, ly);
 
         doc.setFont("helvetica","normal");
-        doc.text(": "+(item[1] || "-"), leftX+30, ly);
+        doc.text(": " + (item[1] || "-"), leftX+26, ly);
 
-        ly += 7;
-
+        ly += itemSpacing;
     });
 
 
@@ -158,13 +165,13 @@ export const generatePDFReport = (data) => {
     const rightX = 110;
 
     doc.setDrawColor(180);
-    doc.roundedRect(rightX, topY, 86, 50, 3, 3);
+    doc.roundedRect(rightX, topY, 86, cardHeight, 3, 3);
 
     doc.setFillColor(98,52,183);
-    doc.roundedRect(rightX, topY, 86, 8, 3,3,"F");
+    doc.roundedRect(rightX, topY, 86, 8, 3, 3, "F");
 
     doc.setTextColor(255,255,255);
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont("helvetica","bold");
 
     doc.text(
@@ -175,111 +182,124 @@ export const generatePDFReport = (data) => {
     );
 
     doc.setTextColor(0,0,0);
+    doc.setFontSize(8.5);
 
-    let sy = topY + 15;
+    let sy = topY + 14;
 
-    Object.entries(data.summary).forEach(([key,value])=>{
-
+    summaryEntries.forEach(([key, value]) => {
         doc.setFont("helvetica","bold");
-
-        doc.text(key,rightX+4,sy);
+        doc.text(key, rightX+4, sy);
 
         doc.setFont("helvetica","normal");
+        doc.text(String(value), rightX+82, sy, { align: "right" });
 
-        doc.text(String(value), rightX+68, sy);
-
-        sy += 7;
-
+        sy += itemSpacing;
     });
 
 
-    y = topY + 60;
+    y = topY + cardHeight + 8;
 
     /* =========================================================
-                    BOOKING HISTORY
+                    TABLES & SECTIONS
 ========================================================= */
 
-    doc.setDrawColor(98,52,183);
-    doc.setLineWidth(0.5);
+    if (data.sections && data.sections.length > 0) {
+        let currentY = y;
 
-    doc.line(14,y,196,y);
+        data.sections.forEach((sec) => {
+            if (currentY > 240) {
+                doc.addPage();
+                currentY = 20;
+            }
 
-    y += 8;
+            doc.setDrawColor(98, 52, 183);
+            doc.setLineWidth(0.5);
+            doc.line(14, currentY, 196, currentY);
+            currentY += 7;
 
-    doc.setFontSize(16);
-    doc.setFont("helvetica","bold");
+            doc.setFontSize(13);
+            doc.setFont("helvetica", "bold");
+            doc.text(sec.title.toUpperCase(), 105, currentY, { align: "center" });
+            currentY += 7;
 
-    doc.text(
-        "BOOKING HISTORY",
-        105,
-        y,
-        {align:"center"}
-    );
+            doc.line(14, currentY, 196, currentY);
+            currentY += 6;
 
-    y += 8;
+            autoTable(doc, {
+                startY: currentY,
+                head: [sec.columns],
+                body: sec.rows,
+                theme: "grid",
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 2.5,
+                    halign: "center",
+                    valign: "middle",
+                    lineColor: [220, 220, 220]
+                },
+                headStyles: {
+                    fillColor: [98, 52, 183],
+                    textColor: [255, 255, 255],
+                    fontStyle: "bold"
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 249, 250]
+                },
+                margin: { left: 14, right: 14 }
+            });
 
-    doc.line(14,y,196,y);
+            currentY = doc.lastAutoTable.finalY + 12;
+        });
+    } else {
+        doc.setDrawColor(98,52,183);
+        doc.setLineWidth(0.5);
 
-    y += 6;
+        doc.line(14,y,196,y);
 
-    /* ---------- Table ---------- */
+        y += 8;
 
-    autoTable(doc,{
+        doc.setFontSize(16);
+        doc.setFont("helvetica","bold");
 
-        startY:y,
+        doc.text(
+            "REPORT DETAILS",
+            105,
+            y,
+            {align:"center"}
+        );
 
-        head:[data.columns],
+        y += 8;
 
-        body:data.rows,
+        doc.line(14,y,196,y);
 
-        theme:"grid",
+        y += 6;
 
-        styles:{
-
-            fontSize:10,
-
-            cellPadding:3,
-
-            halign:"center",
-
-            valign:"middle",
-
-            lineColor:[220,220,220],
-
-            lineWidth:0.2
-
-        },
-
-        headStyles:{
-
-            fillColor:[98,52,183],
-
-            textColor:[255,255,255],
-
-            fontStyle:"bold",
-
-            halign:"center"
-
-        },
-
-        bodyStyles:{
-
-            textColor:[40,40,40]
-
-        },
-
-        alternateRowStyles:{
-
-            fillColor:[248,248,248]
-
-        },
-
-        margin:{
-            left:14,
-            right:14
-        }
-
-    });
+        autoTable(doc,{
+            startY:y,
+            head:[data.columns || []],
+            body:data.rows || [],
+            theme:"grid",
+            styles:{
+                fontSize:10,
+                cellPadding:3,
+                halign:"center",
+                valign:"middle",
+                lineColor:[220,220,220]
+            },
+            headStyles:{
+                fillColor:[98,52,183],
+                textColor:[255,255,255],
+                fontStyle:"bold"
+            },
+            alternateRowStyles:{
+                fillColor:[248,249,250]
+            },
+            margin:{
+                left:14,
+                right:14
+            }
+        });
+    }
 
     /* ---------- Footer ---------- */
 
@@ -394,27 +414,37 @@ export const generateExcelReport = (data) => {
 
     );
 
-    /* ---------- Table ---------- */
+    /* ---------- Table / Sections ---------- */
 
     const startRow = 20;
 
-// Add column headers
-    XLSX.utils.sheet_add_aoa(
-        worksheet,
-        [data.columns],
-        {
-            origin: `A${startRow}`
-        }
-    );
+    if (data.sections && data.sections.length > 0) {
+        let currentRow = startRow;
+        data.sections.forEach(sec => {
+            XLSX.utils.sheet_add_aoa(worksheet, [[sec.title.toUpperCase()]], { origin: `A${currentRow}` });
+            currentRow += 1;
+            XLSX.utils.sheet_add_aoa(worksheet, [sec.columns], { origin: `A${currentRow}` });
+            currentRow += 1;
+            XLSX.utils.sheet_add_aoa(worksheet, sec.rows, { origin: `A${currentRow}` });
+            currentRow += sec.rows.length + 3;
+        });
+    } else {
+        XLSX.utils.sheet_add_aoa(
+            worksheet,
+            [data.columns || []],
+            {
+                origin: `A${startRow}`
+            }
+        );
 
-// Add table rows
-    XLSX.utils.sheet_add_aoa(
-        worksheet,
-        data.rows,
-        {
-            origin: `A${startRow + 1}`
-        }
-    );
+        XLSX.utils.sheet_add_aoa(
+            worksheet,
+            data.rows || [],
+            {
+                origin: `A${startRow + 1}`
+            }
+        );
+    }
 
     worksheet["!cols"]=[
 

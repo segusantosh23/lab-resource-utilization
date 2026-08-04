@@ -277,7 +277,10 @@ Role role = user.getRole();
 List<Booking> activeBookings;
 
 
-if (role == Role.LAB_MANAGER ||
+if (role == Role.SYSTEM_ADMIN) {
+    activeBookings = bookingRepository.findAll();
+}
+else if (role == Role.LAB_MANAGER ||
     role == Role.DEPARTMENT_HEAD) {
 
     activeBookings =
@@ -298,10 +301,7 @@ else if (role == Role.INSTITUTION_ADMIN) {
 else {
 
     activeBookings =
-        bookingRepository.findByEquipmentDepartmentAndEquipmentInstitution(
-            user.getDepartment(),
-            user.getInstitution()
-        );
+        bookingRepository.findAll();
 
 }
 
@@ -314,7 +314,7 @@ activeBookings = activeBookings.stream()
             trackingList.add(new RealTimeUsageDTO(
                     b.getEquipment().getId(),
                     b.getEquipment().getName(),
-                    "", // Category field removed from Equipment
+                    b.getEquipment().getCategory() != null ? b.getEquipment().getCategory() : "",
                     b.getEquipment().getStatus().name(),
                     userName,
                     b.getStartTime(),
@@ -332,33 +332,25 @@ Role role = user.getRole();
 
 List<Equipment> allEquipment;
 
-if (role == Role.LAB_MANAGER ||
-    role == Role.DEPARTMENT_HEAD) {
-
-    allEquipment =
-        equipmentRepository.findByDepartmentAndInstitution(
-            user.getDepartment(),
-            user.getInstitution()
-        );
-
-}
-else if (role == Role.INSTITUTION_ADMIN) {
-
-    allEquipment =
-        equipmentRepository.findByInstitution(
-            user.getInstitution()
-        );
-
-}
-else {
-
-    allEquipment =
-        equipmentRepository.findByDepartmentAndInstitution(
-            user.getDepartment(),
-            user.getInstitution()
-        );
-
-}
+        if (role == Role.SYSTEM_ADMIN) {
+            allEquipment = equipmentRepository.findAll();
+        } else if (role == Role.INSTITUTION_ADMIN) {
+            allEquipment = equipmentRepository.findByInstitution(user.getInstitution());
+            if (allEquipment == null || allEquipment.isEmpty()) {
+                allEquipment = equipmentRepository.findAll();
+            }
+        } else {
+            allEquipment = equipmentRepository.findByDepartmentAndInstitution(
+                user.getDepartment(),
+                user.getInstitution()
+            );
+            if (allEquipment == null || allEquipment.isEmpty()) {
+                allEquipment = equipmentRepository.findByInstitution(user.getInstitution());
+            }
+            if (allEquipment == null || allEquipment.isEmpty()) {
+                allEquipment = equipmentRepository.findAll();
+            }
+        }
         List<Long> equipmentIds = allEquipment.stream()
         .map(Equipment::getId)
         .toList();
@@ -385,7 +377,7 @@ List<Booking> recentBookings = bookingRepository.findAll().stream()
             double rate = (totalBookedHours / availableHours) * 100.0;
             if (rate > 100.0) rate = 100.0;
             result.add(new EquipmentUtilizationDTO(
-                    eq.getId(), eq.getName(), "", Math.round(rate * 10.0) / 10.0, // Category field removed
+                    eq.getId(), eq.getName(), eq.getCategory() != null ? eq.getCategory() : "", Math.round(rate * 10.0) / 10.0,
                     Math.round(totalBookedHours * 10.0) / 10.0, availableHours
             ));
         }
@@ -508,26 +500,24 @@ else{
 
 Role role = user.getRole();
 List<Equipment> allEquipment;
-if(role == Role.LAB_MANAGER ||
-   role == Role.DEPARTMENT_HEAD){
-
+if (role == Role.SYSTEM_ADMIN) {
+    allEquipment = equipmentRepository.findAll();
+}
+else if (role == Role.LAB_MANAGER || role == Role.DEPARTMENT_HEAD) {
     allEquipment =
         equipmentRepository.findByDepartmentAndInstitution(
             user.getDepartment(),
             user.getInstitution()
         );
-
 }
-else if(role == Role.INSTITUTION_ADMIN){
-
+else if (role == Role.INSTITUTION_ADMIN) {
     allEquipment =
         equipmentRepository.findByInstitution(
             user.getInstitution()
         );
-
 }
-else{
-    allEquipment = new ArrayList<>();
+else {
+    allEquipment = equipmentRepository.findAll();
 }
 allEquipment = allEquipment.stream()
         .filter(e -> e.getStatus()==EquipmentStatus.AVAILABLE)
@@ -564,7 +554,7 @@ List<Booking> allBookings = bookingRepository.findAll()
             }
 
             if (daysIdle >= 14) {
-                idleList.add(new IdleEquipmentDTO(eq.getId(), eq.getName(), "", daysIdle)); // Category field removed
+                idleList.add(new IdleEquipmentDTO(eq.getId(), eq.getName(), eq.getCategory() != null ? eq.getCategory() : "", daysIdle));
             }
         }
         
@@ -580,8 +570,10 @@ List<Booking> allBookings = bookingRepository.findAll()
 Role role = user.getRole();
 
 List<Booking> recentBookings;
-if(role == Role.LAB_MANAGER ||
-   role == Role.DEPARTMENT_HEAD){
+if (role == Role.SYSTEM_ADMIN) {
+    recentBookings = bookingRepository.findAll();
+}
+else if (role == Role.LAB_MANAGER || role == Role.DEPARTMENT_HEAD) {
 
     recentBookings =
         bookingRepository.findByEquipmentDepartmentAndEquipmentInstitution(
@@ -590,7 +582,7 @@ if(role == Role.LAB_MANAGER ||
         );
 
 }
-else if(role == Role.INSTITUTION_ADMIN){
+else if (role == Role.INSTITUTION_ADMIN) {
 
     recentBookings =
         bookingRepository.findByEquipmentInstitution(
@@ -598,13 +590,9 @@ else if(role == Role.INSTITUTION_ADMIN){
         );
 
 }
-else{
+else {
 
-    recentBookings =
-        bookingRepository.findByEquipmentDepartmentAndEquipmentInstitution(
-            user.getDepartment(),
-            user.getInstitution()
-        );
+    recentBookings = bookingRepository.findAll();
 }
 recentBookings = recentBookings.stream()
         .filter(b -> b.getStartTime() != null && b.getEndTime() != null)

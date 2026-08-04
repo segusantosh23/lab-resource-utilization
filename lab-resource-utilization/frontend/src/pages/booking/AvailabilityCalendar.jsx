@@ -564,27 +564,42 @@ const AvailabilityCalendar = () => {
                     <option key={eq.id} value={eq.id}>{eq.name} — {eq.status.replace(/_/g, ' ')} (Qty: {eq.availableQuantity ?? eq.quantity})</option>
                   ))}
                 </select>
+
+                {equipmentList.find(e => e.id == formData.equipmentId)?.status === 'UNDER_MAINTENANCE' && (
+                  <div className="mt-3 p-3.5 rounded-xl text-sm border bg-amber-500/10 border-amber-500/30 text-amber-300 flex gap-3 items-start shadow-sm">
+                    <svg className="w-5 h-5 mt-0.5 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-amber-200">Equipment Under Maintenance</p>
+                      <p className="text-xs mt-0.5 text-amber-300/90 leading-relaxed">
+                        This equipment is currently undergoing maintenance and cannot be booked.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Quantity *</label>
-                <input required type="number" min="1" disabled={!formData.equipmentId} max={equipmentList.find(e => e.id == formData.equipmentId)?.availableQuantity ?? 1} name="quantity" value={formData.equipmentId ? formData.quantity : ''} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" />
+                <input required type="number" min="1" disabled={!formData.equipmentId || equipmentList.find(e => e.id == formData.equipmentId)?.status === 'UNDER_MAINTENANCE'} max={equipmentList.find(e => e.id == formData.equipmentId)?.availableQuantity ?? 1} name="quantity" value={formData.equipmentId ? formData.quantity : ''} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Start Time *</label>
-                  <input required type="datetime-local" name="startTime" value={formData.startTime} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 text-white focus:outline-none" />
+                  <input required type="datetime-local" disabled={equipmentList.find(e => e.id == formData.equipmentId)?.status === 'UNDER_MAINTENANCE'} name="startTime" value={formData.startTime} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">End Time *</label>
-                  <input required type="datetime-local" name="endTime" value={formData.endTime} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 text-white focus:outline-none" />
+                  <input required type="datetime-local" disabled={equipmentList.find(e => e.id == formData.equipmentId)?.status === 'UNDER_MAINTENANCE'} name="endTime" value={formData.endTime} onChange={handleInputChange} className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Purpose *</label>
-                <textarea required rows="2" name="purpose" value={formData.purpose} onChange={handleInputChange} placeholder="State the usage purpose…" className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none" />
+                <textarea required rows="2" disabled={equipmentList.find(e => e.id == formData.equipmentId)?.status === 'UNDER_MAINTENANCE'} name="purpose" value={formData.purpose} onChange={handleInputChange} placeholder="State the usage purpose…" className="w-full bg-[#181922] border border-white/[0.08] rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" />
               </div>
 
               <div className="border border-white/[0.06] rounded-xl p-4 bg-white/[0.01]">
@@ -619,7 +634,7 @@ const AvailabilityCalendar = () => {
                   {waitlistSuccess || waitlistInfo ? 'Close' : 'Cancel'}
                 </button>
                 {!waitlistSuccess && !waitlistInfo && (
-                  <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-60">
+                  <button type="submit" disabled={submitting || equipmentList.find(e => e.id == formData.equipmentId)?.status === 'UNDER_MAINTENANCE'} className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     {submitting ? 'Verifying…' : 'Book Equipment'}
                   </button>
                 )}

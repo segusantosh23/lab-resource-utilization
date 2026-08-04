@@ -1,16 +1,29 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
+import { getProfile } from "../../services/profileService";
 
 import {
     generatePDFReport,
     generateExcelReport
 } from "../../utils/reportGenerator";
 
+const formatDate = (val) => {
+    if (!val) return "-";
+    if (Array.isArray(val)) {
+        const [y, m, d] = val;
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return String(val);
+    return d.toLocaleDateString();
+};
+
 const CalibrationReport = () => {
 
     const { user } = useContext(AuthContext);
 
+    const [profile, setProfile] = useState(null);
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -29,17 +42,23 @@ const CalibrationReport = () => {
 
             try {
 
-                const res = await api.get("/api/calibrations");
+                const [profileData, res] = await Promise.all([
+                    getProfile().catch(err => {
+                        console.error(err);
+                        return null;
+                    }),
+                    api.get("/api/calibrations")
+                ]);
 
-                const technicianRecords = res.data.filter(
+                if (profileData) {
+                    setProfile(profileData);
+                }
 
-                    calibration =>
+                const recordsToShow = user.role === "LAB_TECHNICIAN"
+                    ? (res.data || []).filter(calibration => calibration.technicianName === user.name)
+                    : (res.data || []);
 
-                        calibration.technicianName === user.name
-
-                );
-
-                setRecords(technicianRecords);
+                setRecords(recordsToShow);
 
             }
 
@@ -167,13 +186,16 @@ const CalibrationReport = () => {
 
     };
 
+    const roleName = (user?.role || "USER").replace(/_/g, " ");
+    const reportTitle = `${roleName} Calibration Report`;
+
     const handlePDF = () => {
 
         generatePDFReport({
 
-            title: "Lab Technician Calibration Report",
+            title: reportTitle,
 
-            user,
+            user: profile || user,
 
             summary,
 
@@ -209,9 +231,9 @@ const CalibrationReport = () => {
 
                 r.equipmentName,
 
-                r.calibrationDate,
+                formatDate(r.calibrationDate),
 
-                r.nextDueDate,
+                formatDate(r.nextDueDate),
 
                 r.certificateNumber,
 
@@ -227,9 +249,9 @@ const CalibrationReport = () => {
 
         generateExcelReport({
 
-            title: "Lab Technician Calibration Report",
+            title: reportTitle,
 
-            user,
+            user: profile || user,
 
             summary,
 
@@ -258,9 +280,9 @@ const CalibrationReport = () => {
 
                 r.equipmentName,
 
-                r.calibrationDate,
+                formatDate(r.calibrationDate),
 
-                r.nextDueDate,
+                formatDate(r.nextDueDate),
 
                 r.certificateNumber,
 
@@ -577,13 +599,13 @@ const CalibrationReport = () => {
 
                                         <td className="p-4">
 
-                                            {record.calibrationDate}
+                                            {formatDate(record.calibrationDate)}
 
                                         </td>
 
                                         <td className="p-4">
 
-                                            {record.nextDueDate}
+                                            {formatDate(record.nextDueDate)}
 
                                         </td>
 

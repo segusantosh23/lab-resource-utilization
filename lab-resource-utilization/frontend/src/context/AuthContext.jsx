@@ -1,6 +1,7 @@
 import React, { createContext,useContext, useState, useEffect } from 'react';
 
 import authService from '../services/authService';
+import { getProfile } from '../services/profileService';
 
 export const AuthContext = createContext();
 export const useAuth = () => {
@@ -18,6 +19,13 @@ export const AuthProvider = ({ children }) => {
     if (stored) {
       setToken(stored.token);
       setUser(stored.user);
+      getProfile().then(profileData => {
+        if (profileData) {
+          const updatedUser = { ...stored.user, ...profileData };
+          setUser(updatedUser);
+          authService.saveAuth(stored.token, updatedUser);
+        }
+      }).catch(() => {});
     }
     setLoading(false);
   }, []);
@@ -31,10 +39,22 @@ export const AuthProvider = ({ children }) => {
       const { token: jwtToken, email: userEmail, name, role, message } = data;
 
       if (jwtToken) {
-        const userData = { email: userEmail, name, role };
+        let userData = { email: userEmail, name, role };
         authService.saveAuth(jwtToken, userData);
         setToken(jwtToken);
         setUser(userData);
+
+        try {
+          const profileData = await getProfile();
+          if (profileData) {
+            userData = { ...userData, ...profileData };
+            authService.saveAuth(jwtToken, userData);
+            setUser(userData);
+          }
+        } catch (e) {
+          console.error("Could not fetch profile after login", e);
+        }
+
         return { success: true, role };
       } else {
         return { success: false, error: message || 'Login failed' };

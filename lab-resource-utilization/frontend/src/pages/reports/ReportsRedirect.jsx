@@ -14,6 +14,22 @@ const ReportsRedirect = () => {
         return <Navigate to="/reports/technician" replace />;
     }
 
+    if (user?.role === "LAB_MANAGER") {
+        return <Navigate to="/reports/manager" replace />;
+    }
+
+    if (user?.role === "DEPARTMENT_HEAD") {
+        return <Navigate to="/reports/department-head" replace />;
+    }
+
+    if (user?.role === "INSTITUTION_ADMIN") {
+        return <Navigate to="/reports/institution-admin" replace />;
+    }
+
+    if (user?.role === "SYSTEM_ADMIN") {
+        return <Navigate to="/reports/system-admin" replace />;
+    }
+
     return <Navigate to="/" replace />;
 };
 

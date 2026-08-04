@@ -1,16 +1,29 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
+import { getProfile } from "../../services/profileService";
 
 import {
     generatePDFReport,
     generateExcelReport
 } from "../../utils/reportGenerator";
 
+const formatDate = (val) => {
+    if (!val) return "-";
+    if (Array.isArray(val)) {
+        const [y, m, d] = val;
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return String(val);
+    return d.toLocaleDateString();
+};
+
 const MaintenanceReport = () => {
 
     const { user } = useContext(AuthContext);
 
+    const [profile, setProfile] = useState(null);
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -29,11 +42,23 @@ const MaintenanceReport = () => {
 
             try {
 
-                const res = await api.get(
-                    `/api/maintenance/technician/${user.name}`
-                );
+                const maintenanceUrl = user.role === "LAB_TECHNICIAN"
+                    ? `/api/maintenance/technician/${user.name}`
+                    : "/api/maintenance";
 
-                setRecords(res.data);
+                const [profileData, res] = await Promise.all([
+                    getProfile().catch(err => {
+                        console.error(err);
+                        return null;
+                    }),
+                    api.get(maintenanceUrl)
+                ]);
+
+                if (profileData) {
+                    setProfile(profileData);
+                }
+
+                setRecords(res.data || []);
 
             }
 
@@ -91,7 +116,7 @@ const MaintenanceReport = () => {
 
             // Date filtering (skip until backend has createdAt)
             const createdDate = r.createdAt
-                ? new Date(r.createdAt)
+                ? new Date(Array.isArray(r.createdAt) ? new Date(r.createdAt[0], r.createdAt[1]-1, r.createdAt[2]) : r.createdAt)
                 : null;
 
             const fromOk =
@@ -141,13 +166,16 @@ const MaintenanceReport = () => {
     };
 
 
+    const roleName = (user?.role || "USER").replace(/_/g, " ");
+    const reportTitle = `${roleName} Maintenance Report`;
+
     const handlePDF = () => {
 
         generatePDFReport({
 
-            title: "Lab Technician Maintenance Report",
+            title: reportTitle,
 
-            user,
+            user: profile || user,
 
             summary,
 
@@ -166,8 +194,8 @@ const MaintenanceReport = () => {
                 "Equipment",
                 "Description",
                 "Priority",
-                "Created",
-                "Completed",
+                "Start Date",
+                "Completed Date",
                 "Status"
             ],
 
@@ -181,13 +209,9 @@ const MaintenanceReport = () => {
 
                 r.priority,
 
-                r.createdAt
-                    ? new Date(r.createdAt).toLocaleDateString()
-                    : "-",
+                formatDate(r.startedAt || r.createdAt),
 
-                r.completedAt
-                    ? new Date(r.completedAt).toLocaleDateString()
-                    : "-",
+                formatDate(r.completedAt),
 
                 r.status
 
@@ -200,9 +224,9 @@ const MaintenanceReport = () => {
 
         generateExcelReport({
 
-            title: "Lab Technician Maintenance Report",
+            title: reportTitle,
 
-            user,
+            user: profile || user,
 
             summary,
 
@@ -220,8 +244,8 @@ const MaintenanceReport = () => {
                 "Equipment",
                 "Description",
                 "Priority",
-                "Created",
-                "Completed",
+                "Start Date",
+                "Completed Date",
                 "Status"
             ],
 
@@ -235,13 +259,9 @@ const MaintenanceReport = () => {
 
                 r.priority,
 
-                r.createdAt
-                    ? new Date(r.createdAt).toLocaleDateString()
-                    : "-",
+                formatDate(r.startedAt || r.createdAt),
 
-                r.completedAt
-                    ? new Date(r.completedAt).toLocaleDateString()
-                    : "-",
+                formatDate(r.completedAt),
 
                 r.status
 
@@ -471,7 +491,7 @@ const MaintenanceReport = () => {
 
                                     <th className="text-left p-4">Status</th>
 
-                                    <th className="p-4">Created Date</th>
+                                    <th className="p-4">Start Date</th>
 
                                     <th className="p-4">Completed Date</th>
 
@@ -486,7 +506,7 @@ const MaintenanceReport = () => {
                                     <tr>
 
                                         <td
-                                            colSpan="6"
+                                            colSpan="8"
                                             className="text-center p-10 text-gray-400"
                                         >
 
@@ -571,15 +591,11 @@ const MaintenanceReport = () => {
                                             </td>
 
                                             <td className="p-4">
-                                                {record.createdAt
-                                                    ? new Date(record.createdAt).toLocaleDateString()
-                                                    : "-"}
+                                                {formatDate(record.startedAt || record.createdAt)}
                                             </td>
 
                                             <td className="p-4">
-                                                {record.completedAt
-                                                    ? new Date(record.completedAt).toLocaleDateString()
-                                                    : "-"}
+                                                {formatDate(record.completedAt)}
                                             </td>
 
                                         </tr>

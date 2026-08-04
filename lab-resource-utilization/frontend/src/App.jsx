@@ -12,6 +12,14 @@ import ResearcherReports from "./pages/reports/ResearcherReports";
 import MaintenanceReport from "./pages/reports/MaintenanceReport";
 import CalibrationReport from "./pages/reports/CalibrationReport";
 import ReportsHome from "./pages/reports/ReportsHome";
+import ReportsRedirect from "./pages/reports/ReportsRedirect";
+import LabManagerReportsHome from "./pages/reports/LabManagerReportsHome";
+import DepartmentHeadReportsHome from "./pages/reports/DepartmentHeadReportsHome";
+import InstitutionAdminReportsHome from "./pages/reports/InstitutionAdminReportsHome";
+import SystemAdminReportsHome from "./pages/reports/SystemAdminReportsHome";
+import BookingsReport from "./pages/reports/BookingsReport";
+import UtilizationReport from "./pages/reports/UtilizationReport";
+import UsersReport from "./pages/reports/UsersReport";
 
 
 
@@ -135,7 +143,7 @@ function App() {
             allowedRoles={[
                 'LAB_TECHNICIAN',
                 'LAB_MANAGER',
-                
+                'SYSTEM_ADMIN'
             ]}
         >
             <CalibrationList />
@@ -150,7 +158,7 @@ function App() {
             allowedRoles={[
                 'LAB_TECHNICIAN',
                 'LAB_MANAGER',
-                
+                'SYSTEM_ADMIN'
             ]}
         >
             <AddCalibration />
@@ -165,7 +173,7 @@ function App() {
             allowedRoles={[
                 'LAB_TECHNICIAN',
                 'LAB_MANAGER',
-                
+                'SYSTEM_ADMIN'
             ]}
         >
             <EditCalibration />
@@ -180,7 +188,7 @@ function App() {
             allowedRoles={[
                 'LAB_TECHNICIAN',
                 'LAB_MANAGER',
-                
+                'SYSTEM_ADMIN'
             ]}
         >
             <CalibrationHistory />
@@ -195,7 +203,7 @@ function App() {
             allowedRoles={[
                 'LAB_TECHNICIAN',
                 'LAB_MANAGER',
-                
+                'SYSTEM_ADMIN'
             ]}
         >
             <DueSoonCalibrations />
@@ -210,7 +218,7 @@ function App() {
             allowedRoles={[
                 'LAB_TECHNICIAN',
                 'LAB_MANAGER',
-                
+                'SYSTEM_ADMIN'
             ]}
         >
             <ExpiredCalibrations />
@@ -223,9 +231,18 @@ function App() {
         <Route path="/bookings/calendar" element={<ProtectedRoute><AvailabilityCalendar /></ProtectedRoute>} />
         <Route path="/bookings/history" element={<ProtectedRoute><BookingHistory /></ProtectedRoute>} />
         <Route path="/bookings/waitlist" element={<ProtectedRoute><WaitlistManager /></ProtectedRoute>} />
-        {/* ── Maintenance Module ── */}
+          {/* ── Reports Module ── */}
           <Route
               path="/reports"
+              element={
+                  <ProtectedRoute>
+                      <ReportsRedirect />
+                  </ProtectedRoute>
+              }
+          />
+
+          <Route
+              path="/reports/technician"
               element={
                   <ProtectedRoute allowedRoles={["LAB_TECHNICIAN"]}>
                       <ReportsHome />
@@ -234,9 +251,54 @@ function App() {
           />
 
           <Route
+              path="/reports/manager"
+              element={
+                  <ProtectedRoute allowedRoles={["LAB_MANAGER"]}>
+                      <LabManagerReportsHome />
+                  </ProtectedRoute>
+              }
+          />
+
+          <Route
+              path="/reports/department-head"
+              element={
+                  <ProtectedRoute allowedRoles={["DEPARTMENT_HEAD"]}>
+                      <DepartmentHeadReportsHome />
+                  </ProtectedRoute>
+              }
+          />
+
+          <Route
+              path="/reports/institution-admin"
+              element={
+                  <ProtectedRoute allowedRoles={["INSTITUTION_ADMIN"]}>
+                      <InstitutionAdminReportsHome />
+                  </ProtectedRoute>
+              }
+          />
+
+          <Route
+              path="/reports/system-admin"
+              element={
+                  <ProtectedRoute allowedRoles={["SYSTEM_ADMIN"]}>
+                      <SystemAdminReportsHome />
+                  </ProtectedRoute>
+              }
+          />
+
+          <Route
+              path="/reports/bookings"
+              element={
+                  <ProtectedRoute allowedRoles={["LAB_MANAGER", "DEPARTMENT_HEAD", "SYSTEM_ADMIN"]}>
+                      <BookingsReport />
+                  </ProtectedRoute>
+              }
+          />
+
+          <Route
               path="/reports/maintenance"
               element={
-                  <ProtectedRoute allowedRoles={["LAB_TECHNICIAN"]}>
+                  <ProtectedRoute allowedRoles={["LAB_TECHNICIAN", "LAB_MANAGER", "SYSTEM_ADMIN"]}>
                       <MaintenanceReport />
                   </ProtectedRoute>
               }
@@ -245,8 +307,26 @@ function App() {
           <Route
               path="/reports/calibration"
               element={
-                  <ProtectedRoute allowedRoles={["LAB_TECHNICIAN"]}>
+                  <ProtectedRoute allowedRoles={["LAB_TECHNICIAN", "LAB_MANAGER", "SYSTEM_ADMIN"]}>
                       <CalibrationReport />
+                  </ProtectedRoute>
+              }
+          />
+
+          <Route
+              path="/reports/utilization"
+              element={
+                  <ProtectedRoute allowedRoles={["LAB_MANAGER", "DEPARTMENT_HEAD", "INSTITUTION_ADMIN", "SYSTEM_ADMIN"]}>
+                      <UtilizationReport />
+                  </ProtectedRoute>
+              }
+          />
+
+          <Route
+              path="/reports/users"
+              element={
+                  <ProtectedRoute allowedRoles={["INSTITUTION_ADMIN"]}>
+                      <UsersReport />
                   </ProtectedRoute>
               }
           />

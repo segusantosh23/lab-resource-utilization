@@ -544,6 +544,21 @@ const Bookings = () => {
                     </option>
                   ))}
                 </select>
+
+                {equipmentList.find(e => e.id == formData.equipmentId)?.status === 'UNDER_MAINTENANCE' && (
+                  <div className="mt-3 p-3.5 rounded-xl text-sm border bg-amber-500/10 border-amber-500/30 text-amber-300 flex gap-3 items-start shadow-sm">
+                    <svg className="w-5 h-5 mt-0.5 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-amber-200">Equipment Under Maintenance</p>
+                      <p className="text-xs mt-0.5 text-amber-300/90 leading-relaxed">
+                        This equipment is currently undergoing maintenance and cannot be booked.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Quantity */}
@@ -733,8 +748,8 @@ const Bookings = () => {
                 {!waitlistSuccess && !waitlistInfo && (
                   <button
                     type="submit"
-                    disabled={submitting}
-                    className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-60"
+                    disabled={submitting || equipmentList.find(e => e.id == formData.equipmentId)?.status === 'UNDER_MAINTENANCE'}
+                    className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? (
                       <>
