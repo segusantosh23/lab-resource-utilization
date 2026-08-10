@@ -135,96 +135,12 @@ function App() {
         <Route path="/equipment/:id" element={<ProtectedRoute><EquipmentDetails /></ProtectedRoute>} />
 
         {/* ── Calibration Module ── */}
-
-<Route
-    path="/calibrations"
-    element={
-        <ProtectedRoute
-            allowedRoles={[
-                'LAB_TECHNICIAN',
-                'LAB_MANAGER',
-                'SYSTEM_ADMIN'
-            ]}
-        >
-            <CalibrationList />
-        </ProtectedRoute>
-    }
-/>
-
-<Route
-    path="/calibrations/add"
-    element={
-        <ProtectedRoute
-            allowedRoles={[
-                'LAB_TECHNICIAN',
-                'LAB_MANAGER',
-                'SYSTEM_ADMIN'
-            ]}
-        >
-            <AddCalibration />
-        </ProtectedRoute>
-    }
-/>
-
-<Route
-    path="/calibrations/edit/:id"
-    element={
-        <ProtectedRoute
-            allowedRoles={[
-                'LAB_TECHNICIAN',
-                'LAB_MANAGER',
-                'SYSTEM_ADMIN'
-            ]}
-        >
-            <EditCalibration />
-        </ProtectedRoute>
-    }
-/>
-
-<Route
-    path="/calibrations/history/:equipmentId"
-    element={
-        <ProtectedRoute
-            allowedRoles={[
-                'LAB_TECHNICIAN',
-                'LAB_MANAGER',
-                'SYSTEM_ADMIN'
-            ]}
-        >
-            <CalibrationHistory />
-        </ProtectedRoute>
-    }
-/>
-
-<Route
-    path="/calibrations/due-soon"
-    element={
-        <ProtectedRoute
-            allowedRoles={[
-                'LAB_TECHNICIAN',
-                'LAB_MANAGER',
-                'SYSTEM_ADMIN'
-            ]}
-        >
-            <DueSoonCalibrations />
-        </ProtectedRoute>
-    }
-/>
-
-<Route
-    path="/calibrations/expired"
-    element={
-        <ProtectedRoute
-            allowedRoles={[
-                'LAB_TECHNICIAN',
-                'LAB_MANAGER',
-                'SYSTEM_ADMIN'
-            ]}
-        >
-            <ExpiredCalibrations />
-        </ProtectedRoute>
-    }
-/>
+        <Route path="/calibrations" element={<ProtectedRoute><CalibrationList /></ProtectedRoute>} />
+        <Route path="/calibrations/add" element={<ProtectedRoute allowedRoles={['LAB_TECHNICIAN', 'LAB_MANAGER', 'SYSTEM_ADMIN', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN']}><AddCalibration /></ProtectedRoute>} />
+        <Route path="/calibrations/edit/:id" element={<ProtectedRoute allowedRoles={['LAB_TECHNICIAN', 'LAB_MANAGER', 'SYSTEM_ADMIN', 'DEPARTMENT_HEAD', 'INSTITUTION_ADMIN']}><EditCalibration /></ProtectedRoute>} />
+        <Route path="/calibrations/history/:equipmentId" element={<ProtectedRoute><CalibrationHistory /></ProtectedRoute>} />
+        <Route path="/calibrations/due-soon" element={<ProtectedRoute><DueSoonCalibrations /></ProtectedRoute>} />
+        <Route path="/calibrations/expired" element={<ProtectedRoute><ExpiredCalibrations /></ProtectedRoute>} />
 
         {/* ── Booking & Scheduling Module ── */}
         <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />

@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { getAllEquipment } from '../../services/equipmentService';
+import api from '../../services/api';
 
 const LabTechnicianDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -23,26 +24,12 @@ const LabTechnicianDashboard = () => {
         const equipmentData = await getAllEquipment();
         
         setTotalEquipment(equipmentData.length);
-        const maintenanceData = await fetch(
-          `http://localhost:8081/api/maintenance/technician/${user.name}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        )
-        .then(res => res.json());
-
+        const maintenanceRes = await api.get(`/api/maintenance/technician/${user.name}`);
+        const maintenanceData = Array.isArray(maintenanceRes.data) ? maintenanceRes.data : [];
         setMaintenanceCount(maintenanceData.length);
 
-        const calibrationSummary = await fetch(
-          `http://localhost:8081/api/calibrations/summary`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        ).then(res => res.json());
+        const calibrationRes = await api.get(`/api/calibrations/summary`);
+        const calibrationSummary = calibrationRes.data || {};
 
         // Count items that need attention (Due Soon or Expired)
         setCalibrationCount((calibrationSummary.dueSoon || 0) + (calibrationSummary.expired || 0));

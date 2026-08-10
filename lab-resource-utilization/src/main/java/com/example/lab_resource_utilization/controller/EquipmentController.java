@@ -32,12 +32,12 @@ public class EquipmentController {
 
     // Get All Equipment — 200 OK
     @GetMapping
-public ResponseEntity<List<EquipmentResponse>> getAll(Principal principal){
-
-    return ResponseEntity.ok(
-        service.getAllEquipment(principal.getName())
-    );
-}
+    public ResponseEntity<List<EquipmentResponse>> getAll(Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(
+            service.getAllEquipment(email)
+        );
+    }
     // Get Equipment By ID — 200 OK
     @GetMapping("/{id}")
     public ResponseEntity<EquipmentResponse> getById(@PathVariable Long id) {

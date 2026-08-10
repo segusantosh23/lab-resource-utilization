@@ -44,13 +44,8 @@ const MaintenanceRequestForm = () => {
 
   // Load Technicians
   useEffect(() => {
-    fetch("http://localhost:8081/api/maintenance/technicians", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => setTechnicians(data))
+    api.get("/api/maintenance/technicians")
+      .then((res) => setTechnicians(Array.isArray(res.data) ? res.data : []))
       .catch((err) => console.error("Error fetching technicians:", err));
   }, []);
 
@@ -59,8 +54,6 @@ const MaintenanceRequestForm = () => {
 
     if (!form.equipment)
       newErrors.equipment = "Equipment is required";
-
-    
 
     setErrors(newErrors);
 
@@ -72,27 +65,26 @@ const MaintenanceRequestForm = () => {
 
     if (!validate()) return;
 
-    await fetch("http://localhost:8081/api/maintenance", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify(form),
-    });
-
-    navigate("/maintenance", {
-      state: { refresh: true },
-    });
+    try {
+      await api.post("/api/maintenance", form);
+      navigate("/maintenance", {
+        state: { refresh: true },
+      });
+    } catch (err) {
+      console.error("Error submitting maintenance request:", err);
+    }
   };
+
+  const maxAvailable = selectedEquipment
+    ? (selectedEquipment.availableQuantity != null ? selectedEquipment.availableQuantity : selectedEquipment.quantity)
+    : Infinity;
 
   // Basic validation
   const isValid =
     form.equipment &&
-   
     form.technician &&
     form.quantity > 0 &&
-    (selectedEquipment ? form.quantity <= selectedEquipment.quantity : true);
+    (selectedEquipment ? form.quantity <= maxAvailable : true);
 
   return (
     <div className="page-no-scroll flex items-center justify-center bg-[#020617] text-white">
@@ -201,13 +193,15 @@ const MaintenanceRequestForm = () => {
               <label className="block mb-2 text-sm">
                 Quantity
                 {selectedEquipment && (
-                  <span className="ml-2 text-gray-400 text-xs">(Max: {selectedEquipment.quantity})</span>
+                  <span className="ml-2 text-gray-400 text-xs">
+                    (Max Available: {selectedEquipment.availableQuantity ?? selectedEquipment.quantity})
+                  </span>
                 )}
               </label>
               <input
                 type="number"
                 min="1"
-                max={selectedEquipment ? selectedEquipment.quantity : ""}
+                max={selectedEquipment ? (selectedEquipment.availableQuantity ?? selectedEquipment.quantity) : ""}
                 className="w-full p-3 rounded-lg border border-gray-600 bg-[#0f172a] text-white focus:border-purple-500 focus:outline-none"
                 value={form.quantity}
                 onChange={(e) => {
@@ -218,7 +212,9 @@ const MaintenanceRequestForm = () => {
                   }
                   let val = parseInt(rawVal);
                   if (isNaN(val)) return;
-                  const maxQty = selectedEquipment ? selectedEquipment.quantity : Infinity;
+                  const maxQty = selectedEquipment 
+                    ? (selectedEquipment.availableQuantity ?? selectedEquipment.quantity) 
+                    : Infinity;
                   
                   setForm({
                     ...form,
@@ -308,12 +304,15 @@ const EquipmentDropdown = ({ value, onChange, error }) => {
     return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
 
-  const isExactMatch = equipmentList.some(eq => (eq.name || "") === search);
+  const isExactMatch = equipmentList.some(eq => (eq.name || eq.equipmentName || "") === search);
 
   const filtered = equipmentList.filter((eq) => {
-    if (eq.status !== "AVAILABLE") return false;
+    if (eq.status === "RETIRED" || eq.status === "OUT_OF_SERVICE" || eq.status === "UNDER_MAINTENANCE") return false;
+    const avail = eq.availableQuantity != null ? eq.availableQuantity : eq.quantity;
+    if (avail <= 0) return false;
     if (isExactMatch) return true;
-    return (eq.name || "").toLowerCase().includes(search.toLowerCase());
+    const eqName = eq.name || eq.equipmentName || "";
+    return eqName.toLowerCase().includes(search.toLowerCase());
   });
 
   const handleSelect = (eq) => {
@@ -361,27 +360,24 @@ const EquipmentDropdown = ({ value, onChange, error }) => {
             {loading ? (
               <li className="px-4 py-3 text-gray-400 text-sm">Loading equipment...</li>
             ) : filtered.length === 0 ? (
-              <li className="px-4 py-3 text-gray-400 text-sm">No equipment found</li>
+              <li className="px-4 py-3 text-gray-400 text-sm">No available equipment found</li>
             ) : (
               filtered.map((eq, idx) => {
                 const name = eq.name || eq.equipmentName || "";
+                const avail = eq.availableQuantity != null ? eq.availableQuantity : eq.quantity;
                 return (
                   <li
                     key={eq.id || idx}
                     onClick={() => handleSelect(eq)}
-                    className="px-4 py-2.5 cursor-pointer text-sm hover:bg-purple-700 hover:text-white transition-colors flex items-center gap-2"
+                    className="px-4 py-2.5 cursor-pointer text-sm hover:bg-purple-700 hover:text-white transition-colors flex items-center justify-between gap-2"
                   >
-                    <span className="w-2 h-2 rounded-full bg-purple-400 flex-shrink-0" />
-                    {name}
-                    {eq.status && (
-                      <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
-                        eq.status === "AVAILABLE"
-                          ? "bg-green-900 text-green-300"
-                          : "bg-yellow-900 text-yellow-300"
-                      }`}>
-                        {eq.status}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-purple-400 flex-shrink-0" />
+                      <span>{name}</span>
+                    </div>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-900/80 text-emerald-300 border border-emerald-500/30 font-medium">
+                      Avail: {avail} / {eq.quantity}
+                    </span>
                   </li>
                 );
               })

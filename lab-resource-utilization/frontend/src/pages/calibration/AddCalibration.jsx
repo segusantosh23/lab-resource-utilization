@@ -4,14 +4,19 @@ import calibrationService from "../../services/calibrationService";
 import { getAllEquipment } from "../../services/equipmentService";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../context/AuthContext";
+import api from "../../services/api";
 
 const AddCalibration = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useContext(AuthContext);
   const prefilledName = location.state?.prefilledEquipment;
 
-  const { user } = useContext(AuthContext);
-  const prefilledCert = location.state?.prefilledCertificateNumber || "";
+  const generateCertNumber = () => {
+    return `CERT-CAL-${Math.floor(100000 + Math.random() * 900000)}`;
+  };
+
+  const prefilledCert = location.state?.prefilledCertificateNumber || generateCertNumber();
   const prefilledTech = location.state?.prefilledTechnician || user?.name || "";
 
   const [equipment, setEquipment] = useState([]);
@@ -70,16 +75,11 @@ const AddCalibration = () => {
 
       const maintenanceReqId = location.state?.maintenanceRequestId;
       if (maintenanceReqId) {
-        await fetch(
-          `http://localhost:8081/api/maintenance/${maintenanceReqId}/status`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ status: "Completed" }),
-          }
-        );
+        try {
+          await api.put(`/api/maintenance/${maintenanceReqId}/status`, { status: "Completed" });
+        } catch (mErr) {
+          console.error("Error updating maintenance status:", mErr);
+        }
       }
 
       navigate("/calibrations");
@@ -183,7 +183,7 @@ const AddCalibration = () => {
               value={formData.certificateNumber}
               onChange={handleChange}
               required
-              className="w-full bg-[#222533] border border-gray-700 rounded-lg p-3"
+              className="w-full bg-[#222533] border border-gray-700 rounded-lg p-3 text-white"
             />
           </div>
 
@@ -195,9 +195,13 @@ const AddCalibration = () => {
               name="technicianName"
               value={formData.technicianName}
               onChange={handleChange}
-              readOnly
+              readOnly={user?.role === "LAB_TECHNICIAN" || Boolean(location.state?.prefilledTechnician)}
               required
-              className="w-full bg-[#222533] border border-gray-700 rounded-lg p-3 text-gray-400 cursor-not-allowed"
+              className={`w-full bg-[#222533] border border-gray-700 rounded-lg p-3 ${
+                user?.role === "LAB_TECHNICIAN" || location.state?.prefilledTechnician
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-white"
+              }`}
             />
           </div>
 

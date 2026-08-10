@@ -38,7 +38,7 @@ public class EquipmentService {
         EquipmentResponse response = new EquipmentResponse();
         response.setId(equipment.getId());
         response.setName(equipment.getName());
-        response.setCategory(equipment.getCategory()); // Removed - category not in entity
+        response.setCategory(equipment.getCategory());
         response.setDescription(equipment.getDescription());
         response.setManufacturer(equipment.getManufacturer());
         response.setModelNumber(equipment.getModelNumber());
@@ -54,16 +54,19 @@ public class EquipmentService {
         if (activeQty == null) activeQty = 0;
 
         // Subtract quantity currently under maintenance
-        Integer maintenanceQty = maintenanceRepository.sumActiveMaintenanceQuantity(equipment.getName());
+        Integer maintenanceQty = equipment.getName() != null 
+            ? maintenanceRepository.sumActiveMaintenanceQuantity(equipment.getName()) 
+            : 0;
         if (maintenanceQty == null) maintenanceQty = 0;
 
-        int available = Math.max(0, equipment.getQuantity() - activeQty - maintenanceQty);
+        int totalQty = equipment.getQuantity() != null ? equipment.getQuantity() : 0;
+        int available = Math.max(0, totalQty - activeQty - maintenanceQty);
         response.setAvailableQuantity(available);
 
         // Dynamically override status in response if all quantity is in maintenance
-        if (maintenanceQty >= equipment.getQuantity() && equipment.getQuantity() > 0) {
+        if (totalQty > 0 && maintenanceQty >= totalQty) {
             response.setStatus(EquipmentStatus.UNDER_MAINTENANCE);
-        } else if (response.getStatus() == EquipmentStatus.UNDER_MAINTENANCE && maintenanceQty < equipment.getQuantity()) {
+        } else if (response.getStatus() == EquipmentStatus.UNDER_MAINTENANCE && maintenanceQty < totalQty) {
             // If DB says it's under maintenance but it's only partial, show it as AVAILABLE so others can book
             response.setStatus(EquipmentStatus.AVAILABLE);
         }
@@ -74,7 +77,7 @@ public class EquipmentService {
     // Map Request DTO -> Entity (for create and update)
     private void mapToEntity(EquipmentRequest request, Equipment equipment) {
         equipment.setName(request.getName());
-        equipment.setCategory(request.getCategory()); // Removed - category not in entity
+        equipment.setCategory(request.getCategory());
         equipment.setDescription(request.getDescription());
         equipment.setManufacturer(request.getManufacturer());
         equipment.setModelNumber(request.getModelNumber());
@@ -98,41 +101,62 @@ public class EquipmentService {
         return mapToResponse(repository.save(equipment));
     }
 
-    // Get All Equipment
     public List<EquipmentResponse> getAllEquipment(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return repository.findAll().stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
 
-    User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return repository.findAll().stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
 
-    List<Equipment> equipments;
+        List<Equipment> equipments = null;
 
+        if (user.getRole() == Role.LAB_MANAGER ||
+            user.getRole() == Role.DEPARTMENT_HEAD ||
+            user.getRole() == Role.LAB_TECHNICIAN) {
 
-    if(user.getRole() == Role.LAB_MANAGER ||
-   user.getRole() == Role.DEPARTMENT_HEAD ||
-   user.getRole() == Role.LAB_TECHNICIAN) {
+            boolean hasDept = user.getDepartment() != null && !user.getDepartment().trim().isEmpty();
+            boolean hasInst = user.getInstitution() != null && !user.getInstitution().trim().isEmpty();
 
-    equipments = repository.findByDepartmentAndInstitution(
-            user.getDepartment(),
-            user.getInstitution()
-    );
+            if (hasDept && hasInst) {
+                equipments = repository.findByDepartmentAndInstitution(
+                        user.getDepartment(),
+                        user.getInstitution()
+                );
+            }
+            if ((equipments == null || equipments.isEmpty()) && hasDept) {
+                equipments = repository.findByDepartment(user.getDepartment());
+            }
+            if ((equipments == null || equipments.isEmpty()) && hasInst) {
+                equipments = repository.findByInstitution(user.getInstitution());
+            }
+            if (equipments == null || equipments.isEmpty()) {
+                equipments = repository.findAll();
+            }
+        }
+        else if (user.getRole() == Role.INSTITUTION_ADMIN) {
+            boolean hasInst = user.getInstitution() != null && !user.getInstitution().trim().isEmpty();
+            if (hasInst) {
+                equipments = repository.findByInstitution(user.getInstitution());
+            }
+            if (equipments == null || equipments.isEmpty()) {
+                equipments = repository.findAll();
+            }
+        } 
+        else {
+            equipments = repository.findAll();
+        }
 
-}
-    else if(user.getRole() == Role.INSTITUTION_ADMIN) {
-
-        equipments = repository.findByInstitution(user.getInstitution());
-
-    } 
-    else {
-
-        equipments = repository.findAll();
-
+        return equipments.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
-
-
-    return equipments.stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
-}
     // Get Equipment By Id
     public EquipmentResponse getEquipmentById(Long id) {
         Equipment equipment = repository.findById(id)

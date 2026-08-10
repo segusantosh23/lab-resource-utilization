@@ -21,14 +21,18 @@ const CalibrationList = () => {
 
   // Group by equipment to get the latest calibration status for each equipment
   const latestCalibrations = useMemo(() => {
-    const sorted = [...calibrations].sort(
-      (a, b) => new Date(b.createdAt || b.calibrationDate) - new Date(a.createdAt || a.calibrationDate)
+    const list = Array.isArray(calibrations) ? calibrations : [];
+    const sorted = [...list].sort(
+      (a, b) => new Date(b.createdAt || b.calibrationDate || 0) - new Date(a.createdAt || a.calibrationDate || 0)
     );
 
     const map = new Map();
     for (const cal of sorted) {
-      if (!map.has(cal.equipmentId)) {
-        map.set(cal.equipmentId, cal);
+      if (cal && (cal.equipmentId != null || cal.id != null)) {
+        const key = cal.equipmentId || cal.id;
+        if (!map.has(key)) {
+          map.set(key, cal);
+        }
       }
     }
     return Array.from(map.values());
@@ -47,9 +51,9 @@ const CalibrationList = () => {
       const searchText = search.toLowerCase();
 
       const matchesSearch =
-        item.equipmentName?.toLowerCase().includes(searchText) ||
-        item.technicianName?.toLowerCase().includes(searchText) ||
-        item.certificateNumber?.toLowerCase().includes(searchText);
+        (item.equipmentName || "").toLowerCase().includes(searchText) ||
+        (item.technicianName || "").toLowerCase().includes(searchText) ||
+        (item.certificateNumber || "").toLowerCase().includes(searchText);
 
       const matchesStatus =
         statusFilter === "ALL" ||
@@ -66,10 +70,11 @@ const CalibrationList = () => {
   const loadCalibrations = async () => {
     try {
       const response = await calibrationService.getAllCalibrations();
-      setCalibrations(response.data);
+      setCalibrations(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error loading calibrations:", error);
       toast.error("Failed to load calibrations.");
+      setCalibrations([]);
     } finally {
       setLoading(false);
     }
