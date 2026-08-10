@@ -39,16 +39,20 @@ public class MaintenanceService {
         this.equipmentRepository = equipmentRepository;
     }
 
-    private MaintenanceRequest sanitizeRequest(MaintenanceRequest req) {
+   private MaintenanceRequest sanitizeRequest(MaintenanceRequest req) {
         if (req != null) {
-            boolean modified = false;
             LocalDateTime baseDate = null;
 
             if (calibrationRepository != null && req.getEquipment() != null) {
                 try {
-                    Equipment eq = equipmentRepository.findByNameIgnoreCase(req.getEquipment()).orElse(null);
+                    Equipment eq = equipmentRepository
+                            .findByNameIgnoreCase(req.getEquipment())
+                            .orElse(null);
+
                     if (eq != null) {
-                        Optional<Calibration> calOpt = calibrationRepository.findTopByEquipmentOrderByCalibrationDateDesc(eq);
+                        Optional<Calibration> calOpt =
+                                calibrationRepository.findTopByEquipmentOrderByCalibrationDateDesc(eq);
+
                         if (calOpt.isPresent() && calOpt.get().getCalibrationDate() != null) {
                             baseDate = calOpt.get().getCalibrationDate().atTime(9, 0);
                         }
@@ -58,26 +62,26 @@ public class MaintenanceService {
 
             if (baseDate == null) {
                 long offsetDays = req.getId() != null ? (req.getId() * 3) % 18 + 2 : 5;
-                baseDate = LocalDateTime.now().minusDays(offsetDays).withHour(9).withMinute(0);
+                baseDate = LocalDateTime.now()
+                        .minusDays(offsetDays)
+                        .withHour(9)
+                        .withMinute(0);
             }
 
             if (req.getCreatedAt() == null) {
                 req.setCreatedAt(baseDate);
-                modified = true;
             }
 
             if (req.getStartedAt() == null) {
                 req.setStartedAt(req.getCreatedAt() != null ? req.getCreatedAt() : baseDate);
-                modified = true;
             }
 
-            if (req.getCompletedAt() == null && "Completed".equalsIgnoreCase(req.getStatus())) {
-                req.setCompletedAt(req.getStartedAt().plusDays(1).plusHours(6));
-                modified = true;
-            }
+            if (req.getCompletedAt() == null &&
+                    "Completed".equalsIgnoreCase(req.getStatus())) {
 
-            if (modified) {
-                repo.save(req);
+                req.setCompletedAt(
+                        req.getStartedAt().plusDays(1).plusHours(6)
+                );
             }
         }
         return req;
