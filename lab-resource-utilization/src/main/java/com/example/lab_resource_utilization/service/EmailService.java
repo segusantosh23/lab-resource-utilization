@@ -57,33 +57,72 @@ public class EmailService {
     @Value("${app.support-email}")
     private String supportEmail;
 
-    // @Async - Temporarily disabled to see error logs
+    /**
+     * Send Signup OTP Email
+     * Sends OTP verification email to user during signup
+     * @throws RuntimeException if email sending fails
+     */
     public void sendSignupOTP(String toEmail, String otp, String userName) {
-        logger.info("📧 [OTP GENERATED] Email: " + toEmail + " | OTP: " + otp + " | User: " + userName);
+        logger.info("📧 [SEND VERIFICATION OTP] Attempting to send OTP to: " + toEmail);
+        
         try {
+            // Validate sender email is configured
+            if (senderEmail == null || senderEmail.trim().isEmpty()) {
+                throw new IllegalStateException("Sender email (spring.mail.username) is not configured");
+            }
+            
+            logger.info("🔧 [SMTP CONFIG] Sender configured, preparing message");
+            
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(toEmail);
-            helper.setSubject("Email Verification");
-            
-            // Use the sender email configured in application.properties
+            helper.setSubject("Email Verification - " + appName);
             helper.setFrom(senderEmail, appName);
 
             String htmlContent = buildSignupOTPEmail(userName, otp);
             helper.setText(htmlContent, true);
 
+            logger.info("📤 [SMTP SEND] Connecting to SMTP server and sending email...");
+            
+            // This is the critical line - if it fails, exception is thrown
             mailSender.send(message);
-            logger.info("✅ OTP email sent successfully to: " + toEmail);
-        } catch (Exception e) {
-            logger.severe("❌ SMTP ERROR: Failed to send OTP email to: " + toEmail);
-            logger.severe("❌ ERROR MESSAGE: " + e.getMessage());
-            logger.severe("❌ ERROR TYPE: " + e.getClass().getName());
+            
+            logger.info("✅ [SEND VERIFICATION OTP] Email sent successfully to: " + toEmail);
+            
+        } catch (MailAuthenticationException e) {
+            logger.severe("❌ [SMTP AUTH ERROR] Authentication failed - check MAIL_USERNAME and MAIL_PASSWORD");
+            logger.severe("❌ [ERROR] " + e.getMessage());
             if (e.getCause() != null) {
-                logger.severe("❌ ROOT CAUSE: " + e.getCause().getMessage());
+                logger.severe("❌ [CAUSE] " + e.getCause().getMessage());
+            }
+            throw new RuntimeException("SMTP authentication failed. Please check email credentials.", e);
+            
+        } catch (MailSendException e) {
+            logger.severe("❌ [SMTP SEND ERROR] Failed to send email - connection may be blocked or refused");
+            logger.severe("❌ [ERROR] " + e.getMessage());
+            if (e.getCause() != null) {
+                logger.severe("❌ [CAUSE] " + e.getCause().getMessage());
+            }
+            throw new RuntimeException("Failed to send email. SMTP port may be blocked or server unreachable.", e);
+            
+        } catch (MessagingException e) {
+            logger.severe("❌ [SMTP MESSAGING ERROR] Error preparing or sending email message");
+            logger.severe("❌ [ERROR] " + e.getMessage());
+            if (e.getCause() != null) {
+                logger.severe("❌ [CAUSE] " + e.getCause().getMessage());
+            }
+            throw new RuntimeException("Error preparing email message: " + e.getMessage(), e);
+            
+        } catch (Exception e) {
+            logger.severe("❌ [SMTP UNEXPECTED ERROR] Unexpected error sending OTP email");
+            logger.severe("❌ [ERROR TYPE] " + e.getClass().getName());
+            logger.severe("❌ [ERROR] " + e.getMessage());
+            if (e.getCause() != null) {
+                logger.severe("❌ [CAUSE] " + e.getCause().getMessage());
             }
             e.printStackTrace();
-            logger.warning("⚠️ Continuing without email delivery so OTP-based signup can still proceed in development.");
+            throw new RuntimeException("Failed to send OTP email: " + e.getMessage(), e);
         }
     }
 

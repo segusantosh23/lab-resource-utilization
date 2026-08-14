@@ -53,6 +53,7 @@ public class AuthService {
      * Sends OTP to email to validate that the email exists and can receive emails
      * This is done BEFORE collecting password and other account details
      * Returns: [message, otpCode]
+     * @throws ResponseStatusException if email sending fails
      */
     @Transactional
     public String[] sendVerificationOtp(String email) {
@@ -71,12 +72,14 @@ public class AuthService {
         Otp otp = otpService.createOtp(email, OtpType.SIGNUP_VERIFICATION);
 
         // Send OTP email to verify email exists
+        // If this throws an exception, the transaction will be rolled back
         try {
             emailService.sendSignupOTP(email, otp.getOtpCode(), "User");
-        } catch (Exception e) {
-            // If email sending fails, it might mean the email doesn't exist or is invalid
-            System.err.println("Failed to send verification OTP to: " + email + " - " + e.getMessage());
-            // We still return the OTP for testing purposes, but in production this would fail
+        } catch (RuntimeException e) {
+            // Email sending failed - log and throw proper error to frontend
+            System.err.println("❌ Failed to send verification OTP to: " + email + " - " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
+                "Failed to send OTP email. Please check your email address or try again later.");
         }
 
         return new String[] {
