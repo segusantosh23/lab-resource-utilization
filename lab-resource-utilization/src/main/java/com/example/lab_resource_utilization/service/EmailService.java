@@ -57,7 +57,7 @@ public class EmailService {
     @Value("${app.support-email}")
     private String supportEmail;
 
-    @Async
+    // @Async - Temporarily disabled to see error logs
     public void sendSignupOTP(String toEmail, String otp, String userName) {
         logger.info("📧 [OTP GENERATED] Email: " + toEmail + " | OTP: " + otp + " | User: " + userName);
         try {
