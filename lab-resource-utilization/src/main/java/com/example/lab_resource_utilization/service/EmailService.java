@@ -76,7 +76,13 @@ public class EmailService {
             mailSender.send(message);
             logger.info("✅ OTP email sent successfully to: " + toEmail);
         } catch (Exception e) {
-            logger.warning("⚠️ Failed to send OTP email to: " + toEmail + ". Error: " + e.getMessage());
+            logger.severe("❌ SMTP ERROR: Failed to send OTP email to: " + toEmail);
+            logger.severe("❌ ERROR MESSAGE: " + e.getMessage());
+            logger.severe("❌ ERROR TYPE: " + e.getClass().getName());
+            if (e.getCause() != null) {
+                logger.severe("❌ ROOT CAUSE: " + e.getCause().getMessage());
+            }
+            e.printStackTrace();
             logger.warning("⚠️ Continuing without email delivery so OTP-based signup can still proceed in development.");
         }
     }
