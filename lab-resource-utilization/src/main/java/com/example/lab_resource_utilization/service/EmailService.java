@@ -62,6 +62,7 @@ public class EmailService {
      * Sends OTP verification email to user during signup
      * @throws RuntimeException if email sending fails
      */
+    @Async
     public void sendSignupOTP(String toEmail, String otp, String userName) {
         logger.info("📧 [SEND VERIFICATION OTP] Attempting to send OTP to: " + toEmail);
         
