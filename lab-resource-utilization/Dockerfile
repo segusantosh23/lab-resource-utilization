@@ -1,39 +1,17 @@
-# Multi-stage build for Spring Boot application
+# Multi-stage Dockerfile for Spring Boot Application
 
-# Stage 1: Build
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
-
+# Stage 1: Build JAR using Maven
+FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
-
-# Copy Maven configuration
-COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw .
-
-# Give Maven wrapper execute permission
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
 RUN chmod +x mvnw
-
-# Download dependencies
-RUN ./mvnw dependency:go-offline -B
-
-# Copy source code
 COPY src ./src
-
-# Build Spring Boot application
 RUN ./mvnw clean package -DskipTests
 
-
-# Stage 2: Runtime
+# Stage 2: Production Runtime
 FROM eclipse-temurin:21-jre-alpine
-
 WORKDIR /app
-
-# Copy generated JAR
 COPY --from=build /app/target/*.jar app.jar
-
-# Default port for local development
 EXPOSE 8081
-
-# Run Spring Boot application
-# Render provides the PORT environment variable
-ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8081}"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
