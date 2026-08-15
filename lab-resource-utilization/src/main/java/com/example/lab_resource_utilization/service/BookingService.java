@@ -185,40 +185,30 @@ for(User manager : managers){
     }
 
     public List<BookingResponse> getAllBookings(String email) {
+        User manager = userRepository.findByEmail(email).orElseThrow();
+        List<Booking> bookings = null;
 
-    User manager = userRepository.findByEmail(email)
-            .orElseThrow();
+        if (manager.getRole() == Role.LAB_MANAGER || manager.getRole() == Role.DEPARTMENT_HEAD) {
+            String dept = manager.getDepartment();
+            String inst = manager.getInstitution();
+            
+            if (dept != null && !dept.isBlank() && inst != null && !inst.isBlank()) {
+                bookings = bookingRepository.findByEquipmentDepartmentAndEquipmentInstitution(dept.trim(), inst.trim());
+            }
+            if ((bookings == null || bookings.isEmpty()) && inst != null && !inst.isBlank()) {
+                bookings = bookingRepository.findByEquipmentInstitution(inst.trim());
+            }
+            if (bookings == null || bookings.isEmpty()) {
+                bookings = bookingRepository.findAllByOrderByCreatedAtDesc();
+            }
+        } else {
+            bookings = bookingRepository.findAllByOrderByCreatedAtDesc();
+        }
 
-    List<Booking> bookings;
-
-
-    if(manager.getRole() == Role.LAB_MANAGER) {
-
-    bookings = bookingRepository
-            .findByEquipmentDepartmentAndEquipmentInstitution(
-                    manager.getDepartment(),
-                    manager.getInstitution()
-            );
-
-} 
-else if(manager.getRole() == Role.DEPARTMENT_HEAD) {
-
-    bookings = bookingRepository
-            .findByEquipmentDepartmentAndEquipmentInstitution(
-                    manager.getDepartment(),
-                    manager.getInstitution()
-            );
-
-}
-    else {
-        bookings = bookingRepository.findAll();
+        return bookings.stream()
+                .map(this::mapToResponse)
+                .toList();
     }
-
-
-    return bookings.stream()
-            .map(this::mapToResponse)
-            .toList();
-}
 
     public BookingResponse getBookingById(Long id) {
         Booking booking = bookingRepository.findById(id)
