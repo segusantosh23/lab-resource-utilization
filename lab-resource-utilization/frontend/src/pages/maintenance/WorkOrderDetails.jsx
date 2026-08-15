@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import calibrationService from "../../services/calibrationService";
+import api from "../../services/api";
 
 const WorkOrderDetails = () => {
   const { id } = useParams();
@@ -21,9 +22,9 @@ const WorkOrderDetails = () => {
 
   // Fetch work order
   useEffect(() => {
-    fetch(`http://localhost:8081/api/maintenance/${id}`)
-      .then((res) => res.json())
-      .then(async (data) => {
+    api.get(`/api/maintenance/${id}`)
+      .then(async (res) => {
+        const data = res.data;
         setRequest(data);
         if (data.status === "Completed") {
           try {
@@ -55,19 +56,12 @@ const WorkOrderDetails = () => {
       return;
     }
 
-    const res = await fetch(
-      `http://localhost:8081/api/maintenance/${id}/status`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status }),
-      }
-    );
-
-    const data = await res.json();
-    setRequest(data);
+    try {
+      const res = await api.put(`/api/maintenance/${id}/status`, { status });
+      setRequest(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   if (!request) {
@@ -253,4 +247,4 @@ const WorkOrderDetails = () => {
   );
 };
 
-export default WorkOrderDetails;
+export default WorkOrderDetails;

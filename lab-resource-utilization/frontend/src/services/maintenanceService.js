@@ -1,12 +1,10 @@
-import axios from "axios";
+import api from "./api";
 
-const API = "http://localhost:8081/api/maintenance";
+export const createRequest = (data) => api.post("/api/maintenance", data);
 
-export const createRequest = (data) => axios.post(API, data);
+export const getAllRequests = () => api.get("/api/maintenance");
 
-export const getAllRequests = () => axios.get(API);
-
-export const getRequestById = (id) => axios.get(`${API}/${id}`);
+export const getRequestById = (id) => api.get(`/api/maintenance/${id}`);
 
 export const updateStatus = (id, status) =>
-  axios.put(`${API}/${id}/status`, { status });
+  api.put(`/api/maintenance/${id}/status`, { status });
