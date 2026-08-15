@@ -27,7 +27,7 @@ public class CompleteSignupRequest {
     private String name;
 
     @NotBlank(message = "University ID is required")
-    @Size(min = 3, max = 30, message = "University ID must be between 3 and 30 characters")
+    @Size(min = 1, max = 50, message = "University ID must be between 1 and 50 characters")
     private String universityId;
 
     @NotBlank(message = "Role is required")

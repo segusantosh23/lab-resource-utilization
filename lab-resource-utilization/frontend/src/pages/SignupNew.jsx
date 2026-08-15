@@ -213,7 +213,14 @@ const SignupNew = () => {
       }, 2000);
       
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create account. Please try again.');
+      const serverMessage = err.response?.data?.message || err.response?.data?.error;
+      const fieldErrors = err.response?.data?.errors;
+      if (fieldErrors && typeof fieldErrors === 'object') {
+        const firstField = Object.values(fieldErrors)[0];
+        setError(firstField || serverMessage || 'Failed to create account. Please try again.');
+      } else {
+        setError(serverMessage || 'Failed to create account. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
