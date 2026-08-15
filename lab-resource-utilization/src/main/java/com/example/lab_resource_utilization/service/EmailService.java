@@ -13,6 +13,11 @@ import jakarta.mail.MessagingException;
 import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.MailSendException;
 
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
@@ -65,59 +70,95 @@ public class EmailService {
     @Async
     public void sendSignupOTP(String toEmail, String otp, String userName) {
         logger.info("📧 [SEND VERIFICATION OTP] Attempting to send OTP to: " + toEmail);
+        String cleanSender = (senderEmail != null && !senderEmail.isBlank()) ? senderEmail.trim() : "santhuconnected@gmail.com";
+        String htmlContent = buildSignupOTPEmail(userName, otp);
+        String subject = "Email Verification - " + appName;
         
         try {
-            // Validate sender email is configured
-            if (senderEmail == null || senderEmail.trim().isEmpty()) {
-                throw new IllegalStateException("Sender email (spring.mail.username) is not configured");
-            }
-            
             logger.info("🔧 [SMTP CONFIG] Sender configured, preparing message");
             
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(toEmail);
-            helper.setSubject("Email Verification - " + appName);
-            helper.setFrom(senderEmail, appName);
-
-            String htmlContent = buildSignupOTPEmail(userName, otp);
+            helper.setSubject(subject);
+            helper.setFrom(cleanSender, appName);
             helper.setText(htmlContent, true);
 
             logger.info("📤 [SMTP SEND] Connecting to SMTP server and sending email...");
-            
-            // This is the critical line - if it fails, exception is thrown
             mailSender.send(message);
             
-            logger.info("✅ [SEND VERIFICATION OTP] Email sent successfully to: " + toEmail);
-            
-        } catch (MailAuthenticationException e) {
-            logger.severe("❌ [SMTP AUTH ERROR] Authentication failed - check MAIL_USERNAME and MAIL_PASSWORD");
-            logger.severe("❌ [ERROR] " + e.getMessage());
-            if (e.getCause() != null) {
-                logger.severe("❌ [CAUSE] " + e.getCause().getMessage());
-            }
-            throw new RuntimeException("SMTP authentication failed. Please check email credentials.", e);
-            
-        } catch (MailSendException e) {
-            logger.severe("❌ [SMTP SEND ERROR] Failed to send email - connection may be blocked or refused");
-            logger.severe("❌ [ERROR] " + e.getMessage());
-            if (e.getCause() != null) {
-                logger.severe("❌ [CAUSE] " + e.getCause().getMessage());
-            }
-            throw new RuntimeException("Failed to send email. SMTP port may be blocked or server unreachable.", e);
-            
-        } catch (MessagingException e) {
-            logger.severe("❌ [SMTP MESSAGING ERROR] Error preparing or sending email message");
-            logger.severe("❌ [ERROR] " + e.getMessage());
-            if (e.getCause() != null) {
-                logger.severe("❌ [CAUSE] " + e.getCause().getMessage());
-            }
-            throw new RuntimeException("Error preparing email message: " + e.getMessage(), e);
+            logger.info("✅ [SEND VERIFICATION OTP] Email sent successfully via SMTP to: " + toEmail);
+            return;
             
         } catch (Exception e) {
-            logger.severe("❌ [SMTP UNEXPECTED ERROR] Unexpected error sending OTP email");
-            logger.severe("❌ [ERROR TYPE] " + e.getClass().getName());
+            logger.warning("⚠️ [SMTP FAILED] " + e.getMessage() + ". Triggering Brevo HTTPS REST API fallback...");
+        }
+
+        // HTTPS REST API Fallback
+        boolean apiSuccess = sendViaBrevoHttpApi(toEmail, subject, htmlContent);
+        if (apiSuccess) {
+            logger.info("✅ [SEND VERIFICATION OTP] Email sent successfully via Brevo HTTPS API to: " + toEmail);
+        } else {
+            logger.severe("❌ [EMAIL ERROR] Failed to send email via both SMTP and Brevo HTTPS API to: " + toEmail);
+        }
+    }
+
+    private boolean sendViaBrevoHttpApi(String toEmail, String subject, String htmlContent) {
+        try {
+            String cleanSender = (senderEmail != null && !senderEmail.isBlank()) ? senderEmail.trim() : "santhuconnected@gmail.com";
+            String cleanKey = (mailPassword != null && !mailPassword.isBlank()) ? mailPassword.trim() : "";
+
+            if (cleanKey.isEmpty()) {
+                logger.severe("❌ [BREVO API ERROR] mailPassword (api-key) is not configured.");
+                return false;
+            }
+
+            URL url = new URI("https://api.brevo.com/v3/smtp/email").toURL();
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("api-key", cleanKey);
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setDoOutput(true);
+
+            String jsonPayload = String.format(
+                "{\"sender\":{\"name\":\"%s\",\"email\":\"%s\"},\"to\":[{\"email\":\"%s\"}],\"subject\":\"%s\",\"htmlContent\":\"%s\"}",
+                escapeJsonString(appName),
+                escapeJsonString(cleanSender),
+                escapeJsonString(toEmail),
+                escapeJsonString(subject),
+                escapeJsonString(htmlContent)
+            );
+
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(jsonPayload.getBytes(StandardCharsets.UTF_8));
+            }
+
+            int code = conn.getResponseCode();
+            if (code >= 200 && code < 300) {
+                return true;
+            } else {
+                String errBody = "";
+                if (conn.getErrorStream() != null) {
+                    errBody = new String(conn.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+                }
+                logger.severe("❌ [BREVO API ERROR] HTTP " + code + ": " + errBody);
+            }
+        } catch (Exception ex) {
+            logger.severe("❌ [BREVO API EXCEPTION] " + ex.getMessage());
+        }
+        return false;
+    }
+
+    private String escapeJsonString(String input) {
+        if (input == null) return "";
+        return input.replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r")
+                    .replace("\t", "\\t");
+    }
             logger.severe("❌ [ERROR] " + e.getMessage());
             if (e.getCause() != null) {
                 logger.severe("❌ [CAUSE] " + e.getCause().getMessage());

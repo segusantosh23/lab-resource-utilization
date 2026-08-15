@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.mail.internet.MimeMessage;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +24,9 @@ public class HelloController {
 
     @Value("${spring.mail.username:}")
     private String senderEmail;
+
+    @Value("${spring.mail.password:}")
+    private String mailPassword;
 
     @Value("${app.name:Lab Platform}")
     private String appName;
@@ -39,35 +47,67 @@ public class HelloController {
     @GetMapping("/test-email")
     public Map<String, Object> testEmail(@RequestParam(defaultValue = "test@example.com") String to) {
         Map<String, Object> res = new HashMap<>();
-        res.put("configuredSender", senderEmail);
+        String cleanSender = senderEmail != null ? senderEmail.trim() : "";
+        String cleanKey = mailPassword != null ? mailPassword.trim() : "";
         
-        if (mailSender == null) {
-            res.put("status", "FAILED");
-            res.put("error", "JavaMailSender bean is not initialized.");
-            return res;
+        res.put("configuredSender", cleanSender);
+        res.put("keyLength", cleanKey.length());
+
+        // Step 1: Attempt SMTP Send
+        try {
+            if (mailSender != null) {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                helper.setTo(to);
+                helper.setSubject("Test Email - " + appName);
+                if (!cleanSender.isBlank()) {
+                    helper.setFrom(cleanSender, appName);
+                }
+                helper.setText("<h1>Test Email Success!</h1><p>Your mail configuration is working on Render!</p>", true);
+                
+                mailSender.send(message);
+                res.put("status", "SUCCESS");
+                res.put("method", "SMTP");
+                res.put("message", "Email sent successfully via SMTP to " + to);
+                return res;
+            }
+        } catch (Exception e) {
+            res.put("smtpError", e.getMessage());
         }
 
+        // Step 2: Fallback to Brevo HTTPS REST API (Port 443)
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject("Test Email - " + appName);
-            if (senderEmail != null && !senderEmail.isBlank()) {
-                helper.setFrom(senderEmail, appName);
+            URL url = new URI("https://api.brevo.com/v3/smtp/email").toURL();
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("api-key", cleanKey);
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setDoOutput(true);
+
+            String jsonPayload = "{\"sender\":{\"name\":\"" + appName + "\",\"email\":\"" + cleanSender + "\"},\"to\":[{\"email\":\"" + to + "\"}],\"subject\":\"Test Email - " + appName + "\",\"htmlContent\":\"<h1>Test Email Success!</h1><p>Sent via Brevo HTTPS REST API on Render!</p>\"}";
+
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(jsonPayload.getBytes(StandardCharsets.UTF_8));
             }
-            helper.setText("<h1>Test Email Success!</h1><p>Your SMTP mail configuration is working on Render!</p>", true);
-            
-            mailSender.send(message);
-            res.put("status", "SUCCESS");
-            res.put("message", "Email sent successfully to " + to);
-        } catch (Exception e) {
-            res.put("status", "FAILED");
-            res.put("errorClass", e.getClass().getName());
-            res.put("errorMessage", e.getMessage());
-            if (e.getCause() != null) {
-                res.put("cause", e.getCause().getMessage());
+
+            int code = conn.getResponseCode();
+            if (code >= 200 && code < 300) {
+                res.put("status", "SUCCESS");
+                res.put("method", "BREVO_HTTPS_API");
+                res.put("message", "Email sent successfully via Brevo HTTPS API to " + to);
+                return res;
+            } else {
+                res.put("brevoHttpCode", code);
+                if (conn.getErrorStream() != null) {
+                    res.put("brevoHttpResponse", new String(conn.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
+                }
             }
+        } catch (Exception ex) {
+            res.put("brevoHttpError", ex.getMessage());
         }
+
+        res.put("status", "FAILED");
         return res;
     }
 }

@@ -34,10 +34,10 @@ public class MailConfig {
     public JavaMailSender javaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         
-        mailSender.setHost(host);
+        mailSender.setHost(host != null ? host.trim() : "smtp-relay.brevo.com");
         mailSender.setPort(port);
-        mailSender.setUsername(username);
-        mailSender.setPassword(password);
+        mailSender.setUsername(username != null ? username.trim() : "");
+        mailSender.setPassword(password != null ? password.trim() : "");
 
         Properties props = mailSender.getJavaMailProperties();
         
