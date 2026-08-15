@@ -1,17 +1,20 @@
 # Multi-stage Dockerfile for Spring Boot Application
 
-# Stage 1: Build JAR using Maven
-FROM eclipse-temurin:21-jdk-alpine AS build
+# Stage 1: Build JAR using Maven image
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
-COPY lab-resource-utilization/.mvn/ .mvn/
-COPY lab-resource-utilization/mvnw lab-resource-utilization/pom.xml ./
-RUN chmod +x mvnw
-COPY lab-resource-utilization/src ./src
-RUN ./mvnw clean package -DskipTests
+
+# Copy pom.xml and source code
+COPY lab-resource-utilization/pom.xml ./lab-resource-utilization/
+COPY lab-resource-utilization/src ./lab-resource-utilization/src
+
+# Build production JAR
+WORKDIR /app/lab-resource-utilization
+RUN mvn clean package -DskipTests
 
 # Stage 2: Production Runtime
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/lab-resource-utilization/target/*.jar app.jar
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
