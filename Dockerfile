@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Spring Boot Application
+# Multi-stage Dockerfile for Spring Boot Production Deployment on Render
 
 # Stage 1: Build JAR using Maven image
 FROM maven:3.9-eclipse-temurin-21-alpine AS build
