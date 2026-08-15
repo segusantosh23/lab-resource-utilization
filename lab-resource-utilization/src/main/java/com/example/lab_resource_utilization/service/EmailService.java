@@ -59,6 +59,9 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String senderEmail;
 
+    @Value("${spring.mail.password:}")
+    private String mailPassword;
+
     @Value("${app.support-email}")
     private String supportEmail;
 
@@ -158,14 +161,6 @@ public class EmailService {
                     .replace("\n", "\\n")
                     .replace("\r", "\\r")
                     .replace("\t", "\\t");
-    }
-            logger.severe("❌ [ERROR] " + e.getMessage());
-            if (e.getCause() != null) {
-                logger.severe("❌ [CAUSE] " + e.getCause().getMessage());
-            }
-            e.printStackTrace();
-            throw new RuntimeException("Failed to send OTP email: " + e.getMessage(), e);
-        }
     }
 
     @Async
